@@ -85,6 +85,34 @@ class ANI_H5_Dataset(Dataset):
 #  Model builder
 # -------------------------------------------------------------------
 
+class _TorchANIExportWrapper(nn.Module):
+    """
+    Thin export wrapper that converts the ANI model's tuple-based forward
+    signature ``((species, coords)) → SpeciesEnergies`` to the two-arg
+    form ``(species, coords) → (species, energies)`` expected by
+    :class:`src.wrappers.wrap_torchani.TorchANI_Wrapper`.
+
+    Also disables ``periodic_table_index`` so the NAMD wrapper (which
+    already maps Z → 0-indexed species) can feed indices directly.
+    """
+
+    def __init__(self, ani_model: nn.Module):
+        super().__init__()
+        self.ani = ani_model
+        # Disable periodic-table conversion — the NAMD wrapper already
+        # maps atomic numbers to 0-indexed species before calling us.
+        if hasattr(self.ani, "periodic_table_index"):
+            self.ani.periodic_table_index = False
+
+    def forward(
+        self,
+        species: torch.Tensor,
+        coordinates: torch.Tensor,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        result = self.ani((species, coordinates))
+        return result[0], result[1]
+
+
 def build_ani_model(
     elements: list,
     Rcr: float = 5.2,
@@ -99,7 +127,8 @@ def build_ani_model(
     device: str = "cpu",
 ):
     """
-    Build a TorchANI model from scratch.
+    Build a TorchANI model from scratch using the Assembler API
+    (TorchANI ≥ 2.7).
 
     Args:
         elements:  List of element symbols (e.g. ["H", "C", "N", "O"]).
@@ -107,94 +136,50 @@ def build_ani_model(
         hidden_layers: Per-element network architecture [h1, h2, ...].
     """
     import torchani
+    from torchani.arch import Assembler
 
     if hidden_layers is None:
         hidden_layers = [160, 128, 96]
 
     # AEV hyperparameters (ANI-2x-like defaults)
-    if EtaR is None:
-        EtaR = torch.tensor([16.0], device=device)
-    else:
-        EtaR = torch.tensor(EtaR, device=device)
-
     if ShfR is None:
-        ShfR = torch.tensor(
-            [0.9, 1.17, 1.44, 1.71, 1.98, 2.25, 2.52, 2.79,
-             3.06, 3.33, 3.6, 3.87, 4.14, 4.41, 4.68, 4.95],
-            device=device,
-        )
-    else:
-        ShfR = torch.tensor(ShfR, device=device)
-
-    if EtaA is None:
-        EtaA = torch.tensor([8.0], device=device)
-    else:
-        EtaA = torch.tensor(EtaA, device=device)
-
-    if Zeta is None:
-        Zeta = torch.tensor([32.0], device=device)
-    else:
-        Zeta = torch.tensor(Zeta, device=device)
+        ShfR = [0.9, 1.17, 1.44, 1.71, 1.98, 2.25, 2.52, 2.79,
+                3.06, 3.33, 3.6, 3.87, 4.14, 4.41, 4.68, 4.95]
 
     if ShfA is None:
-        ShfA = torch.tensor(
-            [0.9, 1.55, 2.2, 2.85],
-            device=device,
-        )
-    else:
-        ShfA = torch.tensor(ShfA, device=device)
+        ShfA = [0.9, 1.55, 2.2, 2.85]
 
     if ShfZ is None:
-        ShfZ = torch.tensor(
-            [0.19634954, 0.58904862, 0.9817477, 1.3744468,
-             1.7671459, 2.159845, 2.552544, 2.945243],
-            device=device,
-        )
-    else:
-        ShfZ = torch.tensor(ShfZ, device=device)
+        ShfZ = [0.19634954, 0.58904862, 0.9817477, 1.3744468,
+                1.7671459, 2.159845, 2.552544, 2.945243]
+
+    eta_r = 16.0 if EtaR is None else EtaR[0]
+    eta_a = 8.0 if EtaA is None else EtaA[0]
+    zeta_val = 32.0 if Zeta is None else Zeta[0]
 
     species_order = [_SYMBOL_TO_Z[s] for s in elements]
-    num_species = len(elements)
 
-    aev_computer = torchani.AEVComputer(
-        Rcr=Rcr, Rca=Rca,
-        EtaR=EtaR, ShfR=ShfR,
-        EtaA=EtaA, Zeta=Zeta,
-        ShfA=ShfA, ShfZ=ShfZ,
-        num_species=num_species,
+    # Build model via the Assembler (torchani ≥ 2.7).
+    # periodic_table_index=True ⟹ model converts raw atomic numbers
+    # to 0-indexed species during training.  At export we flip this
+    # via _TorchANIExportWrapper.
+    assembler = Assembler(
+        symbols=elements,
+        periodic_table_index=True,
+    )
+    assembler.set_zeros_as_self_energies()
+
+    radial = torchani.aev.ANIRadial(eta=eta_r, shifts=ShfR, cutoff=Rcr)
+    angular = torchani.aev.ANIAngular(
+        eta=eta_a, zeta=zeta_val, shifts=ShfA, sections=ShfZ, cutoff=Rca,
+    )
+    assembler.set_aev_computer(angular=angular, radial=radial)
+    assembler.set_atomic_networks(
+        ctor="ani2x",
+        kwargs={"activation": "celu", "bias": True},
     )
 
-    # Compute AEV length
-    aev_length = aev_computer.aev_length
-
-    # Build per-element networks
-    networks = []
-    for _ in range(num_species):
-        layers = []
-        in_features = aev_length
-        for h in hidden_layers:
-            layers.append(nn.Linear(in_features, h))
-            layers.append(nn.CELU(alpha=0.1))
-            in_features = h
-        layers.append(nn.Linear(in_features, 1))
-        networks.append(nn.Sequential(*layers))
-
-    ani_model = torchani.ANIModel(networks)
-
-    # Full model: species converter + AEV + network + energy shifter
-    # The species converter maps atomic numbers → indices.
-    species_converter = torchani.utils.ChemicalSymbolsToInts(elements)
-
-    # Energy shifter (self-energies; start at zero, could be fit later)
-    energy_shifter = torchani.utils.EnergyShifter(None)
-
-    model = torchani.nn.Sequential(
-        species_converter,
-        aev_computer,
-        ani_model,
-        energy_shifter,
-    )
-
+    model = assembler.assemble()
     return model.to(device), species_order
 
 
@@ -393,8 +378,15 @@ def main(argv=None):
     model.load_state_dict(torch.load(str(output_dir / "best_model.pt"), weights_only=True))
     model.eval()
 
+    # Wrap in _TorchANIExportWrapper so the scripted model has the
+    # two-arg forward(species, coordinates) signature expected by
+    # TorchANI_Wrapper.  Also disables periodic_table_index (the
+    # wrapper already maps Z → 0-indexed species).
+    export_model = _TorchANIExportWrapper(model.cpu())
+    export_model.eval()
+
     # Script and save
-    scripted = torch.jit.script(model.cpu())
+    scripted = torch.jit.script(export_model)
     scripted_path = output_dir / "torchani_scripted.pt"
     scripted.save(str(scripted_path))
 

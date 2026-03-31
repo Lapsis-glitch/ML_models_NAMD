@@ -41,6 +41,20 @@ skip_no_nequip = pytest.mark.skipif(
     reason="nequip-train not found",
 )
 
+# NequIP ≥ 0.17 requires e3nn ≥ 0.6.0, but MACE 0.3.x pins e3nn == 0.4.4.
+# When both are installed the NequIP/Allegro pipeline cannot run.
+try:
+    import e3nn as _e3nn
+    from packaging.version import Version
+    _e3nn_compat = Version(_e3nn.__version__) >= Version("0.6.0")
+except Exception:
+    _e3nn_compat = False
+
+skip_e3nn_incompat = pytest.mark.skipif(
+    not _e3nn_compat,
+    reason=f"e3nn version too old for NequIP 0.17 (need >=0.6.0, have {getattr(_e3nn, '__version__', '?')})",
+)
+
 try:
     import schnetpack  # noqa: F401
     _has_schnetpack = True
@@ -138,6 +152,7 @@ class TestMACEPipeline:
 class TestNequIPPipeline:
 
     @skip_no_nequip
+    @skip_e3nn_incompat
     def test_train_and_wrap(self, prepared_data_dir, tmp_path):
         from src.training.train_nequip import main as train_main
 
@@ -161,6 +176,7 @@ class TestNequIPPipeline:
 class TestAllegroPipeline:
 
     @skip_no_nequip
+    @skip_e3nn_incompat
     def test_train_and_wrap(self, prepared_data_dir, tmp_path):
         from src.training.train_allegro import main as train_main
 

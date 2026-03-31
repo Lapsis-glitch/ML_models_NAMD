@@ -391,6 +391,7 @@ def wrap_and_verify_mace(compiled_path: Path, output_dir: Path) -> bool:
     from src.export import export_wrapped
 
     try:
+        output_dir.mkdir(parents=True, exist_ok=True)
         wrapper = MACE_TS_Wrapper(str(compiled_path), device="cpu").eval()
         out_path = str(output_dir / "mace_namd.pt")
         export_wrapped(wrapper, out_path, model_type="MACE")
@@ -416,6 +417,7 @@ def wrap_and_verify_nequip(deployed_path: Path, output_dir: Path) -> bool:
     from src.export import export_wrapped
 
     try:
+        output_dir.mkdir(parents=True, exist_ok=True)
         wrapper = NequIP_Allegro_Wrapper(str(deployed_path), device="cpu").eval()
         out_path = str(output_dir / "nequip_namd.pt")
         export_wrapped(wrapper, out_path, model_type="NequIP")
@@ -439,6 +441,7 @@ def wrap_and_verify_allegro(deployed_path: Path, output_dir: Path) -> bool:
     from src.export import export_wrapped
 
     try:
+        output_dir.mkdir(parents=True, exist_ok=True)
         wrapper = NequIP_Allegro_Wrapper(str(deployed_path), device="cpu").eval()
         out_path = str(output_dir / "allegro_namd.pt")
         export_wrapped(wrapper, out_path, model_type="Allegro")
@@ -464,6 +467,7 @@ def wrap_and_verify_schnetpack(
     from src.export import export_wrapped
 
     try:
+        output_dir.mkdir(parents=True, exist_ok=True)
         wrapper = SchNetPack_Wrapper(
             model_path=str(scripted_path), r_max=r_max, device="cpu",
         ).eval()
@@ -489,6 +493,7 @@ def wrap_and_verify_torchani(scripted_path: Path, output_dir: Path) -> bool:
     from src.export import export_wrapped
 
     try:
+        output_dir.mkdir(parents=True, exist_ok=True)
         wrapper = TorchANI_Wrapper(
             model_path=str(scripted_path), device="cpu",
             element_list=[1, 8],   # H, O

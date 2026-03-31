@@ -124,7 +124,7 @@ class TorchANI_Wrapper(nn.Module):
         Z = Z.to(torch.int64)
 
         species = self._z_to_spec(Z).unsqueeze(0)              # [1, N]
-        positions = coords.to(torch.float64).unsqueeze(0)       # [1, N, 3]
+        positions = coords.to(torch.float32).unsqueeze(0)       # [1, N, 3]
         positions = positions.requires_grad_(True)
 
         # TorchANI forward: (species, coordinates) → (species, energies)
@@ -200,7 +200,7 @@ class TorchANI_Wrapper(nn.Module):
             (B, N_max), -1, dtype=torch.long, device=dev,
         )
         coords_pad = torch.zeros(
-            (B, N_max, 3), dtype=torch.float64, device=dev,
+            (B, N_max, 3), dtype=torch.float32, device=dev,
         )
         for b in range(B):
             s = int(ptr[b].item())

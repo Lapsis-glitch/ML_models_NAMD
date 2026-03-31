@@ -24,6 +24,19 @@ import subprocess
 import sys
 from pathlib import Path
 
+import torch
+# e3nn 0.4.4 loads constants.pt via torch.load() at import time without
+# weights_only=False.  PyTorch ≥ 2.6 defaults to weights_only=True,
+# which rejects builtins in that file.  Patch before any e3nn import.
+_original_torch_load = torch.load
+
+def _patched_torch_load(*args, **kwargs):
+    if args and isinstance(args[0], str) and "e3nn" in args[0] and "constants.pt" in args[0]:
+        kwargs["weights_only"] = False
+    return _original_torch_load(*args, **kwargs)
+
+torch.load = _patched_torch_load
+
 import yaml
 
 from ase.io import read as ase_read, write as ase_write
@@ -153,7 +166,13 @@ def main(argv=None):
     print(f"  {' '.join(train_cmd)}")
     print()
 
-    result = subprocess.run(train_cmd, cwd=str(output_dir))
+    # e3nn 0.4.4 calls torch.load("constants.pt") at import time without
+    # weights_only=False.  PyTorch >= 2.6 defaults to weights_only=True.
+    # Pass TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD=1 so the subprocess can load
+    # e3nn without error.
+    _sub_env = {**os.environ, "TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD": "1"}
+
+    result = subprocess.run(train_cmd, cwd=str(output_dir), env=_sub_env)
     if result.returncode != 0:
         print(f"\nNequIP training failed (exit code {result.returncode})")
         sys.exit(result.returncode)
@@ -179,7 +198,7 @@ def main(argv=None):
     packaged_path = output_dir / "nequip_packaged.nequip.zip"
     pkg_cmd = ["nequip-package", "build", str(ckpt_path), str(packaged_path)]
     print(f"Packaging: {' '.join(pkg_cmd)}")
-    result = subprocess.run(pkg_cmd)
+    result = subprocess.run(pkg_cmd, env=_sub_env)
     if result.returncode != 0:
         print(f"\nnequip-package failed (exit code {result.returncode})")
         sys.exit(result.returncode)
@@ -195,7 +214,7 @@ def main(argv=None):
         str(deployed_path),
     ]
     print(f"Compiling: {' '.join(compile_cmd)}")
-    result = subprocess.run(compile_cmd, capture_output=True, text=True)
+    result = subprocess.run(compile_cmd, capture_output=True, text=True, env=_sub_env)
 
     ts_ok = result.returncode == 0 and deployed_path.exists()
     if not ts_ok:

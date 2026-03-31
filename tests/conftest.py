@@ -9,6 +9,21 @@ import pytest
 import torch
 import numpy as np
 
+# ---- e3nn / PyTorch ≥ 2.6 compatibility patch ----
+# e3nn 0.4.4's o3/_wigner.py calls torch.load("constants.pt") at import
+# time without weights_only=False.  PyTorch ≥ 2.6 defaults to
+# weights_only=True, rejecting the `slice` and other builtins stored
+# in that file.  Patch torch.load so e3nn can import successfully.
+_original_torch_load = torch.load
+
+def _patched_torch_load(*args, **kwargs):
+    # If loading e3nn's constants file, force weights_only=False
+    if args and isinstance(args[0], str) and "e3nn" in args[0] and "constants.pt" in args[0]:
+        kwargs["weights_only"] = False
+    return _original_torch_load(*args, **kwargs)
+
+torch.load = _patched_torch_load
+
 
 # -------------------------------------------------------------------
 #  Small water-trimer-like dummy data (9 atoms: 3×H₂O)

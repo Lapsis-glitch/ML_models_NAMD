@@ -13,6 +13,7 @@ negligible for GPU-inference workloads.
 
 import torch
 from torch import nn
+from pathlib import Path
 
 
 def export_wrapped(
@@ -29,6 +30,9 @@ def export_wrapped(
         out_path:   Destination ``.pt`` file.
         model_type: Human-readable label printed in diagnostics.
     """
+    # Ensure parent directory exists.
+    Path(out_path).parent.mkdir(parents=True, exist_ok=True)
+
     scripted = torch.jit.script(wrapper)
     scripted.save(out_path)
 

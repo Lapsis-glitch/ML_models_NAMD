@@ -66,6 +66,22 @@ def main(argv=None):
         print("ERROR: schnetpack not installed. pip install 'schnetpack>=2.0'")
         sys.exit(1)
 
+    # ---- Monkey-patch ASE 3.28 metadata property bug ----
+    # SchNetPack accesses SQLite3Database.metadata outside an active
+    # connection context manager, which triggers
+    # ``assert self.connection is not None`` in ASE ≥ 3.28.
+    # Patch the getter to open a temporary connection when needed.
+    from ase.db.sqlite import SQLite3Database
+    _orig_metadata_fget = SQLite3Database.metadata.fget
+
+    def _patched_metadata_get(self):
+        if self._metadata is None and self.connection is None:
+            with self.managed_connection():
+                return _orig_metadata_fget(self)
+        return _orig_metadata_fget(self)
+
+    SQLite3Database.metadata = SQLite3Database.metadata.getter(_patched_metadata_get)
+
     try:
         import pytorch_lightning as pl
     except ImportError:
@@ -99,43 +115,49 @@ def main(argv=None):
     if merged_db.exists():
         merged_db.unlink()
 
-    # Read source DBs
-    train_data = ASEAtomsData(str(train_db))
-    val_data = ASEAtomsData(str(val_db))
-    n_train = len(train_data)
-    n_val = len(val_data)
+    # Read source DBs and build a merged DB using raw ase.db API
+    # (avoids SchNetPack/ASE 3.28 connection-management bug).
+    from ase.db import connect as ase_db_connect
+    from ase.io import read as ase_read
 
-    # Create merged DB
-    new_dataset = ASEAtomsData.create(
-        str(merged_db),
-        distance_unit="Ang",
-        property_unit_dict={"energy": "eV", "forces": "eV/Ang"},
-    )
+    # Read frames from the XYZ splits (more robust than reading .db)
+    train_xyz = data_dir / "xyz" / "train.xyz"
+    val_xyz = data_dir / "xyz" / "val.xyz"
+    if train_xyz.exists() and val_xyz.exists():
+        train_frames = ase_read(str(train_xyz), index=":", format="extxyz")
+        val_frames = ase_read(str(val_xyz), index=":", format="extxyz")
+    else:
+        # Fallback: read from .db files directly
+        train_frames = []
+        with ase_db_connect(str(train_db)) as db:
+            for row in db.select():
+                train_frames.append(row.toatoms())
+        val_frames = []
+        with ase_db_connect(str(val_db)) as db:
+            for row in db.select():
+                val_frames.append(row.toatoms())
 
-    # Copy data
-    all_atoms = []
-    all_props = []
-    for i in range(n_train):
-        atoms, props = train_data.get_properties(i)
-        clean_props = {}
-        if "energy" in props:
-            clean_props["energy"] = np.array(props["energy"].numpy(), dtype=np.float64)
-        if "forces" in props:
-            clean_props["forces"] = np.array(props["forces"].numpy(), dtype=np.float64)
-        all_atoms.append(atoms)
-        all_props.append(clean_props)
+    n_train = len(train_frames)
+    n_val = len(val_frames)
 
-    for i in range(n_val):
-        atoms, props = val_data.get_properties(i)
-        clean_props = {}
-        if "energy" in props:
-            clean_props["energy"] = np.array(props["energy"].numpy(), dtype=np.float64)
-        if "forces" in props:
-            clean_props["forces"] = np.array(props["forces"].numpy(), dtype=np.float64)
-        all_atoms.append(atoms)
-        all_props.append(clean_props)
+    # Helper to extract energy/forces
+    from src.training.prepare_data import get_energy, get_forces
 
-    new_dataset.add_systems(all_props, all_atoms)
+    with ase_db_connect(str(merged_db)) as db:
+        db.metadata = {
+            "_property_unit_dict": {"energy": "eV", "forces": "eV/Ang"},
+            "_distance_unit": "Ang",
+            "atomrefs": {},
+        }
+        for atoms in train_frames + val_frames:
+            data = {}
+            e = get_energy(atoms)
+            if e is not None:
+                data["energy"] = np.array([e], dtype=np.float64)
+            f = get_forces(atoms)
+            if f is not None:
+                data["forces"] = np.array(f, dtype=np.float64)
+            db.write(atoms, data=data)
 
     # Write split file
     train_idx = list(range(n_train))
@@ -197,23 +219,27 @@ def main(argv=None):
         ],
         output_modules=[energy_head, forces_head],
         postprocessors=[
-            trn.CastTo64(),
+            # NOTE: CastTo64() is omitted because it uses a Python-level
+            # dict that TorchScript cannot compile.  The NAMD wrapper
+            # handles dtype conversion (→ float64) on its side.
         ],
     )
 
     # ---- Loss and training ----
-    energy_loss = spk.train.ModelOutput(
+    energy_loss = spk.task.ModelOutput(
         name="energy",
         loss_fn=torch.nn.MSELoss(),
         loss_weight=args.energy_weight,
+        metrics={},
     )
-    forces_loss = spk.train.ModelOutput(
+    forces_loss = spk.task.ModelOutput(
         name="forces",
         loss_fn=torch.nn.MSELoss(),
         loss_weight=args.forces_weight,
+        metrics={},
     )
 
-    task = spk.train.Task(
+    task = spk.task.AtomisticTask(
         model=model,
         outputs=[energy_loss, forces_loss],
         optimizer_cls=torch.optim.Adam,
@@ -224,6 +250,7 @@ def main(argv=None):
     )
 
     # ---- Trainer ----
+    # Save the model state dict before training for later checkpoint-free reload
     callbacks = [
         pl.callbacks.ModelCheckpoint(
             dirpath=str(output_dir / "checkpoints"),
@@ -269,18 +296,34 @@ def main(argv=None):
             sys.exit(1)
 
     print(f"\nLoading best checkpoint: {best_path}")
-    best_task = spk.train.Task.load_from_checkpoint(
-        str(best_path), model=model,
-        outputs=[energy_loss, forces_loss],
-        optimizer_cls=torch.optim.Adam,
-        optimizer_args={"lr": args.lr},
-    )
-    best_model = best_task.model
+    # Use weights_only=False because Lightning checkpoints contain
+    # SchNetPack class references that require pickling.
+    ckpt = torch.load(str(best_path), map_location="cpu", weights_only=False)
+    task.load_state_dict(ckpt["state_dict"])
+    best_model = task.model
     best_model.eval()
 
     # Script and save
-    scripted = torch.jit.script(best_model)
+    # SchNetPack models may contain modules that TorchScript cannot
+    # compile via script mode (e.g. Python-level dicts).  Try script
+    # first, fall back to trace.
     scripted_path = output_dir / "schnet_scripted.pt"
+    try:
+        scripted = torch.jit.script(best_model)
+    except Exception:
+        # Build a representative sample input for tracing.
+        sample_inputs: dict = {
+            "_positions": torch.randn(3, 3, dtype=torch.float32),
+            "_atomic_numbers": torch.tensor([8, 1, 1], dtype=torch.long),
+            "_idx_i": torch.tensor([0, 0, 1, 1, 2, 2], dtype=torch.long),
+            "_idx_j": torch.tensor([1, 2, 0, 2, 0, 1], dtype=torch.long),
+            "_offsets": torch.zeros(6, 3, dtype=torch.float32),
+            "_cell": torch.zeros(3, 3, dtype=torch.float32),
+            "_n_atoms": torch.tensor([3], dtype=torch.long),
+            "_idx_m": torch.zeros(3, dtype=torch.long),
+        }
+        with torch.no_grad():
+            scripted = torch.jit.trace(best_model, (sample_inputs,))
     scripted.save(str(scripted_path))
 
     print(f"\n{'='*60}")

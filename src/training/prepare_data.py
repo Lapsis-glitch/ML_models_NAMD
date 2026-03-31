@@ -152,12 +152,19 @@ def write_schnetpack_db(
     Each ``Atoms`` object must carry ``info['energy']`` (scalar) and
     ``arrays['forces']`` ([N,3]) – the standard extended-XYZ convention.
     These are stored as properties ``energy`` and ``forces`` in the DB.
+
+    Uses the raw ``ase.db`` context-manager API to avoid a
+    SchNetPack 2.2 / ASE ≥ 3.28 incompatibility where
+    ``ASEAtomsData`` accesses the DB metadata outside an active
+    connection.
     """
     try:
-        from schnetpack.data import ASEAtomsData
+        import schnetpack  # noqa: F401
     except ImportError:
         print("  [skip] schnetpack not installed – skipping .db output")
         return
+
+    from ase.db import connect as ase_db_connect
 
     db_dir = output_dir / "schnetpack"
     db_dir.mkdir(parents=True, exist_ok=True)
@@ -167,24 +174,24 @@ def write_schnetpack_db(
         if db_path.exists():
             db_path.unlink()
 
-        # Collect property lists
-        property_list = []
-        for atoms in frames:
-            props = {}
-            e = get_energy(atoms)
-            if e is not None:
-                props["energy"] = np.array([e], dtype=np.float64)
-            f = get_forces(atoms)
-            if f is not None:
-                props["forces"] = f
-            property_list.append(props)
+        with ase_db_connect(str(db_path)) as db:
+            # SchNetPack metadata (must be written inside the connection)
+            db.metadata = {
+                "_property_unit_dict": {"energy": "eV", "forces": "eV/Ang"},
+                "_distance_unit": "Ang",
+                "atomrefs": {},
+            }
 
-        new_dataset = ASEAtomsData.create(
-            str(db_path),
-            distance_unit="Ang",
-            property_unit_dict={"energy": "eV", "forces": "eV/Ang"},
-        )
-        new_dataset.add_systems(property_list, frames)
+            for atoms in frames:
+                data = {}
+                e = get_energy(atoms)
+                if e is not None:
+                    data["energy"] = np.array([e], dtype=np.float64)
+                f = get_forces(atoms)
+                if f is not None:
+                    data["forces"] = f
+                db.write(atoms, data=data)
+
         print(f"  {db_path}  ({len(frames)} frames)")
 
 

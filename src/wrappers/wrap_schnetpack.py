@@ -103,7 +103,7 @@ class SchNetPack_Wrapper(nn.Module):
             self._cached_N = N
             self._cached_idx_m   = torch.zeros(N, dtype=torch.long, device=dev)
             self._cached_n_atoms = torch.tensor([N], dtype=torch.long, device=dev)
-            self._cached_cell    = torch.zeros((3, 3), dtype=torch.float64, device=dev)
+            self._cached_cell    = torch.zeros((3, 3), dtype=torch.float32, device=dev)
 
         # Build edges (FP32)
         edge_index, edge_vecs32, _ = build_edges(coords32, self.r_max)
@@ -112,11 +112,11 @@ class SchNetPack_Wrapper(nn.Module):
 
         # SchNetPack offsets (zeros for non-periodic)
         offsets = torch.zeros(
-            (edge_index.size(1), 3), dtype=torch.float64, device=dev,
+            (edge_index.size(1), 3), dtype=torch.float32, device=dev,
         )
 
         inputs: Dict[str, torch.Tensor] = {
-            "_positions":       coords,
+            "_positions":       coords32,
             "_atomic_numbers":  Z,
             "_idx_i":           idx_i,
             "_idx_j":           idx_j,
@@ -181,7 +181,7 @@ class SchNetPack_Wrapper(nn.Module):
         coords32 = coords.to(torch.float32)
         Z = Z.to(torch.int64)
 
-        cell = torch.zeros((3, 3), dtype=torch.float64, device=dev)
+        cell = torch.zeros((3, 3), dtype=torch.float32, device=dev)
 
         # Per-molecule atom counts
         n_atoms = ptr[1:] - ptr[:-1]  # [B]
@@ -191,11 +191,11 @@ class SchNetPack_Wrapper(nn.Module):
         idx_i = edge_index[0]
         idx_j = edge_index[1]
         offsets = torch.zeros(
-            (edge_index.size(1), 3), dtype=torch.float64, device=dev,
+            (edge_index.size(1), 3), dtype=torch.float32, device=dev,
         )
 
         inputs: Dict[str, torch.Tensor] = {
-            "_positions":       coords,
+            "_positions":       coords32,
             "_atomic_numbers":  Z,
             "_idx_i":           idx_i,
             "_idx_j":           idx_j,
