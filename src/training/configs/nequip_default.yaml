@@ -1,0 +1,86 @@
+# NequIP 0.17+ training configuration (Hydra format)
+#
+# Used as a template by train_nequip.py.
+# Values marked PLACEHOLDER are overwritten at runtime.
+
+run: [train]
+
+seed: 42
+cutoff_radius: 5.0
+model_type_names: PLACEHOLDER
+chemical_species: ${model_type_names}
+per_edge_type_cutoff: null
+
+dataloader:
+  _target_: torch.utils.data.DataLoader
+  batch_size: 5
+
+data:
+  _target_: nequip.data.datamodule.NequIPDataModule
+  seed: ${seed}
+  split_dataset:
+    dataset:
+      _target_: nequip.data.dataset.ASEDataset
+      file_path: PLACEHOLDER
+      transforms:
+        - _target_: nequip.data.transforms.ChemicalSpeciesToAtomTypeMapper
+          model_type_names: ${model_type_names}
+          chemical_species_to_atom_type_map: ${list_to_identity_dict:${chemical_species}}
+        - _target_: nequip.data.transforms.NeighborListTransform
+          r_max: ${cutoff_radius}
+      ase_args:
+        format: extxyz
+    train: PLACEHOLDER
+    val: PLACEHOLDER
+    test: 0
+  train_dataloader: ${dataloader}
+  val_dataloader: ${dataloader}
+  test_dataloader: ${dataloader}
+  stats_manager:
+    _target_: nequip.data.CommonDataStatisticsManager
+    type_names: ${model_type_names}
+
+trainer:
+  _target_: lightning.Trainer
+  max_epochs: 200
+  check_val_every_n_epoch: 1
+  log_every_n_steps: 5
+  callbacks:
+    - _target_: lightning.pytorch.callbacks.ModelCheckpoint
+      monitor: val0_epoch/weighted_sum
+      dirpath: ${hydra:runtime.output_dir}
+      filename: best
+      save_last: true
+
+training_module:
+  _target_: nequip.train.EMALightningModule
+  loss:
+    _target_: nequip.train.EnergyForceLoss
+    per_atom_energy: true
+    coeffs:
+      total_energy: 1.0
+      forces: 100.0
+  val_metrics:
+    _target_: nequip.train.EnergyForceMetrics
+    coeffs:
+      total_energy_mae: 1.0
+      forces_mae: 1.0
+  test_metrics: ${training_module.val_metrics}
+  optimizer:
+    _target_: torch.optim.Adam
+    lr: 0.005
+  model:
+    _target_: nequip.model.NequIPGNNModel
+    seed: ${seed}
+    model_dtype: float64
+    type_names: ${model_type_names}
+    r_max: ${cutoff_radius}
+    l_max: 2
+    parity: true
+    num_layers: 4
+    num_features: 32
+    radial_mlp_depth: 1
+    radial_mlp_width: 16
+    avg_num_neighbors: ${training_data_stats:num_neighbors_mean}
+    per_type_energy_shifts: ${training_data_stats:per_atom_energy_mean}
+    per_type_energy_scales: ${training_data_stats:forces_rms}

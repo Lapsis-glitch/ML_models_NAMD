@@ -1,0 +1,46 @@
+# MACE default training configuration
+#
+# This file is used as a template by train_mace.py.
+# Values marked PLACEHOLDER are overwritten at runtime.
+#
+# Reference: https://mace-docs.readthedocs.io/en/latest/
+
+# ---- Model ----
+model: ScaleShiftMACE
+r_max: 5.0
+num_radial_basis: 8
+num_cutoff_basis: 5
+max_L: 1
+correlation: 3
+hidden_irreps: "128x0e + 128x1o"
+num_interactions: 2
+MLP_irreps: "16x0e"
+
+# ---- Data ----
+train_file: PLACEHOLDER
+valid_file: PLACEHOLDER
+test_file: PLACEHOLDER
+energy_key: energy
+forces_key: forces
+stress_key: null
+
+# Atomic energies: "average" auto-computes per-element E0 from training data.
+E0s: average
+
+# ---- Training ----
+batch_size: 10
+valid_batch_size: 10
+max_num_epochs: 200
+lr: 0.01
+scheduler: ReduceLROnPlateau
+patience: 50
+ema: true
+ema_decay: 0.99
+
+# ---- Loss ----
+energy_weight: 1.0
+forces_weight: 100.0
+
+# ---- Output ----
+# MACE >= 0.3.x automatically saves both .model and _compiled.model
+

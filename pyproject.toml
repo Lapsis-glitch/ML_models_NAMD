@@ -1,0 +1,57 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ml-models-namd"
+version = "0.1.0"
+description = "Wrappers for ML interatomic potentials compatible with NAMD"
+requires-python = ">=3.9"
+dependencies = [
+    "torch>=1.13",
+]
+
+[project.optional-dependencies]
+mace = ["mace-torch"]
+nequip = ["nequip>=0.6.0"]
+allegro = ["allegro", "nequip>=0.6.0"]
+schnet = ["schnetpack>=2.0", "pytorch-lightning>=2.0"]
+torchani = ["torchani>=2.2", "h5py"]
+training = ["ase", "h5py", "pyyaml", "numpy"]
+datagen = ["ase"]
+test = ["pytest>=7.0", "pytest-cov", "ase"]
+all = [
+    "mace-torch",
+    "nequip>=0.6.0",
+    "allegro",
+    "schnetpack>=2.0",
+    "pytorch-lightning>=2.0",
+    "torchani>=2.2",
+    "ase",
+    "h5py",
+    "pyyaml",
+    "numpy",
+    "pytest>=7.0",
+    "pytest-cov",
+]
+
+[project.scripts]
+ml-models-namd = "src.cli:main"
+ml-models-namd-prepare = "src.training.prepare_data:main"
+ml-models-namd-generate = "src.datagen.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "slow: marks tests as slow (full training pipeline)",
+]
+filterwarnings = [
+    # TorchScript is deprecated in PyTorch ≥ 2.6 but NAMD requires it.
+    "ignore:`torch.jit.script` is deprecated:DeprecationWarning",
+    "ignore:`torch.jit.load` is deprecated:DeprecationWarning",
+]
+
