@@ -37,9 +37,12 @@ def main(argv=None):
     parser.add_argument("--device", default="cpu",
                         help="Device to load onto (default: cpu)")
 
-    # SchNetPack-specific
+    # SchNetPack-specific (also used as fallback for new NequIP-framework
+    # models that don't expose r_max as a module attribute, e.g. NequIP-OAM-L).
     parser.add_argument("--r-max", type=float, default=0.0,
-                        help="[schnet] Cutoff radius in Å (required)")
+                        help="[schnet] Cutoff radius in Å (required); "
+                             "[nequip] optional fallback when the deployed "
+                             "model has no r_max attribute (OAM-L: 6.0)")
     parser.add_argument("--energy-key", default="energy",
                         help="[schnet] Output dict key for energy")
     parser.add_argument("--forces-key", default="forces",
@@ -60,8 +63,9 @@ def main(argv=None):
 
     elif model_type in ("nequip", "allegro"):
         from .wrappers.wrap_compiled_nequip import NequIP_Allegro_Wrapper
+        r_max_override = args.r_max if args.r_max > 0.0 else None
         wrapper = NequIP_Allegro_Wrapper(
-            args.compiled, device=args.device,
+            args.compiled, device=args.device, r_max=r_max_override,
         ).eval()
 
     elif model_type == "schnet":

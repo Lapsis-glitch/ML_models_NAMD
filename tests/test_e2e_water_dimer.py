@@ -50,6 +50,18 @@ if str(_PROJECT_ROOT) not in sys.path:
 logger = logging.getLogger(__name__)
 
 # ===================================================================
+#  e3nn compatibility check
+# ===================================================================
+# NequIP ≥ 0.17 requires e3nn ≥ 0.6.0, but MACE 0.3.x pins e3nn == 0.4.4.
+# When both are installed the NequIP/Allegro pipeline cannot run.
+try:
+    import e3nn as _e3nn
+    from packaging.version import Version
+    _e3nn_compat = Version(_e3nn.__version__) >= Version("0.6.0")
+except Exception:
+    _e3nn_compat = False
+
+# ===================================================================
 #  Constants
 # ===================================================================
 
@@ -755,6 +767,11 @@ class TestE2E_NequIP:
     def test_train_and_wrap(self, e2e_prepared_dir, e2e_workdir):
         if not _has_command("nequip-train"):
             pytest.skip("nequip-train not found")
+        if not _e3nn_compat:
+            pytest.skip(
+                f"e3nn version too old for NequIP 0.17 "
+                f"(need >=0.6.0, have {getattr(_e3nn, '__version__', '?')})"
+            )
         trained_dir = e2e_workdir / "trained"
         model = train_nequip(e2e_prepared_dir, trained_dir)
         assert model is not None, "NequIP training failed"
@@ -768,6 +785,11 @@ class TestE2E_Allegro:
     def test_train_and_wrap(self, e2e_prepared_dir, e2e_workdir):
         if not _has_command("nequip-train"):
             pytest.skip("nequip-train not found")
+        if not _e3nn_compat:
+            pytest.skip(
+                f"e3nn version too old for NequIP 0.17 "
+                f"(need >=0.6.0, have {getattr(_e3nn, '__version__', '?')})"
+            )
         try:
             import allegro  # noqa: F401
         except ImportError:

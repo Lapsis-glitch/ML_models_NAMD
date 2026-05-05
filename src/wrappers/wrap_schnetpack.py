@@ -137,8 +137,9 @@ class SchNetPack_Wrapper(nn.Module):
             raise RuntimeError("SchNetPack model returned forces=None")
 
         conv = self.conv_factor.to(dev)
-        # SchNetPack often returns energy as [B, 1]; squeeze to scalar / [B].
-        energy  = energy_raw.to(torch.float64).squeeze() * conv
+        # SchNetPack often returns energy as [B, 1]; squeeze the trailing
+        # dim only so we don't accidentally collapse unrelated unit dims.
+        energy  = energy_raw.to(torch.float64).squeeze(-1) * conv
         forces  = forces_raw.to(torch.float64) * conv
         charges = torch.zeros(N, dtype=torch.float64, device=dev)
 

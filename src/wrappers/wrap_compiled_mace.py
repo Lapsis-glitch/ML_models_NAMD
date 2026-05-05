@@ -57,6 +57,7 @@ class MACE_TS_Wrapper(nn.Module):
 
         # --- Cached tensors (populated on first forward() call) ---
         self._cached_N: int = -1
+        self._cached_Z:          torch.Tensor = torch.empty(0, dtype=torch.int64)
         self._cached_batch:      torch.Tensor = torch.empty(0)
         self._cached_ptr:        torch.Tensor = torch.empty(0)
         self._cached_num_nodes:  torch.Tensor = torch.empty(0)
@@ -86,14 +87,21 @@ class MACE_TS_Wrapper(nn.Module):
         coords32 = coords.to(torch.float32)
         Z = Z.to(torch.int64)
 
-        # Cached constant tensors (depend only on N and Z, never change mid-run).
-        if N != self._cached_N:
+        # Cached constant tensors — keyed on both N and Z.  Different
+        # molecules with the same atom count but different elements must
+        # get fresh node_attrs, otherwise MACE sees stale one-hots.
+        shape_changed = N != self._cached_N
+        z_changed = shape_changed or not torch.equal(Z, self._cached_Z)
+
+        if shape_changed:
             self._cached_N = N
             self._cached_batch     = torch.zeros(N, dtype=torch.long, device=dev)
             self._cached_ptr       = torch.tensor([0, N], dtype=torch.long, device=dev)
             self._cached_num_nodes = torch.tensor([N], dtype=torch.long, device=dev)
             self._cached_cell      = torch.zeros((3, 3), dtype=torch.float64, device=dev)
 
+        if z_changed:
+            self._cached_Z = Z.clone()
             atomic_numbers_dev = self.atomic_numbers.to(dev)
             match = Z.unsqueeze(1) == atomic_numbers_dev.unsqueeze(0)
             self._cached_node_attrs = match.to(torch.float64)

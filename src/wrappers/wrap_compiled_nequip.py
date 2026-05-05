@@ -26,9 +26,9 @@ import argparse
 
 import torch
 from torch import nn
-from typing import Dict
+from typing import Dict, Optional
 
-from ..constants import EV_TO_KCAL
+from ..constants import EV_TO_KCAL, SYMBOL_TO_Z
 from ..edges import build_edges, build_edges_batched
 from ..export import export_wrapped
 
@@ -37,13 +37,18 @@ from ..export import export_wrapped
 #  Helpers to extract metadata from a NequIP-deployed model
 # -------------------------------------------------------------------
 
-def _get_r_max(model: torch.jit.ScriptModule) -> float:
-    """Extract cutoff from a nequip-deployed model."""
+def _get_r_max(
+    model: torch.jit.ScriptModule,
+    override: Optional[float] = None,
+) -> float:
+    """Extract cutoff from a nequip-deployed model, or use *override*."""
+    if override is not None:
+        return float(override)
     if hasattr(model, "r_max"):
         return float(model.r_max)
     raise RuntimeError(
-        "Deployed NequIP/Allegro model has no 'r_max' attribute. "
-        "Make sure you used `nequip-deploy build`."
+        "Deployed model has no 'r_max' attribute. Pass --r-max explicitly "
+        "(NequIP-OAM-L: 6.0)."
     )
 
 
@@ -52,21 +57,26 @@ def _get_type_map(model: torch.jit.ScriptModule) -> Dict[int, int]:
     Build a mapping ``{atomic_number: type_index}`` from the deployed
     model's metadata.
 
-    NequIP stores ``type_names`` (e.g. ``['H', 'C', 'N', 'O']``) and
-    optionally ``chemical_symbol_to_type`` on the deployed model.
-    We also accept a plain ``atomic_numbers`` list (like MACE stores).
+    Supports three flavors:
+      1. ``atomic_numbers`` list  (old nequip-deploy / MACE-style)
+      2. ``type_names`` list of element symbols  (NequIP 0.17 framework)
     """
-    # Try the attribute that nequip-deploy writes (list of atomic numbers
-    # corresponding to type indices 0, 1, 2, …).
     if hasattr(model, "atomic_numbers"):
         z_list = [int(z) for z in model.atomic_numbers]
         return {z: i for i, z in enumerate(z_list)}
 
-    # Fallback: chemical_symbol_to_type stored as a string attr.
-    # Not always present – raise informative error if missing.
+    if hasattr(model, "type_names"):
+        symbols = [str(s) for s in model.type_names]
+        out: Dict[int, int] = {}
+        for i, s in enumerate(symbols):
+            if s not in SYMBOL_TO_Z:
+                raise RuntimeError(f"Unknown element symbol in type_names: {s!r}")
+            out[SYMBOL_TO_Z[s]] = i
+        return out
+
     raise RuntimeError(
         "Cannot determine type map from deployed model. "
-        "Expected an 'atomic_numbers' attribute on the model."
+        "Expected an 'atomic_numbers' or 'type_names' attribute on the model."
     )
 
 
@@ -82,13 +92,18 @@ class NequIP_Allegro_Wrapper(nn.Module):
         device:         ``"cpu"`` or ``"cuda"``.
     """
 
-    def __init__(self, deployed_path: str, device: str = "cpu"):
+    def __init__(
+        self,
+        deployed_path: str,
+        device: str = "cpu",
+        r_max: Optional[float] = None,
+    ):
         super().__init__()
 
         self.inner = torch.jit.load(deployed_path, map_location=device)
         self.inner.eval()
 
-        self.r_max: float = _get_r_max(self.inner)
+        self.r_max: float = _get_r_max(self.inner, override=r_max)
 
         # Build Z → 0-indexed type-index lookup tensor.
         # z_to_type_map[z] = type_index  (size = max_z + 1).
@@ -98,6 +113,12 @@ class NequIP_Allegro_Wrapper(nn.Module):
         for z, idx in type_map.items():
             z_to_type[z] = idx
         self.z_to_type = z_to_type
+
+        # NequIP 0.17 framework models lack 'r_max'/'atomic_numbers' attrs and
+        # do not populate 'forces' in their output dict — we compute forces
+        # via autograd and provide the extra input keys the new framework
+        # expects.
+        self._is_new_nequip: bool = not hasattr(self.inner, "r_max")
 
         # Conversion factor
         self.ev_to_kcal = torch.tensor(EV_TO_KCAL, dtype=torch.float64)
@@ -132,44 +153,69 @@ class NequIP_Allegro_Wrapper(nn.Module):
     ):
         dev = coords.device
         N = coords.size(0)
-
-        coords32 = coords.to(torch.float32)
         Z = Z.to(torch.int64)
         atom_types = self._z_to_types(Z)
 
-        # Cache constant tensors
         if N != self._cached_N:
             self._cached_N = N
             self._cached_batch = torch.zeros(N, dtype=torch.long, device=dev)
             self._cached_ptr   = torch.tensor([0, N], dtype=torch.long, device=dev)
             self._cached_cell  = torch.zeros((3, 3), dtype=torch.float64, device=dev)
 
-        # Edge construction in FP32
-        edge_index, edge_vecs32, _ = build_edges(coords32, self.r_max)
-        edge_cell_shift = torch.zeros(
-            (edge_index.size(1), 3), dtype=torch.float64, device=dev,
-        )
+        if self._is_new_nequip:
+            # NequIP 0.17 framework: omit `edge_vectors` from the input dict
+            # so the model takes its position-based force-computation branch
+            # (which writes `forces` to the output dict via its own autograd).
+            pos32 = coords.to(torch.float32)
+            edge_index, _, _ = build_edges(pos32, self.r_max)
+            E = edge_index.size(1)
+            edge_cell_shift = torch.zeros((E, 3), dtype=torch.float32, device=dev)
+            cell = torch.zeros((1, 3, 3), dtype=torch.float32, device=dev)
+            num_atoms = torch.tensor([N], dtype=torch.long, device=dev)
 
-        # NequIP AtomicData dict
-        data: Dict[str, torch.Tensor] = {
-            "pos":             coords,
-            "edge_index":      edge_index,
-            "atom_types":      atom_types,
-            "edge_cell_shift": edge_cell_shift,
-            "cell":            self._cached_cell,
-            "batch":           self._cached_batch,
-            "ptr":             self._cached_ptr,
-        }
+            ei = edge_index[0]
+            ej = edge_index[1]
+            keys = ei * N + ej
+            rev_keys = ej * N + ei
+            sorted_keys, sort_idx = torch.sort(keys)
+            pos_in_sorted = torch.searchsorted(sorted_keys, rev_keys)
+            edge_transpose_perm = sort_idx[pos_in_sorted]
 
-        out = self.inner(data)
-
-        energy_raw = out["total_energy"]
-        forces_raw = out["forces"]
-
-        if energy_raw is None:
-            raise RuntimeError("Deployed model returned total_energy=None")
-        if forces_raw is None:
-            raise RuntimeError("Deployed model returned forces=None")
+            data: Dict[str, torch.Tensor] = {
+                "pos":                 pos32,
+                "edge_index":          edge_index,
+                "atom_types":          atom_types,
+                "edge_cell_shift":     edge_cell_shift,
+                "edge_transpose_perm": edge_transpose_perm,
+                "cell":                cell,
+                "batch":               self._cached_batch,
+                "num_atoms":           num_atoms,
+            }
+            out = self.inner(data)
+            energy_raw = out["total_energy"]
+            forces_raw = out["forces"]
+        else:
+            coords32 = coords.to(torch.float32)
+            edge_index, _, _ = build_edges(coords32, self.r_max)
+            edge_cell_shift = torch.zeros(
+                (edge_index.size(1), 3), dtype=torch.float64, device=dev,
+            )
+            data: Dict[str, torch.Tensor] = {
+                "pos":             coords,
+                "edge_index":      edge_index,
+                "atom_types":      atom_types,
+                "edge_cell_shift": edge_cell_shift,
+                "cell":            self._cached_cell,
+                "batch":           self._cached_batch,
+                "ptr":             self._cached_ptr,
+            }
+            out = self.inner(data)
+            energy_raw = out["total_energy"]
+            forces_raw = out["forces"]
+            if energy_raw is None:
+                raise RuntimeError("Deployed model returned total_energy=None")
+            if forces_raw is None:
+                raise RuntimeError("Deployed model returned forces=None")
 
         ev2kcal = self.ev_to_kcal.to(dev)
         energy  = energy_raw.to(torch.float64) * ev2kcal
@@ -210,40 +256,66 @@ class NequIP_Allegro_Wrapper(nn.Module):
         """
         dev = coords.device
         N_total = coords.size(0)
-
-        coords32 = coords.to(torch.float32)
+        B = ptr.size(0) - 1
         Z = Z.to(torch.int64)
         atom_types = self._z_to_types(Z)
 
-        cell = torch.zeros((3, 3), dtype=torch.float64, device=dev)
+        if self._is_new_nequip:
+            pos32 = coords.to(torch.float32)
+            edge_index, _, _ = build_edges_batched(
+                pos32, ptr, self.r_max,
+            )
+            E = edge_index.size(1)
+            edge_cell_shift = torch.zeros((E, 3), dtype=torch.float32, device=dev)
+            cell = torch.zeros((B, 3, 3), dtype=torch.float32, device=dev)
+            n_atoms_per = ptr[1:] - ptr[:-1]
 
-        # Block-diagonal edge construction
-        edge_index, edge_vecs32, _ = build_edges_batched(
-            coords32, ptr, self.r_max,
-        )
-        edge_cell_shift = torch.zeros(
-            (edge_index.size(1), 3), dtype=torch.float64, device=dev,
-        )
+            ei = edge_index[0]
+            ej = edge_index[1]
+            keys = ei * N_total + ej
+            rev_keys = ej * N_total + ei
+            sorted_keys, sort_idx = torch.sort(keys)
+            pos_in_sorted = torch.searchsorted(sorted_keys, rev_keys)
+            edge_transpose_perm = sort_idx[pos_in_sorted]
 
-        data: Dict[str, torch.Tensor] = {
-            "pos":             coords,
-            "edge_index":      edge_index,
-            "atom_types":      atom_types,
-            "edge_cell_shift": edge_cell_shift,
-            "cell":            cell,
-            "batch":           batch,
-            "ptr":             ptr,
-        }
-
-        out = self.inner(data)
-
-        energy_raw = out["total_energy"]
-        forces_raw = out["forces"]
-
-        if energy_raw is None:
-            raise RuntimeError("Deployed model returned total_energy=None")
-        if forces_raw is None:
-            raise RuntimeError("Deployed model returned forces=None")
+            data: Dict[str, torch.Tensor] = {
+                "pos":                 pos32,
+                "edge_index":          edge_index,
+                "atom_types":          atom_types,
+                "edge_cell_shift":     edge_cell_shift,
+                "edge_transpose_perm": edge_transpose_perm,
+                "cell":                cell,
+                "batch":               batch,
+                "num_atoms":           n_atoms_per,
+            }
+            out = self.inner(data)
+            energy_raw = out["total_energy"]
+            forces_raw = out["forces"]
+        else:
+            coords32 = coords.to(torch.float32)
+            cell = torch.zeros((3, 3), dtype=torch.float64, device=dev)
+            edge_index, _, _ = build_edges_batched(
+                coords32, ptr, self.r_max,
+            )
+            edge_cell_shift = torch.zeros(
+                (edge_index.size(1), 3), dtype=torch.float64, device=dev,
+            )
+            data: Dict[str, torch.Tensor] = {
+                "pos":             coords,
+                "edge_index":      edge_index,
+                "atom_types":      atom_types,
+                "edge_cell_shift": edge_cell_shift,
+                "cell":            cell,
+                "batch":           batch,
+                "ptr":             ptr,
+            }
+            out = self.inner(data)
+            energy_raw = out["total_energy"]
+            forces_raw = out["forces"]
+            if energy_raw is None:
+                raise RuntimeError("Deployed model returned total_energy=None")
+            if forces_raw is None:
+                raise RuntimeError("Deployed model returned forces=None")
 
         ev2kcal  = self.ev_to_kcal.to(dev)
         energies = energy_raw.to(torch.float64) * ev2kcal

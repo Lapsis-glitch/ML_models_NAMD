@@ -39,6 +39,7 @@ all = [
 ml-models-namd = "src.cli:main"
 ml-models-namd-prepare = "src.training.prepare_data:main"
 ml-models-namd-generate = "src.datagen.cli:main"
+ml-models-namd-qmmm = "src.datagen.qmmm.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["."]

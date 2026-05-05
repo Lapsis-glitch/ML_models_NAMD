@@ -206,17 +206,20 @@ def write_torchani_h5(
     output_dir: Path,
 ) -> None:
     """
-    Write an HDF5 file with groups ``train``, ``val``, ``test``.
+    Write an HDF5 file with top-level groups ``train``, ``val``, ``test``.
 
-    Inside each group, per-species subgroups store:
-        coordinates  [n_frames, n_atoms, 3]  float64  (Å)
-        energies     [n_frames]              float64  (Hartree)
-        forces       [n_frames, n_atoms, 3]  float64  (Hartree/Å)
-        species      [n_frames, n_atoms]     int64    (atomic numbers)
+    Frames are bucketed by species composition (tuple of atomic numbers
+    in system order) so each bucket has a uniform ``[n_frames, N, …]``
+    shape.  Buckets become subgroups named ``bucket_<idx>``:
 
-    TorchANI's native HDF5 reader expects this layout.  Energies and
-    forces are stored in **Hartree** (TorchANI's native unit).  The
-    conversion from eV (assumed in the XYZ) is applied automatically.
+        train/bucket_0/species      [n_frames, N]     int64
+        train/bucket_0/coordinates  [n_frames, N, 3]  float64  (Å)
+        train/bucket_0/energies     [n_frames]        float64  (Hartree)
+        train/bucket_0/forces       [n_frames, N, 3]  float64  (Hartree/Å)
+
+    Mirrors TorchANI's native layout.  Energies/forces are stored in
+    Hartree (TorchANI's native unit); the XYZ's eV values are converted
+    automatically.
     """
     try:
         import h5py
@@ -236,30 +239,53 @@ def write_torchani_h5(
                 continue
             grp = f.create_group(name)
 
-            species_list, coords_list, energy_list, forces_list = [], [], [], []
+            # Bucket frames by species composition (tuple of Z in order).
+            buckets: dict = {}
             for atoms in frames:
-                species_list.append(atoms.get_atomic_numbers())
-                coords_list.append(atoms.get_positions())
+                key = tuple(int(z) for z in atoms.get_atomic_numbers())
+                buckets.setdefault(key, []).append(atoms)
 
-                # Energy (eV → Hartree)
-                e_ev = get_energy(atoms)
-                if e_ev is not None:
-                    energy_list.append(e_ev / HARTREE_TO_EV)
-                else:
-                    energy_list.append(0.0)
+            for bucket_idx, (species_key, bucket_frames) in enumerate(buckets.items()):
+                species_arr = np.tile(
+                    np.asarray(species_key, dtype=np.int64),
+                    (len(bucket_frames), 1),
+                )
+                coords_list = []
+                energy_list = []
+                forces_list = []
+                for atoms in bucket_frames:
+                    coords_list.append(atoms.get_positions())
 
-                # Forces (eV/Å → Hartree/Å)
-                frc = get_forces(atoms)
-                if frc is not None:
-                    forces_list.append(frc / HARTREE_TO_EV)
-                else:
-                    forces_list.append(np.zeros_like(coords_list[-1]))
+                    e_ev = get_energy(atoms)
+                    energy_list.append(
+                        e_ev / HARTREE_TO_EV if e_ev is not None else 0.0
+                    )
 
-            grp.create_dataset("species", data=np.array(species_list))
-            grp.create_dataset("coordinates", data=np.array(coords_list))
-            grp.create_dataset("energies", data=np.array(energy_list))
-            grp.create_dataset("forces", data=np.array(forces_list))
-            print(f"  {h5_path}:{name}  ({len(frames)} frames)")
+                    frc = get_forces(atoms)
+                    if frc is not None:
+                        forces_list.append(frc / HARTREE_TO_EV)
+                    else:
+                        forces_list.append(np.zeros_like(coords_list[-1]))
+
+                sub = grp.create_group(f"bucket_{bucket_idx}")
+                sub.create_dataset("species", data=species_arr)
+                sub.create_dataset(
+                    "coordinates",
+                    data=np.asarray(coords_list, dtype=np.float64),
+                )
+                sub.create_dataset(
+                    "energies",
+                    data=np.asarray(energy_list, dtype=np.float64),
+                )
+                sub.create_dataset(
+                    "forces",
+                    data=np.asarray(forces_list, dtype=np.float64),
+                )
+
+            print(
+                f"  {h5_path}:{name}  "
+                f"({len(frames)} frames in {len(buckets)} composition bucket(s))"
+            )
 
 
 # -------------------------------------------------------------------

@@ -51,6 +51,12 @@ class ANI_H5_Dataset(Dataset):
     Read a split (train/val/test) from the HDF5 file produced by
     :mod:`src.training.prepare_data`.
 
+    Frames are stored under composition-bucket subgroups
+    (``<split>/bucket_<idx>/…``); this dataset concatenates all buckets
+    that share a common atom count.  Different atom counts can't be
+    batched together without padding, so if the split contains multiple
+    atom sizes a ``ValueError`` is raised.
+
     Returns:
         species:     [N]    int64   (atomic numbers)
         coordinates: [N, 3] float64 (Å)
@@ -62,12 +68,43 @@ class ANI_H5_Dataset(Dataset):
         import h5py
         self.h5_path = h5_path
         self.split = split
+
+        species_arrs: list = []
+        coord_arrs: list = []
+        energy_arrs: list = []
+        force_arrs: list = []
+
         with h5py.File(h5_path, "r") as f:
             grp = f[split]
-            self.species = torch.tensor(np.array(grp["species"]), dtype=torch.long)
-            self.coordinates = torch.tensor(np.array(grp["coordinates"]), dtype=torch.float64)
-            self.energies = torch.tensor(np.array(grp["energies"]), dtype=torch.float64)
-            self.forces = torch.tensor(np.array(grp["forces"]), dtype=torch.float64)
+            # Support both the new bucketed layout and the legacy flat one.
+            if "species" in grp and isinstance(grp["species"], h5py.Dataset):
+                buckets = [grp]
+            else:
+                buckets = [grp[k] for k in grp.keys()]
+
+            atom_counts = set()
+            for b in buckets:
+                sp = np.array(b["species"])
+                co = np.array(b["coordinates"])
+                en = np.array(b["energies"])
+                fr = np.array(b["forces"])
+                atom_counts.add(sp.shape[1])
+                species_arrs.append(sp)
+                coord_arrs.append(co)
+                energy_arrs.append(en)
+                force_arrs.append(fr)
+
+        if len(atom_counts) > 1:
+            raise ValueError(
+                f"Split '{split}' contains frames with different atom counts "
+                f"({sorted(atom_counts)}).  Train one model per composition "
+                f"or implement padding in the DataLoader."
+            )
+
+        self.species = torch.tensor(np.concatenate(species_arrs, axis=0), dtype=torch.long)
+        self.coordinates = torch.tensor(np.concatenate(coord_arrs, axis=0), dtype=torch.float64)
+        self.energies = torch.tensor(np.concatenate(energy_arrs, axis=0), dtype=torch.float64)
+        self.forces = torch.tensor(np.concatenate(force_arrs, axis=0), dtype=torch.float64)
 
     def __len__(self):
         return self.species.size(0)

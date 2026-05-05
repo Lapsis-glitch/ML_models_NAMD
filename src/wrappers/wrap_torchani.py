@@ -106,7 +106,20 @@ class TorchANI_Wrapper(nn.Module):
     def _z_to_spec(self, Z: torch.Tensor) -> torch.Tensor:
         """Atomic numbers → TorchANI species indices."""
         table = self.z_to_species.to(Z.device)
-        return table[Z]
+        max_z = int(table.size(0)) - 1
+        if bool((Z < 0).any()) or bool((Z > max_z).any()):
+            raise RuntimeError(
+                "Encountered atomic number outside the model's element set"
+            )
+        species = table[Z]
+        # Unmapped entries in the table are -1 (TorchANI's padding value).
+        # Real atoms must never land on padding — detect and raise.
+        if bool((species < 0).any()):
+            raise RuntimeError(
+                "Encountered atomic number not registered in the TorchANI "
+                "element list — check the --elements argument"
+            )
+        return species
 
     # -----------------------------------------------------------------
     #  Forward (single molecule)
