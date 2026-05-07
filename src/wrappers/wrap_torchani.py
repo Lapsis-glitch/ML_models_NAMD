@@ -88,6 +88,12 @@ class TorchANI_Wrapper(nn.Module):
         self.inner = torch.jit.load(model_path, map_location=device)
         self.inner.eval()
 
+        try:
+            first_param = next(self.inner.parameters())
+            self.model_uses_fp32: bool = first_param.dtype == torch.float32
+        except StopIteration:
+            self.model_uses_fp32 = True
+
         self.z_to_species = _build_z_to_species(element_list)
 
         # TorchANI outputs Hartree; we need kcal/mol.

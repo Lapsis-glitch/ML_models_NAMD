@@ -38,11 +38,13 @@ def export_wrapped(
 
     r_max = getattr(wrapper, "r_max", None)
     supports_batch = getattr(wrapper, "supports_batch", False)
+    model_uses_fp32 = getattr(wrapper, "model_uses_fp32", False)
+    internal_dtype = "float32" if model_uses_fp32 else "float64"
 
     print(f"[{model_type}] Exported wrapped TorchScript model to: {out_path}")
     if r_max is not None:
         print(f"  cutoff (r_max): {r_max} Å")
     print(f"  supports_batch: {supports_batch}")
     print(f"  Unit conversion is fused into model output (kcal/mol).")
-    print(f"  Edge computation runs in float32; model runs in float64.")
+    print(f"  Edge computation runs in float32; model runs in {internal_dtype}.")
 

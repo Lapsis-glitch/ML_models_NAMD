@@ -24,7 +24,7 @@ def main(argv=None):
     parser.add_argument(
         "--model-type",
         required=True,
-        choices=["mace", "nequip", "allegro", "schnet", "torchani"],
+        choices=["mace", "nequip", "allegro", "schnet", "torchani", "xmace"],
         help="Type of ML potential to wrap",
     )
     parser.add_argument(
@@ -52,6 +52,11 @@ def main(argv=None):
     parser.add_argument("--elements", default="1,6,7,8,16,17",
                         help="[torchani] Comma-separated atomic numbers "
                              "in species order (default: ANI-2x)")
+
+    # X-MACE-specific
+    parser.add_argument("--state", type=int, default=0,
+                        help="[xmace] Electronic state index to expose "
+                             "(default: 0 = ground state)")
 
     args = parser.parse_args(argv)
 
@@ -89,6 +94,12 @@ def main(argv=None):
             element_list=elem_list,
         ).eval()
 
+    elif model_type == "xmace":
+        from .wrappers.wrap_xmace import XMACE_TS_Wrapper
+        wrapper = XMACE_TS_Wrapper(
+            args.compiled, state_idx=args.state, device=args.device,
+        ).eval()
+
     else:
         parser.error(f"Unknown model type: {model_type}")
         return  # unreachable, parser.error raises
@@ -102,6 +113,8 @@ def main(argv=None):
         label = "SchNetPack"
     elif model_type == "torchani":
         label = "TorchANI"
+    elif model_type == "xmace":
+        label = "X-MACE"
 
     export_wrapped(wrapper, args.out, model_type=label)
 

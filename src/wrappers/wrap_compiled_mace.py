@@ -41,10 +41,19 @@ class MACE_TS_Wrapper(nn.Module):
         self.inner = torch.jit.load(compiled_path, map_location=device)
         self.inner.eval()
 
+        try:
+            first_param = next(self.inner.parameters())
+            self.model_uses_fp32: bool = first_param.dtype == torch.float32
+        except StopIteration:
+            self.model_uses_fp32 = False
+
         # Cutoff
         if hasattr(self.inner, "r_max"):
             r = self.inner.r_max
             self.r_max = float(r) if not isinstance(r, float) else r
+
+
+
         else:
             raise RuntimeError("Compiled model has no r_max attribute")
 
@@ -70,6 +79,11 @@ class MACE_TS_Wrapper(nn.Module):
         # Flag checked by the C++ side to enable batched dispatch.
         self.supports_batch: bool = True
 
+    def _model_float_dtype(self):
+        if self.model_uses_fp32:
+            return torch.float32
+        return torch.float64
+
     # -----------------------------------------------------------------
     #  Forward (single molecule)
     # -----------------------------------------------------------------
@@ -83,8 +97,10 @@ class MACE_TS_Wrapper(nn.Module):
     ):
         dev = coords.device
         N = coords.size(0)
+        model_dtype = self._model_float_dtype()
 
         coords32 = coords.to(torch.float32)
+        coords_model = coords.to(model_dtype)
         Z = Z.to(torch.int64)
 
         # Cached constant tensors — keyed on both N and Z.  Different
@@ -98,22 +114,22 @@ class MACE_TS_Wrapper(nn.Module):
             self._cached_batch     = torch.zeros(N, dtype=torch.long, device=dev)
             self._cached_ptr       = torch.tensor([0, N], dtype=torch.long, device=dev)
             self._cached_num_nodes = torch.tensor([N], dtype=torch.long, device=dev)
-            self._cached_cell      = torch.zeros((3, 3), dtype=torch.float64, device=dev)
+            self._cached_cell      = torch.zeros((3, 3), dtype=model_dtype, device=dev)
 
         if z_changed:
             self._cached_Z = Z.clone()
             atomic_numbers_dev = self.atomic_numbers.to(dev)
             match = Z.unsqueeze(1) == atomic_numbers_dev.unsqueeze(0)
-            self._cached_node_attrs = match.to(torch.float64)
+            self._cached_node_attrs = match.to(model_dtype)
 
-        # FP32 edge construction, cast back to float64 for the model.
+        # FP32 edge construction, then cast to the model's float dtype.
         edge_index, edge_vecs32, edge_len32 = build_edges(coords32, self.r_max)
-        edge_vecs = edge_vecs32.to(torch.float64)
-        edge_len  = edge_len32.to(torch.float64)
+        edge_vecs = edge_vecs32.to(model_dtype)
+        edge_len  = edge_len32.to(model_dtype)
         shifts = torch.zeros_like(edge_vecs)
 
         batch_dict = {
-            "positions":      coords,
+            "positions":      coords_model,
             "atomic_numbers": Z,
             "node_attrs":     self._cached_node_attrs,
             "edge_index":     edge_index,
@@ -191,28 +207,30 @@ class MACE_TS_Wrapper(nn.Module):
         """
         dev = coords.device
         N_total = coords.size(0)
+        model_dtype = self._model_float_dtype()
 
         coords32 = coords.to(torch.float32)
+        coords_model = coords.to(model_dtype)
         Z = Z.to(torch.int64)
 
         # One-hot node attributes for all atoms.
         atomic_numbers_dev = self.atomic_numbers.to(dev)
         match = Z.unsqueeze(1) == atomic_numbers_dev.unsqueeze(0)
-        node_attrs = match.to(torch.float64)
+        node_attrs = match.to(model_dtype)
 
         num_nodes = torch.tensor([N_total], dtype=torch.long, device=dev)
-        cell = torch.zeros((3, 3), dtype=torch.float64, device=dev)
+        cell = torch.zeros((3, 3), dtype=model_dtype, device=dev)
 
         # Block-diagonal edge construction.
         edge_index, edge_vecs32, edge_len32 = build_edges_batched(
             coords32, ptr, self.r_max,
         )
-        edge_vecs = edge_vecs32.to(torch.float64)
-        edge_len  = edge_len32.to(torch.float64)
+        edge_vecs = edge_vecs32.to(model_dtype)
+        edge_len  = edge_len32.to(model_dtype)
         shifts = torch.zeros_like(edge_vecs)
 
         batch_dict = {
-            "positions":      coords,
+            "positions":      coords_model,
             "atomic_numbers": Z,
             "node_attrs":     node_attrs,
             "edge_index":     edge_index,
