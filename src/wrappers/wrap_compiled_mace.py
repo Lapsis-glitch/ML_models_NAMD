@@ -45,6 +45,9 @@ class MACE_TS_Wrapper(nn.Module):
         if hasattr(self.inner, "r_max"):
             r = self.inner.r_max
             self.r_max = float(r) if not isinstance(r, float) else r
+
+
+
         else:
             raise RuntimeError("Compiled model has no r_max attribute")
 

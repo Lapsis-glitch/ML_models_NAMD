@@ -1,4 +1,4 @@
-t# ML_models_NAMD
+# ML_models_NAMD
 
 Wrappers that make popular **machine-learning interatomic potentials** (MLIPs) compatible with [NAMD](https://www.ks.uiuc.edu/Research/namd/).
 
@@ -9,10 +9,11 @@ Each wrapper takes a trained model, translates NAMD's calling convention into th
 | Model | Wrapper | Native Units | Builds Own Edges? | Deploy Tool |
 |---|---|---|---|---|
 | [MACE](https://github.com/ACEsuit/mace) | `MACE_TS_Wrapper` | eV | No | `mace` tools → TorchScript |
-| [NequIP](https://github.com/mir-group/nequip) | `NequIP_Allegro_Wrapper` | eV | No | `nequip-deploy build` |
+| [NequIP](https://github.com/mir-group/nequip) | `NequIP_Allegro_Wrapper` | eV | No | `nequip-deploy build` / `nequip-compile` |
 | [Allegro](https://github.com/mir-group/allegro) | `NequIP_Allegro_Wrapper` | eV | No | `nequip-deploy build` |
 | [SchNetPack](https://github.com/atomistic-machine-learning/schnetpack) (≥ 2.0) | `SchNetPack_Wrapper` | eV (configurable) | No | `torch.jit.script` |
 | [TorchANI](https://github.com/aiqm/torchani) | `TorchANI_Wrapper` | Hartree | Yes (internal) | `torch.jit.script` |
+| [X-MACE](https://github.com/rhyan10/X-MACE) (excited states) | `XMACE_TS_Wrapper` | eV | No | `e3nn.util.jit.compile` |
 
 ## Standardised Output Contract
 
@@ -57,6 +58,27 @@ pip install -e ".[torchani]"
 pip install -e ".[all]"
 ```
 
+> **The five frameworks cannot live in one Python env.** `mace-torch 0.3.x` pins `e3nn 0.4.4` while NequIP ≥ 0.6 needs `e3nn ≥ 0.6.0`; X-MACE pins `e3nn 0.5.1`. We use separate conda envs (`MACE_312`, `nequip_env` / `allegro`, `MLIP_2026`, `x_mace`) and dispatch the right interpreter per model. The exact paths are recorded in `.claude/settings.local.json` and noted in `CLAUDE.md`.
+
+### X-MACE (special case)
+
+X-MACE upstream is not TorchScript-clean as published. A patched copy of [rhyan10/X-MACE @ X-MACE_socs](https://github.com/rhyan10/X-MACE/tree/X-MACE_socs) lives in `~/x-mace-src` and is installed editable into the `x_mace` conda env. The patches fix:
+
+- A `zip()` over five `ModuleList`s in `AutoencoderExcitedMACE.forward` that TorchScript silently drops (loop never runs).
+- `socs_readouts.append(None)` when `compute_socs=False` — TorchScript cannot iterate a `ModuleList` containing `None`.
+- Untyped accumulators in `forward` and bare `torch.tensor([])` placeholders that fail at runtime.
+- A typo in `compute_forces` (`retain == False` instead of `=`) and missing `Optional[Tensor]` handling on `autograd.grad`.
+
+Existing `*.model` files saved with `nac_indices=None`/`soc_indices=None` need a runtime fix before `e3nn.util.jit.compile`:
+
+```python
+m = torch.load("fulvene.model", map_location="cpu", weights_only=False).eval()
+if m.nac_indices is None: m.nac_indices = 0
+if m.soc_indices is None: m.soc_indices = 0
+compiled = e3nn.util.jit.compile(deepcopy(m))
+torch.jit.save(compiled, "fulvene_compiled.pt")
+```
+
 ## Quick Start
 
 ### 1. Prepare your model
@@ -82,13 +104,23 @@ scripted = torch.jit.script(model)
 scripted.save("schnet_scripted.pt")
 ```
 
-**TorchANI** — script a built-in or custom model:
-```python
-import torch, torchani
-model = torchani.models.ANI2x()
-scripted = torch.jit.script(model)
-scripted.save("ani2x_scripted.pt")
+**TorchANI** — use the bundled compiler for a built-in foundation model, or script a custom one yourself:
+```bash
+python -m src.compile_torchani --variant ani2x --out compiled_ani2x.pt
 ```
+
+**X-MACE** — compile from a saved `*.model` (see the X-MACE installation section above for the patched-source requirement):
+```python
+import torch
+from copy import deepcopy
+from e3nn.util import jit
+m = torch.load("fulvene.model", map_location="cpu", weights_only=False).eval()
+if m.nac_indices is None: m.nac_indices = 0
+if m.soc_indices is None: m.soc_indices = 0
+torch.jit.save(jit.compile(deepcopy(m)), "fulvene_compiled.pt")
+```
+
+> **Foundation-model shortcut.** `src/compile_mace_off.py`, `src/compile_schnetpack.py`, and `src/compile_torchani.py` take a pretrained checkpoint (e.g. `MACE-OFF23_medium.model`, ANI-2x) and emit the compiled artifact in a single step — handy when you don't want to train from scratch.
 
 ### 2. Export for NAMD
 
@@ -109,6 +141,9 @@ python -m src.cli --model-type schnet --compiled schnet_scripted.pt --r-max 5.0 
 
 # TorchANI (--elements sets species order; default is ANI-2x: H,C,N,O,S,Cl)
 python -m src.cli --model-type torchani --compiled ani2x_scripted.pt --out mlff_model.pt
+
+# X-MACE (--state K selects which electronic state to expose; default 0 = ground)
+python -m src.cli --model-type xmace --compiled fulvene_compiled.pt --state 0 --out mlff_model.pt
 ```
 
 All commands produce a single `mlff_model.pt` TorchScript file that NAMD can load.
@@ -135,6 +170,9 @@ ML_models_NAMD/
 │   ├── constants.py                # Unit conversion factors
 │   ├── edges.py                    # Shared edge/neighbor-list builders
 │   ├── export.py                   # Shared TorchScript export logic
+│   ├── compile_mace_off.py         # Compile MACE-OFF foundation model → .pt
+│   ├── compile_schnetpack.py       # Build random SchNetPack → .pt (timing)
+│   ├── compile_torchani.py         # Compile ANI-1x/1ccx/2x → .pt
 │   ├── models/                     # Pre-compiled model artifacts
 │   ├── datagen/
 │   │   ├── __init__.py
@@ -162,13 +200,17 @@ ML_models_NAMD/
 │       ├── wrap_compiled_mace.py   # MACE wrapper
 │       ├── wrap_compiled_nequip.py # NequIP & Allegro wrapper (shared)
 │       ├── wrap_schnetpack.py      # SchNetPack wrapper
-│       └── wrap_torchani.py        # TorchANI wrapper
+│       ├── wrap_torchani.py        # TorchANI wrapper
+│       └── wrap_xmace.py           # X-MACE wrapper (excited states)
 └── tests/
     ├── conftest.py                 # Shared fixtures
     ├── test_interface_compliance.py # Parametrised tests across all wrappers
     ├── test_datagen.py             # Pure-QM data generation tests
-    ├── test_qmmm.py               # QM/MM data generation tests
-    └── test_pipeline_integration.py # Full train → wrap pipeline tests
+    ├── test_qmmm.py                # QM/MM data generation tests
+    ├── test_pipeline_integration.py # Full train → wrap pipeline tests
+    ├── test_e2e_water_dimer.py     # End-to-end ORCA → train → wrap pipeline
+    ├── run_e2e_water_dimer.sh      # Shell wrapper (loads ORCA module)
+    └── run_nequip_tests.sh         # NequIP/Allegro tests in their own env
 ```
 
 ### Shared Modules
@@ -178,7 +220,7 @@ ML_models_NAMD/
 | `constants.py` | `EV_TO_KCAL`, `HARTREE_TO_KCAL`, and other conversion factors |
 | `edges.py` | `build_edges()` and `build_edges_batched()` — O(N²) vectorised neighbor lists in FP32 |
 | `export.py` | `export_wrapped()` — `torch.jit.script` + save + diagnostics |
-| `cli.py` | `--model-type {mace,nequip,allegro,schnet,torchani}` dispatcher |
+| `cli.py` | `--model-type {mace,nequip,allegro,schnet,torchani,xmace}` dispatcher |
 
 ---
 
@@ -212,6 +254,14 @@ ML_models_NAMD/
 - Native units are **Hartree** (converted via `HARTREE_TO_KCAL = 627.509474`).
 - Species mapping (`--elements`) must match the model's expected order (default: ANI-2x `[H, C, N, O, S, Cl]`).
 - Batched evaluation pads variable-size molecules to equal length with species index `-1`.
+
+### X-MACE (excited states)
+
+- Wraps `AutoencoderExcitedMACE` from [rhyan10/X-MACE](https://github.com/rhyan10/X-MACE). Inner model returns `energy: [B, n_states]` and `forces: [N, n_states, 3]` (per-state forces are computed inside the inner model via `torch.autograd.grad` per state).
+- The wrapper exposes a **single** electronic state via `--state K` (default 0 = ground state); slicing happens after inference, so all states are still computed.
+- Inner weights are **float32** (unlike MACE-OFF, which is float64). The wrapper feeds float32 `positions`/`node_attrs`/`shifts`/`cell` and casts the model output to float64 kcal/mol.
+- Input dict uses MACE-style keys (`positions`, `atomic_numbers`, `node_attrs`, `edge_index`, `shifts`, `cell`, `batch`, `ptr`) — no `edge_vectors`/`edge_lengths`/`num_nodes` (X-MACE recomputes them internally).
+- Compiling X-MACE from `*.model` requires the patched source at `~/x-mace-src` (see Installation → X-MACE). Don't `pip install mace-torch` over the editable install — it would clobber the patches.
 
 ---
 
@@ -545,14 +595,15 @@ python -m src.cli --model-type TYPE --compiled PATH [OPTIONS]
 
 | Argument | Required | Default | Description |
 |---|---|---|---|
-| `--model-type` | ✅ | — | `mace`, `nequip`, `allegro`, `schnet`, or `torchani` |
+| `--model-type` | ✅ | — | `mace`, `nequip`, `allegro`, `schnet`, `torchani`, or `xmace` |
 | `--compiled` | ✅ | — | Path to compiled/deployed model file |
 | `--out` | | `mlff_model.pt` | Output TorchScript file |
 | `--device` | | `cpu` | Device to load onto (`cpu` or `cuda`) |
-| `--r-max` | schnet only | — | Cutoff radius in Å |
+| `--r-max` | schnet only | — | Cutoff radius in Å (also accepted as a NequIP fallback when the deployed model has no `r_max` attribute, e.g. NequIP-OAM-L: `--r-max 6.0`) |
 | `--energy-key` | | `energy` | SchNetPack output dict key for energy |
 | `--forces-key` | | `forces` | SchNetPack output dict key for forces |
 | `--elements` | | `1,6,7,8,16,17` | TorchANI species order (atomic numbers) |
+| `--state` | | `0` | X-MACE electronic state index to expose (0 = ground) |
 
 ---
 
@@ -571,6 +622,19 @@ Tests use **mock inner models** (no real MLIP weights needed) to verify that eve
 - Can survive `torch.jit.script()`.
 
 Edge-building utilities and unit conversion constants are also tested independently.
+
+NequIP/Allegro pipeline tests need their own conda env (`nequip_env`) — run with the helper:
+
+```bash
+bash tests/run_nequip_tests.sh
+```
+
+The end-to-end ORCA → train → wrap pipeline (loads `module load orca`, generates 20 water dimers, trains every model, wraps for NAMD):
+
+```bash
+bash tests/run_e2e_water_dimer.sh                # full
+bash tests/run_e2e_water_dimer.sh --skip-orca    # reuse cached data
+```
 
 ---
 
