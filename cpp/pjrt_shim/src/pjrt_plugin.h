@@ -16,6 +16,13 @@ struct PjrtExecutionResult {
     std::vector<PjrtBufferData> outputs;
 };
 
+struct PjrtExecutableHandle {
+    PJRT_LoadedExecutable* loaded = nullptr;
+    PJRT_Executable* executable = nullptr;
+    std::string executable_name;
+    size_t num_outputs = 0;
+};
+
 class PjrtPlugin {
 public:
     explicit PjrtPlugin(std::string plugin_path);
@@ -38,6 +45,12 @@ public:
     std::vector<std::string> device_strings(bool addressable_only = true) const;
     std::vector<std::string> plugin_attributes() const;
     PJRT_Device* first_addressable_device() const;
+    PjrtExecutableHandle compile_mlir(const std::string& mlir,
+                                      const std::string& compile_options) const;
+    PjrtExecutionResult execute_compiled(const PjrtExecutableHandle& executable,
+                                         const std::vector<float>& input_values,
+                                         const std::vector<int64_t>& input_dims) const;
+    void destroy_compiled(PjrtExecutableHandle& executable) const;
     PjrtExecutionResult compile_and_execute_mlir(const std::string& mlir,
                                                  const std::string& compile_options,
                                                  const std::vector<float>& input_values,

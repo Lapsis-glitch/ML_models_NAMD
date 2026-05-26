@@ -1,0 +1,6 @@
+# 3x3 coordinates in Angstrom for the existing n=3 artifact
+# same shape as the exported water probe, but slightly perturbed
+0.000000 0.000000 0.020000
+0.957200 0.000000 -0.010000
+-0.239987 0.927297 0.015000
+

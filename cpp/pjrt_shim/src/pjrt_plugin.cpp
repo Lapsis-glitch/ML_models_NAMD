@@ -234,41 +234,16 @@ PJRT_Device* PjrtPlugin::first_addressable_device() const {
     return args.addressable_devices[0];
 }
 
-PjrtExecutionResult PjrtPlugin::compile_and_execute_mlir(const std::string& mlir,
-                                                        const std::string& compile_options,
-                                                        const std::vector<float>& input_values,
-                                                        const std::vector<int64_t>& input_dims) const {
+PjrtExecutableHandle PjrtPlugin::compile_mlir(const std::string& mlir,
+                                             const std::string& compile_options) const {
     if (api_ == nullptr || client_ == nullptr) {
         throw std::runtime_error("PJRT client is not initialized");
-    }
-    if (input_dims.empty()) {
-        throw std::runtime_error("input_dims must not be empty");
-    }
-
-    size_t expected_elements = 1;
-    for (int64_t dim : input_dims) {
-        if (dim <= 0) throw std::runtime_error("input_dims must be positive");
-        expected_elements *= static_cast<size_t>(dim);
-    }
-    if (input_values.size() != expected_elements) {
-        std::ostringstream os;
-        os << "input_values size mismatch: got " << input_values.size()
-           << " expected " << expected_elements;
-        throw std::runtime_error(os.str());
     }
 
     PJRT_LoadedExecutable* loaded = nullptr;
     PJRT_Executable* executable = nullptr;
-    PJRT_Buffer* input_buffer = nullptr;
-    PJRT_Event* input_done = nullptr;
-    PJRT_Event* execute_done = nullptr;
-    std::vector<PJRT_Buffer*> output_buffers;
 
     auto cleanup = [&]() {
-        for (PJRT_Buffer*& buffer : output_buffers) destroy_buffer(buffer, "PJRT_Buffer_Destroy(output)");
-        destroy_buffer(input_buffer, "PJRT_Buffer_Destroy(input)");
-        await_and_destroy_event(execute_done, "PJRT_Event_Await(execute)", "PJRT_Event_Destroy(execute)");
-        await_and_destroy_event(input_done, "PJRT_Event_Await(input transfer)", "PJRT_Event_Destroy(input transfer)");
         destroy_executable(executable, "PJRT_Executable_Destroy");
         destroy_loaded_executable(loaded, "PJRT_LoadedExecutable_Destroy");
     };
@@ -298,12 +273,14 @@ PjrtExecutionResult PjrtPlugin::compile_and_execute_mlir(const std::string& mlir
         executable = get_exec_args.executable;
         if (executable == nullptr) throw std::runtime_error("PJRT_LoadedExecutable_GetExecutable returned null executable");
 
-        PjrtExecutionResult result;
+        PjrtExecutableHandle out;
+        out.loaded = loaded;
+        out.executable = executable;
 
         auto name_args = MAKE_ARGS(PJRT_Executable_Name_Args);
         name_args.executable = executable;
         check(api_->PJRT_Executable_Name(&name_args), "PJRT_Executable_Name");
-        result.executable_name = view(name_args.executable_name, name_args.executable_name_size);
+        out.executable_name = view(name_args.executable_name, name_args.executable_name_size);
 
         auto outputs_args = MAKE_ARGS(PJRT_Executable_NumOutputs_Args);
         outputs_args.executable = executable;
@@ -311,7 +288,52 @@ PjrtExecutionResult PjrtPlugin::compile_and_execute_mlir(const std::string& mlir
         if (outputs_args.num_outputs == 0) {
             throw std::runtime_error("compiled executable reported zero outputs");
         }
+        out.num_outputs = outputs_args.num_outputs;
+        return out;
+    } catch (...) {
+        cleanup();
+        throw;
+    }
+}
 
+PjrtExecutionResult PjrtPlugin::execute_compiled(const PjrtExecutableHandle& executable,
+                                                const std::vector<float>& input_values,
+                                                const std::vector<int64_t>& input_dims) const {
+    if (api_ == nullptr || client_ == nullptr) {
+        throw std::runtime_error("PJRT client is not initialized");
+    }
+    if (executable.loaded == nullptr || executable.executable == nullptr) {
+        throw std::runtime_error("compiled executable handle is not initialized");
+    }
+    if (input_dims.empty()) {
+        throw std::runtime_error("input_dims must not be empty");
+    }
+
+    size_t expected_elements = 1;
+    for (int64_t dim : input_dims) {
+        if (dim <= 0) throw std::runtime_error("input_dims must be positive");
+        expected_elements *= static_cast<size_t>(dim);
+    }
+    if (input_values.size() != expected_elements) {
+        std::ostringstream os;
+        os << "input_values size mismatch: got " << input_values.size()
+           << " expected " << expected_elements;
+        throw std::runtime_error(os.str());
+    }
+
+    PJRT_Buffer* input_buffer = nullptr;
+    PJRT_Event* input_done = nullptr;
+    PJRT_Event* execute_done = nullptr;
+    std::vector<PJRT_Buffer*> output_buffers;
+
+    auto cleanup = [&]() {
+        for (PJRT_Buffer*& buffer : output_buffers) destroy_buffer(buffer, "PJRT_Buffer_Destroy(output)");
+        destroy_buffer(input_buffer, "PJRT_Buffer_Destroy(input)");
+        await_and_destroy_event(execute_done, "PJRT_Event_Await(execute)", "PJRT_Event_Destroy(execute)");
+        await_and_destroy_event(input_done, "PJRT_Event_Await(input transfer)", "PJRT_Event_Destroy(input transfer)");
+    };
+
+    try {
         auto upload_args = MAKE_ARGS(PJRT_Client_BufferFromHostBuffer_Args);
         upload_args.client = client_;
         upload_args.data = input_values.data();
@@ -350,12 +372,12 @@ PjrtExecutionResult PjrtPlugin::compile_and_execute_mlir(const std::string& mlir
 
         PJRT_Buffer* argument_list[1] = {input_buffer};
         PJRT_Buffer* const* argument_lists[1] = {argument_list};
-        output_buffers.assign(outputs_args.num_outputs, nullptr);
+        output_buffers.assign(executable.num_outputs, nullptr);
         PJRT_Buffer** output_lists[1] = {output_buffers.data()};
         PJRT_Event* execute_events[1] = {nullptr};
 
         auto exec_args = MAKE_ARGS(PJRT_LoadedExecutable_Execute_Args);
-        exec_args.executable = loaded;
+        exec_args.executable = executable.loaded;
         exec_args.options = &execute_options;
         exec_args.argument_lists = argument_lists;
         exec_args.num_devices = 1;
@@ -367,6 +389,8 @@ PjrtExecutionResult PjrtPlugin::compile_and_execute_mlir(const std::string& mlir
         execute_done = execute_events[0];
         await_and_destroy_event(execute_done, "PJRT_Event_Await(execute)", "PJRT_Event_Destroy(execute)");
 
+        PjrtExecutionResult result;
+        result.executable_name = executable.executable_name;
         result.outputs.reserve(output_buffers.size());
         for (PJRT_Buffer* buffer : output_buffers) {
             if (buffer == nullptr) {
@@ -378,6 +402,28 @@ PjrtExecutionResult PjrtPlugin::compile_and_execute_mlir(const std::string& mlir
         return result;
     } catch (...) {
         cleanup();
+        throw;
+    }
+}
+
+void PjrtPlugin::destroy_compiled(PjrtExecutableHandle& executable) const {
+    destroy_executable(executable.executable, "PJRT_Executable_Destroy");
+    destroy_loaded_executable(executable.loaded, "PJRT_LoadedExecutable_Destroy");
+    executable.executable_name.clear();
+    executable.num_outputs = 0;
+}
+
+PjrtExecutionResult PjrtPlugin::compile_and_execute_mlir(const std::string& mlir,
+                                                        const std::string& compile_options,
+                                                        const std::vector<float>& input_values,
+                                                        const std::vector<int64_t>& input_dims) const {
+    PjrtExecutableHandle executable = compile_mlir(mlir, compile_options);
+    try {
+        PjrtExecutionResult result = execute_compiled(executable, input_values, input_dims);
+        destroy_compiled(executable);
+        return result;
+    } catch (...) {
+        destroy_compiled(executable);
         throw;
     }
 }

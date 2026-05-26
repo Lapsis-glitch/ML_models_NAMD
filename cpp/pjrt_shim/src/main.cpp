@@ -1,11 +1,10 @@
+#include "artifact_bundle.h"
 #include "pjrt_plugin.h"
 
 #include <filesystem>
-#include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <limits>
-#include <numeric>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -18,14 +17,15 @@ namespace {
 struct Args {
     std::string plugin = "/home/rat/miniconda3/envs/fennix/lib/python3.11/site-packages/jax_plugins/xla_cuda12/xla_cuda_plugin.so";
     std::string manifest = "/home/rat/PycharmProjects/ML_models_NAMD/models/fennix_bio1_stablehlo_n3/manifest.json";
-    std::string stablehlo = "/home/rat/PycharmProjects/ML_models_NAMD/models/fennix_bio1_stablehlo_n3/fennix_bio1_eval.stablehlo.mlir";
-    std::string compile_options = "/home/rat/PycharmProjects/ML_models_NAMD/models/fennix_bio1_stablehlo_n3/compile_options.pb";
-    std::string reference = "/home/rat/PycharmProjects/ML_models_NAMD/models/fennix_bio1_stablehlo_n3/reference_runtime.txt";
+    std::string stablehlo;
+    std::string compile_options;
+    std::string reference;
+    std::string coords;
     bool skip_validate = false;
 };
 
 void usage(const char* argv0) {
-    std::cerr << "Usage: " << argv0 << " [--plugin PATH] [--manifest PATH] [--stablehlo PATH] [--compile-options PATH] [--reference PATH] [--skip-validate]\n";
+    std::cerr << "Usage: " << argv0 << " [--plugin PATH] [--manifest PATH] [--stablehlo PATH] [--compile-options PATH] [--reference PATH] [--coords PATH] [--skip-validate]\n";
 }
 
 Args parse_args(int argc, char** argv) {
@@ -43,6 +43,7 @@ Args parse_args(int argc, char** argv) {
         else if (key == "--stablehlo") args.stablehlo = need_value("--stablehlo");
         else if (key == "--compile-options") args.compile_options = need_value("--compile-options");
         else if (key == "--reference") args.reference = need_value("--reference");
+        else if (key == "--coords") args.coords = need_value("--coords");
         else if (key == "--skip-validate") args.skip_validate = true;
         else if (key == "--help" || key == "-h") {
             usage(argv[0]);
@@ -66,87 +67,12 @@ std::string file_summary(const std::string& path) {
 }
 
 std::string first_line_containing(const std::string& path, const std::string& needle) {
-    std::ifstream in(path);
+    std::istringstream in(read_text_file(path));
     std::string line;
     while (std::getline(in, line)) {
         if (line.find(needle) != std::string::npos) return line;
     }
     return "";
-}
-
-std::string read_file_contents(const std::string& path) {
-    std::ifstream in(path, std::ios::binary);
-    if (!in) throw std::runtime_error("failed to open file: " + path);
-    std::ostringstream buffer;
-    buffer << in.rdbuf();
-    return buffer.str();
-}
-
-std::vector<float> default_reference_coords() {
-    return {
-        0.0f, 0.0f, 0.0f,
-        0.9572f, 0.0f, 0.0f,
-        -0.239987f, 0.927297f, 0.0f,
-    };
-}
-
-struct RuntimeReference {
-    std::vector<int64_t> input_dims;
-    std::vector<float> coordinates;
-    std::vector<float> energy_ref_ev;
-    std::vector<float> forces_ref_ev_a;
-    std::vector<float> energy_jit_ev;
-    std::vector<float> forces_jit_ev_a;
-    double tol_energy_ev = 0.0;
-    double tol_forces_ev_a = 0.0;
-};
-
-std::vector<std::string> split_csv(const std::string& text) {
-    std::vector<std::string> out;
-    std::stringstream ss(text);
-    std::string item;
-    while (std::getline(ss, item, ',')) out.push_back(item);
-    return out;
-}
-
-std::vector<float> parse_float_csv(const std::string& text) {
-    std::vector<float> out;
-    if (text.empty()) return out;
-    for (const auto& item : split_csv(text)) out.push_back(std::stof(item));
-    return out;
-}
-
-std::vector<int64_t> parse_int64_csv(const std::string& text) {
-    std::vector<int64_t> out;
-    if (text.empty()) return out;
-    for (const auto& item : split_csv(text)) out.push_back(std::stoll(item));
-    return out;
-}
-
-RuntimeReference load_runtime_reference(const std::string& path) {
-    std::ifstream in(path);
-    if (!in) throw std::runtime_error("failed to open runtime reference: " + path);
-    RuntimeReference ref;
-    std::string line;
-    while (std::getline(in, line)) {
-        if (line.empty()) continue;
-        const auto pos = line.find('=');
-        if (pos == std::string::npos) throw std::runtime_error("malformed runtime reference line: " + line);
-        const std::string key = line.substr(0, pos);
-        const std::string value = line.substr(pos + 1);
-        if (key == "input_dims") ref.input_dims = parse_int64_csv(value);
-        else if (key == "coordinates") ref.coordinates = parse_float_csv(value);
-        else if (key == "energy_ref_ev") ref.energy_ref_ev = parse_float_csv(value);
-        else if (key == "forces_ref_ev_a") ref.forces_ref_ev_a = parse_float_csv(value);
-        else if (key == "energy_jit_ev") ref.energy_jit_ev = parse_float_csv(value);
-        else if (key == "forces_jit_ev_a") ref.forces_jit_ev_a = parse_float_csv(value);
-        else if (key == "tol_energy_ev") ref.tol_energy_ev = std::stod(value);
-        else if (key == "tol_forces_ev_a") ref.tol_forces_ev_a = std::stod(value);
-    }
-    if (ref.input_dims.empty() || ref.coordinates.empty() || ref.energy_jit_ev.empty() || ref.forces_jit_ev_a.empty()) {
-        throw std::runtime_error("runtime reference is missing required fields");
-    }
-    return ref;
 }
 
 std::string dims_to_string(const std::vector<int64_t>& dims) {
@@ -190,20 +116,69 @@ double max_abs_diff(const std::vector<float>& a, const std::vector<float>& b) {
     return best;
 }
 
+size_t num_elements(const std::vector<int64_t>& dims) {
+    size_t total = 1;
+    for (int64_t dim : dims) {
+        if (dim <= 0) throw std::runtime_error("dims must be positive");
+        total *= static_cast<size_t>(dim);
+    }
+    return total;
+}
+
+bool same_values(const std::vector<float>& a, const std::vector<float>& b, double atol = 1e-7) {
+    if (a.size() != b.size()) return false;
+    for (size_t i = 0; i < a.size(); ++i) {
+        if (std::abs(static_cast<double>(a[i] - b[i])) > atol) return false;
+    }
+    return true;
+}
+
+void require_dims(const std::vector<int64_t>& actual, const std::vector<int64_t>& expected, const char* label) {
+    if (actual != expected) {
+        throw std::runtime_error(std::string(label) + " dims mismatch: got " + dims_to_string(actual) +
+                                 " expected " + dims_to_string(expected));
+    }
+}
+
+std::vector<float> scaled_values(const std::vector<float>& values, double factor) {
+    std::vector<float> out(values.size());
+    for (size_t i = 0; i < values.size(); ++i) {
+        out[i] = static_cast<float>(static_cast<double>(values[i]) * factor);
+    }
+    return out;
+}
+
 }  // namespace
 
 int main(int argc, char** argv) {
     try {
         const Args args = parse_args(argc, argv);
+        ArtifactSpec spec = load_artifact_spec(args.manifest);
+        if (!args.stablehlo.empty()) spec.stablehlo_path = args.stablehlo;
+        if (!args.compile_options.empty()) spec.compile_options_path = args.compile_options;
+        if (!args.reference.empty()) spec.reference_runtime_path = args.reference;
+        const RuntimeReference runtime_ref = load_runtime_reference(spec.reference_runtime_path);
+        require_dims(runtime_ref.input_dims, spec.input_dims, "manifest/runtime-reference input");
+
+        const std::vector<float> input_values = args.coords.empty()
+            ? runtime_ref.coordinates
+            : load_flat_float_values(args.coords);
+        if (input_values.size() != num_elements(spec.input_dims)) {
+            throw std::runtime_error("input coordinate count does not match manifest input dims " + dims_to_string(spec.input_dims));
+        }
+        const bool validating_reference_coords = same_values(input_values, runtime_ref.coordinates);
 
         std::cout << "=== FENNIX PJRT native probe ===\n";
         std::cout << "plugin:   " << file_summary(args.plugin) << "\n";
-        std::cout << "manifest: " << file_summary(args.manifest) << "\n";
-        std::cout << "stablehlo:" << file_summary(args.stablehlo) << "\n";
-        std::cout << "compile:  " << file_summary(args.compile_options) << "\n";
-        std::cout << "reference:" << file_summary(args.reference) << "\n";
+        std::cout << "manifest: " << file_summary(spec.manifest_path) << "\n";
+        std::cout << "stablehlo:" << file_summary(spec.stablehlo_path) << "\n";
+        std::cout << "compile:  " << file_summary(spec.compile_options_path) << "\n";
+        std::cout << "reference:" << file_summary(spec.reference_runtime_path) << "\n";
+        if (!args.coords.empty()) {
+            std::cout << "coords:   " << file_summary(args.coords) << "\n";
+        }
 
-        std::string signature = first_line_containing(args.stablehlo, "func.func public @main");
+        std::string signature = first_line_containing(spec.stablehlo_path, "func.func public @main");
         if (!signature.empty()) {
             std::cout << "StableHLO signature: " << signature << "\n";
         }
@@ -230,15 +205,24 @@ int main(int argc, char** argv) {
         if (devices.empty()) std::cout << "  <none>\n";
         for (const auto& d : devices) std::cout << "  " << d << "\n";
 
-        const RuntimeReference runtime_ref = load_runtime_reference(args.reference);
-        const std::vector<int64_t> input_dims = runtime_ref.input_dims;
-        const std::vector<float> input_values = runtime_ref.coordinates.empty() ? default_reference_coords() : runtime_ref.coordinates;
-        const std::string mlir = read_file_contents(args.stablehlo);
-        const std::string compile_options = read_file_contents(args.compile_options);
+        const std::string mlir = read_text_file(spec.stablehlo_path);
+        const std::string compile_options = read_text_file(spec.compile_options_path);
 
-        std::cout << "\nCompiling and executing StableHLO...\n";
-        auto result = plugin.compile_and_execute_mlir(mlir, compile_options, input_values, input_dims);
-        std::cout << "Executable: " << result.executable_name << "\n";
+        std::cout << "\nCompiling StableHLO...\n";
+        PjrtExecutableHandle executable = plugin.compile_mlir(mlir, compile_options);
+        PjrtExecutionResult result;
+        try {
+            std::cout << "Executable: " << executable.executable_name << "\n";
+            std::cout << "Warming up compiled executable once before validation...\n";
+            auto warmup = plugin.execute_compiled(executable, input_values, spec.input_dims);
+            (void)warmup;
+            std::cout << "Running measured execution...\n";
+            result = plugin.execute_compiled(executable, input_values, spec.input_dims);
+            plugin.destroy_compiled(executable);
+        } catch (...) {
+            plugin.destroy_compiled(executable);
+            throw;
+        }
         std::cout << "Input coords (Angstrom): " << values_to_string(input_values) << "\n";
 
         for (size_t i = 0; i < result.outputs.size(); ++i) {
@@ -248,22 +232,31 @@ int main(int argc, char** argv) {
                       << " values=" << values_to_string(output.f32_values) << "\n";
         }
 
+        if (result.outputs.size() != 2) {
+            throw std::runtime_error("expected exactly 2 outputs for the exported FENNIX artifact");
+        }
+        require_dims(result.outputs[0].dims, spec.energy_dims, "energy output");
+        require_dims(result.outputs[1].dims, spec.forces_dims, "forces output");
+        std::cout << "Energy [kcal/mol]:        " << values_to_string(scaled_values(result.outputs[0].f32_values, spec.ev_to_kcal)) << "\n";
+        std::cout << "Forces [kcal/mol/A]:      " << values_to_string(scaled_values(result.outputs[1].f32_values, spec.ev_to_kcal)) << "\n";
+
         if (!args.skip_validate) {
-            if (result.outputs.size() != 2) {
-                throw std::runtime_error("expected exactly 2 outputs for the exported FENNIX artifact");
-            }
-            const double energy_diff = max_abs_diff(result.outputs[0].f32_values, runtime_ref.energy_jit_ev);
-            const double force_diff = max_abs_diff(result.outputs[1].f32_values, runtime_ref.forces_jit_ev_a);
+            if (!validating_reference_coords) {
+                std::cout << "Validation skipped: custom coordinates differ from the exported runtime reference.\n";
+            } else {
+                const double energy_diff = max_abs_diff(result.outputs[0].f32_values, runtime_ref.energy_jit_ev);
+                const double force_diff = max_abs_diff(result.outputs[1].f32_values, runtime_ref.forces_jit_ev_a);
 
-            std::cout << std::scientific << std::setprecision(8);
-            std::cout << "Validation vs exported JIT reference:\n";
-            std::cout << "  energy max abs diff [eV]      = " << energy_diff
-                      << " (tol " << runtime_ref.tol_energy_ev << ")\n";
-            std::cout << "  forces max abs diff [eV/A]    = " << force_diff
-                      << " (tol " << runtime_ref.tol_forces_ev_a << ")\n";
+                std::cout << std::scientific << std::setprecision(8);
+                std::cout << "Validation vs exported JIT reference:\n";
+                std::cout << "  energy max abs diff [eV]      = " << energy_diff
+                          << " (tol " << runtime_ref.tol_energy_ev << ")\n";
+                std::cout << "  forces max abs diff [eV/A]    = " << force_diff
+                          << " (tol " << runtime_ref.tol_forces_ev_a << ")\n";
 
-            if (energy_diff > runtime_ref.tol_energy_ev || force_diff > runtime_ref.tol_forces_ev_a) {
-                throw std::runtime_error("native PJRT execution exceeded exported reference tolerances");
+                if (energy_diff > runtime_ref.tol_energy_ev || force_diff > runtime_ref.tol_forces_ev_a) {
+                    throw std::runtime_error("native PJRT execution exceeded exported reference tolerances");
+                }
             }
         } else {
             std::cout << "Validation skipped by request (--skip-validate).\n";
