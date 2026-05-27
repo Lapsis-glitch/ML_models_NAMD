@@ -38,6 +38,21 @@ XLA_PYTHON_CLIENT_PREALLOCATE=false conda run -n fennix python \
   --total-charge 0
 ```
 
+Or specialize the export directly to a full PDB system (atom order, species,
+and reference coordinates are taken from the PDB):
+
+```bash
+cd /home/rat/PycharmProjects/ML_models_NAMD
+XLA_PYTHON_CLIENT_PREALLOCATE=false conda run -n fennix python \
+  scripts/export_fennix_bio1_stablehlo.py \
+  --model models/fennix-bio1S.fnx \
+  --pdb namd_water_test/water.qm.pdb \
+  --out-dir models/fennix_bio1_stablehlo_water_pdb
+```
+
+If `--total-charge` is omitted in `--pdb` mode, the exporter sums any formal
+PDB charge fields it finds and otherwise falls back to `0`.
+
 That export now writes these sidecars alongside the StableHLO MLIR:
 
 - `compile_options.pb` — serialized minimal JAX compile options used by the
