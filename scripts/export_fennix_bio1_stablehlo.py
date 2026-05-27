@@ -165,12 +165,48 @@ def default_coords(n_atoms: int) -> np.ndarray:
     return coords
 
 
-def default_out_dir(n_atoms: int, pdb_path: Path | None = None) -> Path:
+def default_walker_coords(base_coords: np.ndarray, n_walkers: int) -> np.ndarray:
+    """Return deterministic per-walker coordinates for a fixed system."""
+    if n_walkers < 1:
+        raise ValueError("--n-walkers must be at least 1")
+    base = np.asarray(base_coords, dtype=np.float32)
+    if base.ndim != 2 or base.shape[1] != 3:
+        raise ValueError(f"base coordinates must have shape [N,3], got {base.shape}")
+    if n_walkers == 1:
+        return base.copy()
+
+    walker_coords = np.repeat(base[None, :, :], n_walkers, axis=0)
+    for walker_idx in range(n_walkers):
+        walker_coords[walker_idx, :, 0] += np.float32(0.05 * walker_idx)
+    return walker_coords
+
+
+def load_walker_coords_npy(path: Path, n_atoms: int) -> np.ndarray:
+    coords = np.load(Path(path).expanduser().resolve())
+    coords = np.asarray(coords, dtype=np.float32)
+    if coords.ndim != 3 or coords.shape[2] != 3:
+        raise ValueError(
+            f"Walker coordinates must have shape [n_walkers, n_atoms, 3], got {coords.shape}"
+        )
+    if coords.shape[1] != n_atoms:
+        raise ValueError(
+            f"Walker coordinates atom count {coords.shape[1]} does not match system atom count {n_atoms}"
+        )
+    if not np.isfinite(coords).all():
+        raise ValueError("Walker coordinates contain non-finite values")
+    return coords
+
+
+def default_out_dir(n_atoms: int, pdb_path: Path | None = None, n_walkers: int = 1) -> Path:
     models_dir = _REPO_ROOT / "models"
     if pdb_path is None:
-        return models_dir / f"fennix_bio1_stablehlo_n{n_atoms}"
-    stem = "".join(ch if ch.isalnum() or ch in {"-", "_"} else "_" for ch in pdb_path.stem)
-    return models_dir / f"fennix_bio1_stablehlo_{stem}_n{n_atoms}"
+        suffix = f"fennix_bio1_stablehlo_n{n_atoms}"
+    else:
+        stem = "".join(ch if ch.isalnum() or ch in {"-", "_"} else "_" for ch in pdb_path.stem)
+        suffix = f"fennix_bio1_stablehlo_{stem}_n{n_atoms}"
+    if n_walkers > 1:
+        suffix += f"_w{n_walkers}"
+    return models_dir / suffix
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -202,6 +238,17 @@ def main(argv: list[str] | None = None) -> None:
         type=int,
         default=None,
         help="Fixed total charge for the specialized export. If omitted with --pdb, the exporter sums any formal PDB charge fields and otherwise falls back to 0.",
+    )
+    parser.add_argument(
+        "--n-walkers",
+        type=int,
+        default=None,
+        help="Experimental fixed walker count for same-system batching. Defaults to 1 unless inferred from --walker-coords-npy.",
+    )
+    parser.add_argument(
+        "--walker-coords-npy",
+        default=None,
+        help="Optional .npy array of reference coordinates with shape [n_walkers, n_atoms, 3]. Overrides deterministic default walker coordinates.",
     )
     args = parser.parse_args(argv)
 
@@ -251,10 +298,31 @@ def main(argv: list[str] | None = None) -> None:
     else:
         total_charge_source = "default_zero"
 
+    walker_coords_path = Path(args.walker_coords_npy).expanduser().resolve() if args.walker_coords_npy else None
+    if walker_coords_path is not None:
+        loaded_walker_coords = load_walker_coords_npy(walker_coords_path, n_atoms=n_atoms)
+        inferred_n_walkers = int(loaded_walker_coords.shape[0])
+        if args.n_walkers is not None and args.n_walkers != inferred_n_walkers:
+            raise SystemExit(
+                f"--n-walkers={args.n_walkers} does not match --walker-coords-npy batch size {inferred_n_walkers}"
+            )
+        n_walkers = inferred_n_walkers
+        export_coords = loaded_walker_coords[0] if n_walkers == 1 else loaded_walker_coords
+    else:
+        n_walkers = int(args.n_walkers or 1)
+        export_coords = default_walker_coords(coords, n_walkers=n_walkers)
+
+    if n_walkers < 1:
+        raise SystemExit("--n-walkers must be at least 1")
+
     resolved_out_dir = (
         Path(args.out_dir).expanduser().resolve()
         if args.out_dir is not None
-        else default_out_dir(n_atoms=n_atoms, pdb_path=Path(input_source["path"]) if input_source["path"] else None)
+        else default_out_dir(
+            n_atoms=n_atoms,
+            pdb_path=Path(input_source["path"]) if input_source["path"] else None,
+            n_walkers=n_walkers,
+        )
     )
     out_dir = resolved_out_dir.resolve()
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -264,6 +332,7 @@ def main(argv: list[str] | None = None) -> None:
         f"from {'PDB ' + str(input_source['path']) if args.pdb is not None else 'explicit --z-list'}"
     )
     print(f"Writing artifacts to {out_dir}")
+    print(f"Walker count: {n_walkers}")
     print(f"Using total charge {total_charge} ({total_charge_source})")
 
     print(f"Loading FeNNol model: {model_path}")
@@ -275,7 +344,7 @@ def main(argv: list[str] | None = None) -> None:
         f"energy_terms={model.energy_terms}",
     )
 
-    raw_np = {
+    single_raw_np = {
         "species": Z,
         "coordinates": coords,
         "natoms": np.array([n_atoms], dtype=np.int32),
@@ -285,7 +354,7 @@ def main(argv: list[str] | None = None) -> None:
 
     # Warm/init preprocessing once.  The JAX process path then uses the fixed
     # neighbor-list capacities in this state, avoiding Python-side checks.
-    _ = model.preprocess(**raw_np)
+    _ = model.preprocess(**single_raw_np)
     state = model.preproc_state
 
     species = jnp.asarray(Z)
@@ -305,11 +374,29 @@ def main(argv: list[str] | None = None) -> None:
         energy_ev, forces_ev_a, _ = model._energy_and_forces(model.variables, pre)
         return energy_ev, forces_ev_a
 
-    jit_eval = jax.jit(eval_ev)
+    if n_walkers == 1:
+        jit_eval = jax.jit(eval_ev)
+        energy_ref, forces_ref, _ = model.energy_and_forces(**single_raw_np)
+        energy_jit, forces_jit = jit_eval(jnp.asarray(export_coords))
+    else:
+        jit_eval = jax.jit(jax.vmap(eval_ev, in_axes=0, out_axes=0))
+        ref_energies = []
+        ref_forces = []
+        for walker_coords in export_coords:
+            energy_ref_i, forces_ref_i, _ = model.energy_and_forces(
+                species=single_raw_np["species"],
+                coordinates=walker_coords,
+                natoms=single_raw_np["natoms"],
+                batch_index=single_raw_np["batch_index"],
+                total_charge=single_raw_np["total_charge"],
+            )
+            ref_energies.append(np.asarray(energy_ref_i))
+            ref_forces.append(np.asarray(forces_ref_i))
+        energy_ref = np.stack(ref_energies, axis=0)
+        forces_ref = np.stack(ref_forces, axis=0)
+        energy_jit, forces_jit = jit_eval(jnp.asarray(export_coords))
 
     print("Evaluating Python/JAX reference and lowered executable...")
-    energy_ref, forces_ref, _ = model.energy_and_forces(**raw_np)
-    energy_jit, forces_jit = jit_eval(jnp.asarray(coords))
 
     energy_ref_np = np.asarray(energy_ref)
     forces_ref_np = np.asarray(forces_ref)
@@ -322,7 +409,7 @@ def main(argv: list[str] | None = None) -> None:
     print("force max abs diff eV/A:", np.max(np.abs(forces_jit_np - forces_ref_np)))
 
     print("Lowering to StableHLO...")
-    lowered = jit_eval.lower(jnp.asarray(coords))
+    lowered = jit_eval.lower(jnp.asarray(export_coords))
     stablehlo_text = str(lowered.compiler_ir(dialect="stablehlo"))
     stablehlo_path = out_dir / "fennix_bio1_eval.stablehlo.mlir"
     stablehlo_path.write_text(stablehlo_text)
@@ -346,8 +433,9 @@ def main(argv: list[str] | None = None) -> None:
     np.savez(
         out_dir / "reference.npz",
         Z=Z,
-        coordinates=coords,
+        coordinates=export_coords,
         symbols=np.asarray(input_source["symbols"] or [], dtype="U4"),
+        n_walkers=np.asarray([n_walkers], dtype=np.int32),
         energy_ref_ev=energy_ref_np,
         forces_ref_ev_a=forces_ref_np,
         energy_jit_ev=energy_jit_np,
@@ -360,8 +448,8 @@ def main(argv: list[str] | None = None) -> None:
     runtime_ref_path.write_text(
         "\n".join(
             [
-                f"input_dims={','.join(str(int(x)) for x in coords.shape)}",
-                f"coordinates={','.join(f'{float(x):.9g}' for x in coords.reshape(-1))}",
+                f"input_dims={','.join(str(int(x)) for x in export_coords.shape)}",
+                f"coordinates={','.join(f'{float(x):.9g}' for x in export_coords.reshape(-1))}",
                 f"energy_ref_ev={','.join(f'{float(x):.9g}' for x in energy_ref_np.reshape(-1))}",
                 f"forces_ref_ev_a={','.join(f'{float(x):.9g}' for x in forces_ref_np.reshape(-1))}",
                 f"energy_jit_ev={','.join(f'{float(x):.9g}' for x in energy_jit_np.reshape(-1))}",
@@ -377,16 +465,20 @@ def main(argv: list[str] | None = None) -> None:
         "model_path": str(model_path),
         "model_type": "FENNIX-BIO1",
         "n_atoms": n_atoms,
+        "n_walkers": n_walkers,
         "z_list": Z.tolist(),
         "total_charge": total_charge,
         "total_charge_source": total_charge_source,
-        "source_system": input_source,
+        "source_system": {
+            **input_source,
+            "walker_coords_npy": str(walker_coords_path) if walker_coords_path is not None else None,
+        },
         "input_signature": [
-            {"name": "coordinates", "shape": [n_atoms, 3], "dtype": "float32", "units": "Angstrom"}
+            {"name": "coordinates", "shape": list(export_coords.shape), "dtype": "float32", "units": "Angstrom"}
         ],
         "output_signature": [
-            {"name": "energy", "shape": [1], "dtype": "float32", "units": "eV"},
-            {"name": "forces", "shape": [n_atoms, 3], "dtype": "float32", "units": "eV/Angstrom"},
+            {"name": "energy", "shape": list(energy_jit_np.shape), "dtype": "float32", "units": "eV"},
+            {"name": "forces", "shape": list(forces_jit_np.shape), "dtype": "float32", "units": "eV/Angstrom"},
         ],
         "conversion": {"ev_to_kcal": EV_TO_KCAL},
         "fennol": {
@@ -409,7 +501,7 @@ def main(argv: list[str] | None = None) -> None:
             "energy_max_abs_diff_ev": float(np.max(np.abs(energy_jit_np - energy_ref_np))),
             "forces_max_abs_diff_ev_a": float(np.max(np.abs(forces_jit_np - forces_ref_np))),
         },
-        "runtime_note": "This artifact is specialized to fixed atom identity/count. Runtime Python is not required by the intended PJRT C++ consumer.",
+        "runtime_note": "This artifact is specialized to fixed atom identity/count and fixed walker count. Runtime Python is not required by the intended PJRT C++ consumer.",
     }
     (out_dir / "manifest.json").write_text(json.dumps(manifest, indent=2))
 

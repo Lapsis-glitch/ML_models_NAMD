@@ -1,5 +1,8 @@
 import importlib.util
+import json
 from pathlib import Path
+from types import SimpleNamespace
+from unittest import mock
 
 import numpy as np
 import pytest
@@ -47,6 +50,27 @@ class TestLoadPdbSystem:
         out_dir = fennix_export.default_out_dir(42, Path("/tmp/my system.pdb"))
 
         assert out_dir.name == "fennix_bio1_stablehlo_my_system_n42"
+
+    def test_default_out_dir_tracks_walker_count(self):
+        out_dir = fennix_export.default_out_dir(42, Path("/tmp/my system.pdb"), n_walkers=8)
+
+        assert out_dir.name == "fennix_bio1_stablehlo_my_system_n42_w8"
+
+    def test_default_walker_coords_batches_identical_systems(self):
+        base = np.asarray([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]], dtype=np.float32)
+
+        coords = fennix_export.default_walker_coords(base, n_walkers=3)
+
+        assert coords.shape == (3, 2, 3)
+        np.testing.assert_allclose(coords[0], base)
+        np.testing.assert_allclose(coords[1, :, 0], base[:, 0] + 0.05)
+
+    def test_load_walker_coords_npy_rejects_wrong_atom_count(self, tmp_path):
+        coords_path = tmp_path / "walkers.npy"
+        np.save(coords_path, np.zeros((4, 2, 3), dtype=np.float32))
+
+        with pytest.raises(ValueError, match="does not match system atom count"):
+            fennix_export.load_walker_coords_npy(coords_path, n_atoms=3)
 
     def test_reads_atomic_numbers_and_coordinates_from_pdb(self, tmp_path):
         pdb_path = tmp_path / "water.pdb"
@@ -120,4 +144,182 @@ class TestLoadPdbSystem:
 
         with pytest.raises(ValueError, match="Unsupported PDB charge field"):
             fennix_export.load_pdb_system(pdb_path)
+
+
+def _fake_import_module_factory():
+    class FakeLowered:
+        def compiler_ir(self, dialect):
+            if dialect == "stablehlo":
+                return "module @stablehlo"
+            if dialect == "hlo":
+                return SimpleNamespace(as_hlo_text=lambda: "HloModule test")
+            raise AssertionError(dialect)
+
+    class FakeJit:
+        def __init__(self, fn):
+            self._fn = fn
+
+        def __call__(self, coords):
+            return self._fn(coords)
+
+        def lower(self, coords):
+            return FakeLowered()
+
+    class FakeJnp:
+        int32 = np.int32
+
+        @staticmethod
+        def asarray(x):
+            return np.asarray(x)
+
+        @staticmethod
+        def array(x, dtype=None):
+            return np.array(x, dtype=dtype)
+
+        @staticmethod
+        def zeros(shape, dtype=None):
+            return np.zeros(shape, dtype=dtype)
+
+    class FakeModel:
+        cutoff = 7.5
+        energy_unit = "ev"
+        energy_terms = ["nn_energies_mean", "ff_energy"]
+        variables = {"weights": 1}
+        preproc_state = {"capacity": "fixed"}
+
+        def __init__(self):
+            self.preprocessing = SimpleNamespace(process=lambda state, raw: raw)
+
+        def preprocess(self, **raw):
+            self.preproc_state = {"n_atoms": int(raw["natoms"][0])}
+            return raw
+
+        def _energy_and_forces(self, variables, pre):
+            coords = np.asarray(pre["coordinates"], dtype=np.float32)
+            energy = np.array([coords.sum()], dtype=np.float32)
+            forces = -coords.astype(np.float32)
+            return energy, forces, None
+
+        def energy_and_forces(self, **raw):
+            return self._energy_and_forces(self.variables, raw)
+
+    class FakeFENNIX:
+        @staticmethod
+        def load(path):
+            return FakeModel()
+
+    class FakeCompileOptions:
+        def SerializeAsString(self):
+            return b"compile-options"
+
+    class FakeJax:
+        __version__ = "fake-jax"
+
+        @staticmethod
+        def devices():
+            return ["cpu:0"]
+
+        @staticmethod
+        def jit(fn):
+            return FakeJit(fn)
+
+        @staticmethod
+        def vmap(fn, in_axes=0, out_axes=0):
+            assert in_axes == 0
+            assert out_axes == 0
+
+            def wrapped(coords_batch):
+                energies = []
+                forces = []
+                for coords in np.asarray(coords_batch):
+                    energy_i, forces_i = fn(coords)
+                    energies.append(np.asarray(energy_i))
+                    forces.append(np.asarray(forces_i))
+                return np.stack(energies, axis=0), np.stack(forces, axis=0)
+
+            return wrapped
+
+    def fake_import_module(name):
+        if name == "jax":
+            return FakeJax
+        if name == "jax.numpy":
+            return FakeJnp
+        if name == "fennol":
+            return SimpleNamespace(FENNIX=FakeFENNIX)
+        if name == "jax._src.compiler":
+            return SimpleNamespace(get_compile_options=lambda *args: FakeCompileOptions())
+        raise ImportError(name)
+
+    return fake_import_module
+
+
+class TestExporterMain:
+    def test_main_keeps_single_walker_shapes_unchanged(self, tmp_path):
+        out_dir = tmp_path / "single"
+
+        with mock.patch("importlib.import_module", side_effect=_fake_import_module_factory()):
+            fennix_export.main([
+                "--model", str(tmp_path / "fake.fnx"),
+                "--out-dir", str(out_dir),
+                "--z-list", "8,1,1",
+            ])
+
+        manifest = json.loads((out_dir / "manifest.json").read_text())
+        assert manifest["n_walkers"] == 1
+        assert manifest["input_signature"][0]["shape"] == [3, 3]
+        assert manifest["output_signature"][0]["shape"] == [1]
+        assert manifest["output_signature"][1]["shape"] == [3, 3]
+
+        reference = np.load(out_dir / "reference.npz")
+        assert reference["coordinates"].shape == (3, 3)
+
+    def test_main_writes_batched_multi_walker_artifact(self, tmp_path):
+        out_dir = tmp_path / "batched"
+        walker_coords = np.asarray(
+            [
+                [[0.0, 0.0, 0.0], [0.9, 0.0, 0.0], [-0.2, 0.8, 0.0]],
+                [[0.1, 0.0, 0.0], [1.0, 0.0, 0.0], [-0.1, 0.8, 0.0]],
+                [[0.2, 0.0, 0.0], [1.1, 0.0, 0.0], [0.0, 0.8, 0.0]],
+            ],
+            dtype=np.float32,
+        )
+        coords_path = tmp_path / "walkers.npy"
+        np.save(coords_path, walker_coords)
+
+        with mock.patch("importlib.import_module", side_effect=_fake_import_module_factory()):
+            fennix_export.main([
+                "--model", str(tmp_path / "fake.fnx"),
+                "--out-dir", str(out_dir),
+                "--z-list", "8,1,1",
+                "--walker-coords-npy", str(coords_path),
+            ])
+
+        manifest = json.loads((out_dir / "manifest.json").read_text())
+        assert manifest["n_walkers"] == 3
+        assert manifest["input_signature"][0]["shape"] == [3, 3, 3]
+        assert manifest["output_signature"][0]["shape"] == [3, 1]
+        assert manifest["output_signature"][1]["shape"] == [3, 3, 3]
+        assert manifest["source_system"]["walker_coords_npy"] == str(coords_path.resolve())
+
+        reference = np.load(out_dir / "reference.npz")
+        np.testing.assert_allclose(reference["coordinates"], walker_coords)
+        assert reference["energy_jit_ev"].shape == (3, 1)
+        assert reference["forces_jit_ev_a"].shape == (3, 3, 3)
+
+        runtime_ref = (out_dir / "reference_runtime.txt").read_text()
+        assert "input_dims=3,3,3" in runtime_ref
+
+    def test_main_rejects_conflicting_walker_count(self, tmp_path):
+        coords_path = tmp_path / "walkers.npy"
+        np.save(coords_path, np.zeros((2, 3, 3), dtype=np.float32))
+
+        with mock.patch("importlib.import_module", side_effect=_fake_import_module_factory()):
+            with pytest.raises(SystemExit, match="does not match --walker-coords-npy batch size 2"):
+                fennix_export.main([
+                    "--model", str(tmp_path / "fake.fnx"),
+                    "--z-list", "8,1,1",
+                    "--n-walkers", "3",
+                    "--walker-coords-npy", str(coords_path),
+                ])
+
 

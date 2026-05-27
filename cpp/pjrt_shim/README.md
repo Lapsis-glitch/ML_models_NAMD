@@ -53,6 +53,38 @@ XLA_PYTHON_CLIENT_PREALLOCATE=false conda run -n fennix python \
 If `--total-charge` is omitted in `--pdb` mode, the exporter sums any formal
 PDB charge fields it finds and otherwise falls back to `0`.
 
+Experimental same-system multi-walker batching is also available. This keeps
+atom count / species order / total charge fixed and adds a leading walker axis
+to the exported coordinate and force tensors:
+
+```bash
+cd /home/rat/PycharmProjects/ML_models_NAMD
+python - <<'PY'
+import numpy as np
+
+coords = np.asarray(
+    [
+        [[0.000, 0.000, 0.000], [0.957, 0.000, 0.000], [-0.240, 0.927, 0.000]],
+        [[0.050, 0.000, 0.000], [1.007, 0.000, 0.000], [-0.190, 0.927, 0.000]],
+        [[0.100, 0.000, 0.000], [1.057, 0.000, 0.000], [-0.140, 0.927, 0.000]],
+    ],
+    dtype=np.float32,
+)
+np.save("/tmp/fennix_walkers.npy", coords)
+PY
+XLA_PYTHON_CLIENT_PREALLOCATE=false conda run -n fennix python \
+  scripts/export_fennix_bio1_stablehlo.py \
+  --model models/fennix-bio1S.fnx \
+  --pdb namd_water_test/water.qm.pdb \
+  --walker-coords-npy /tmp/fennix_walkers.npy
+```
+
+When `n_walkers > 1`, the manifest input shape becomes `[n_walkers, n_atoms, 3]`
+and the output shapes become `[n_walkers, 1]` for energy and
+`[n_walkers, n_atoms, 3]` for forces. The current native probe is manifest-
+driven, but this batched mode should still be treated as experimental until it
+is validated end-to-end against the CUDA PJRT runtime.
+
 That export now writes these sidecars alongside the StableHLO MLIR:
 
 - `compile_options.pb` — serialized minimal JAX compile options used by the
