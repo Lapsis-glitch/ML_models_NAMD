@@ -62,13 +62,13 @@ class XMACE_TS_Wrapper(nn.Module):
         self.state_idx: int = int(state_idx)
         self.n_states: int = n_states
 
-        # Cached constants (populated lazily)
+        # Cached constants (populated lazily).  Keyed on atom count N only;
+        # node_attrs is recomputed each step (sync-free) rather than cached
+        # against Z.
         self._cached_N: int = -1
-        self._cached_Z:          torch.Tensor = torch.empty(0, dtype=torch.int64)
         self._cached_batch:      torch.Tensor = torch.empty(0)
         self._cached_ptr:        torch.Tensor = torch.empty(0)
         self._cached_cell:       torch.Tensor = torch.empty(0)
-        self._cached_node_attrs: torch.Tensor = torch.empty(0)
 
         self.ev_to_kcal = torch.tensor(EV_TO_KCAL, dtype=torch.float64)
 
@@ -92,20 +92,19 @@ class XMACE_TS_Wrapper(nn.Module):
         coords32 = coords.to(torch.float32).detach().requires_grad_(True)
         Z = Z.to(torch.int64)
 
-        shape_changed = N != self._cached_N
-        z_changed = shape_changed or not torch.equal(Z, self._cached_Z)
-
-        if shape_changed:
+        # Constant tensors keyed on atom count N only (no host sync).  The
+        # old code also keyed on Z via a per-step torch.equal(Z, ...) — a
+        # Python bool that forces a GPU→CPU sync every MD step.  node_attrs
+        # is instead recomputed below: cheap, sync-free, always correct.
+        if N != self._cached_N:
             self._cached_N = N
             self._cached_batch = torch.zeros(N, dtype=torch.long, device=dev)
             self._cached_ptr   = torch.tensor([0, N], dtype=torch.long, device=dev)
             self._cached_cell  = torch.zeros((3, 3), dtype=torch.float32, device=dev)
 
-        if z_changed:
-            self._cached_Z = Z.clone()
-            atomic_numbers_dev = self.atomic_numbers.to(dev)
-            match = Z.unsqueeze(1) == atomic_numbers_dev.unsqueeze(0)
-            self._cached_node_attrs = match.to(torch.float32)
+        # One-hot node attributes — always recomputed (no sync, no caching).
+        atomic_numbers_dev = self.atomic_numbers.to(dev)
+        node_attrs = (Z.unsqueeze(1) == atomic_numbers_dev.unsqueeze(0)).to(torch.float32)
 
         edge_index, _, _ = build_edges(coords32, self.r_max)
         shifts = torch.zeros((edge_index.size(1), 3), dtype=torch.float32, device=dev)
@@ -113,7 +112,7 @@ class XMACE_TS_Wrapper(nn.Module):
         data = {
             "positions":      coords32,
             "atomic_numbers": Z,
-            "node_attrs":     self._cached_node_attrs,
+            "node_attrs":     node_attrs,
             "edge_index":     edge_index,
             "shifts":         shifts,
             "cell":           self._cached_cell,

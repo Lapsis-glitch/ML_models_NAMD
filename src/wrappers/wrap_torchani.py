@@ -210,23 +210,26 @@ class TorchANI_Wrapper(nn.Module):
         Z = Z.to(torch.int64)
         spec_flat = self._z_to_spec(Z)  # [N_total]
 
-        # Determine max molecule size for padding.
+        # Determine max molecule size for padding (one shape sync — kept).
         n_atoms = ptr[1:] - ptr[:-1]           # [B]
         N_max = int(n_atoms.max().item())
 
-        # Build padded species [B, N_max] and coords [B, N_max, 3].
-        species_pad = torch.full(
-            (B, N_max), -1, dtype=torch.long, device=dev,
-        )
-        coords_pad = torch.zeros(
-            (B, N_max, 3), dtype=torch.float32, device=dev,
-        )
-        for b in range(B):
-            s = int(ptr[b].item())
-            e = int(ptr[b + 1].item())
-            n = e - s
-            species_pad[b, :n] = spec_flat[s:e]
-            coords_pad[b, :n, :] = coords[s:e]
+        # Local index of each atom within its molecule, computed sync-free
+        # (no per-molecule int(ptr[b].item()) host syncs).  batch/ptr are
+        # moved onto the coords device with a no-op .to(dev) when already
+        # co-located (NAMD passes everything on the model device).
+        batch = batch.to(dev)
+        ptr_dev = ptr.to(dev)
+        local_pos = torch.arange(N_total, device=dev) - ptr_dev[:-1].index_select(0, batch)  # [N_total]
+
+        # Build padded species [B, N_max] and coords [B, N_max, 3] with a
+        # single scatter each (no Python loop).  Padding atoms keep species
+        # -1 and zero coords exactly as before.
+        species_pad = torch.full((B, N_max), -1, dtype=torch.long, device=dev)
+        coords_pad = torch.zeros((B, N_max, 3), dtype=torch.float32, device=dev)
+        pad_idx: List[Optional[torch.Tensor]] = [batch, local_pos]
+        species_pad.index_put_(pad_idx, spec_flat)
+        coords_pad.index_put_(pad_idx, coords.to(torch.float32))
 
         coords_pad = coords_pad.requires_grad_(True)
 
@@ -248,13 +251,13 @@ class TorchANI_Wrapper(nn.Module):
         ha2kcal = self.ha_to_kcal.to(dev)
         energies = energies_ha.squeeze(-1).to(torch.float64) * ha2kcal  # [B]
 
-        forces_list: List[torch.Tensor] = []
-        for b in range(B):
-            s = int(ptr[b].item())
-            e = int(ptr[b + 1].item())
-            n = e - s
-            forces_list.append(forces_pad[b, :n, :])
-        forces = torch.cat(forces_list, dim=0).to(torch.float64) * ha2kcal
+        # Gather each real atom's force from its [molecule, local] slot,
+        # sync-free (no per-molecule int(ptr[b].item()) loop).  flat_idx
+        # selects rows in global atom order 0..N_total-1, which equals the
+        # block-0-then-block-1 layout the old torch.cat produced.
+        flat_idx = batch * N_max + local_pos                            # [N_total]
+        forces = forces_pad.reshape(B * N_max, 3).index_select(0, flat_idx)
+        forces = forces.to(torch.float64) * ha2kcal
 
         charges = torch.zeros(N_total, dtype=torch.float64, device=dev)
 
