@@ -7,14 +7,17 @@ return ``(species, energies)``.  Forces are obtained via
 ``torch.autograd.grad``.
 
 Exposes the standard NAMD MLIP interface:
-    forward(coords, Z, pc_coords, pc_charges)
-        -> (energy_kcal, forces_kcal_A, charges_e)
-    forward_batch(coords, Z, batch, ptr, pc_coords, pc_charges)
-        -> (energies, forces, charges)
+    forward(coords, Z, pc_coords, pc_charges, cell)
+        -> (energy_kcal, forces_kcal_A, charges_e, virial_kcal)
+    forward_batch(coords, Z, batch, ptr, pc_coords, pc_charges, cells)
+        -> (energies, forces, charges, virials)
 
 TorchANI specifics:
   * The model builds its own neighbor list internally (AEV computer),
-    so the shared ``build_edges`` is **not** used here.
+    so the shared ``build_edges`` is **not** used here.  That stays true
+    for periodic systems: TorchANI takes the cell itself and builds the
+    periodic neighbour list, so the shared ``build_edges_pbc`` is not used
+    either.
   * Native output units are **Hartree** → converted via
     ``HARTREE_TO_KCAL``.
   * Species are 0-indexed type IDs, not raw atomic numbers.
@@ -22,16 +25,39 @@ TorchANI specifics:
   * Forces must be computed via ``torch.autograd.grad``.
   * Batched evaluation uses TorchANI's native ``[B, N, 3]`` padded
     format; variable-size molecules are padded with species index ``-1``.
+
+Periodic boundaries:
+  The exported artifact's own ``forward`` only takes ``(species, coords)``,
+  but the TorchANI model it wraps is still reachable as ``inner.ani`` and
+  that one accepts ``cell`` and ``pbc``.  So a periodic step calls the inner
+  model directly.  Two things are worth knowing about that path.  TorchANI
+  wraps the coordinates into the central cell for us, so NAMD does not have
+  to send pre-wrapped positions.  And its periodic neighbour list enumerates
+  every image within the cutoff rather than taking the nearest one, so
+  unlike the shared minimum-image builders it is happy with a box smaller
+  than twice the cutoff.
+
+The virial:
+  TorchANI has no stress or virial machinery of its own, so this wrapper builds
+  one the generic way described in ``src/virial.py``: deform the positions and
+  the box by the same small strain and differentiate the energy against it.
+  Nothing extra is spent doing so, because forces here already come from an
+  autograd call and the strain rides along in the same backward pass.  There is
+  no shift vector to deform by hand either, since TorchANI rebuilds its images
+  from whichever cell it is given and the strained cell is what it is given.
 """
 
 import argparse
 
 import torch
 from torch import nn
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from ..constants import HARTREE_TO_KCAL
+from ..edges import cell_is_periodic
 from ..export import export_wrapped
+from ..virial import (make_strain, apply_strain, forces_and_virial, finalize,
+                      zero_virial, zero_virials)
 
 
 # -------------------------------------------------------------------
@@ -39,7 +65,7 @@ from ..export import export_wrapped
 # -------------------------------------------------------------------
 
 # ANI-2x element order.  Other ANI variants may differ.
-_ANI2X_ELEMENTS: List[int] = [1, 6, 7, 8, 16, 17]  # H C N O S Cl
+_ANI2X_ELEMENTS: List[int] = [1, 6, 7, 8, 16, 9, 17]  # H C N O S F Cl (torchani ANI2x.atomic_numbers)
 
 # ANI-1x / ANI-1ccx element order.
 _ANI1X_ELEMENTS: List[int] = [1, 6, 7, 8]  # H C N O
@@ -71,7 +97,16 @@ class TorchANI_Wrapper(nn.Module):
         device:         ``"cpu"`` or ``"cuda"``.
         element_list:   Ordered list of atomic numbers corresponding to
                         TorchANI species indices 0, 1, 2, ….
-                        Defaults to ANI-2x order ``[1,6,7,8,16,17]``.
+                        Defaults to ANI-2x order ``[1,6,7,8,16,9,17]`` (H C N O S F Cl).
+        lean:           Opt-in (default False): drop per-call host work that
+                        does not change any result.  The Z -> species table
+                        is kept on the model device instead of being copied
+                        host -> device every call, the element-range checks
+                        become device-side asserts (``torch._assert_async``,
+                        no host sync; a bad Z aborts instead of raising a
+                        catchable error), and the Hartree -> kcal/mol factor
+                        tensor is moved to the device once instead of being
+                        copied there on every call.  Outputs are bit-identical.
     """
 
     def __init__(
@@ -79,6 +114,7 @@ class TorchANI_Wrapper(nn.Module):
         model_path: str,
         device: str = "cpu",
         element_list: Optional[List[int]] = None,
+        lean: bool = False,
     ):
         super().__init__()
 
@@ -88,6 +124,20 @@ class TorchANI_Wrapper(nn.Module):
         self.inner = torch.jit.load(model_path, map_location=device)
         self.inner.eval()
 
+        # The periodic path calls the inner TorchANI model directly, since the
+        # export wrapper's own forward has no room for a cell.  TorchScript
+        # compiles both branches whatever the cell turns out to be at runtime,
+        # so an artifact without that submodule cannot be used at all, and it
+        # is better to say why here than to fail inside the compiler.
+        if not hasattr(self.inner, "ani"):
+            raise RuntimeError(
+                "TorchScript artifact does not expose the TorchANI model as "
+                "'.ani', so this wrapper cannot reach the periodic entry point "
+                "and will not compile. Re-export the model with "
+                "src/training/train_torchani.py, which wraps it in "
+                "_TorchANIExportWrapper and keeps '.ani' reachable."
+            )
+
         try:
             first_param = next(self.inner.parameters())
             self.model_uses_fp32: bool = first_param.dtype == torch.float32
@@ -95,6 +145,7 @@ class TorchANI_Wrapper(nn.Module):
             self.model_uses_fp32 = True
 
         self.z_to_species = _build_z_to_species(element_list)
+        self.lean: bool = bool(lean)
 
         # TorchANI outputs Hartree; we need kcal/mol.
         self.ha_to_kcal = torch.tensor(HARTREE_TO_KCAL, dtype=torch.float64)
@@ -105,12 +156,40 @@ class TorchANI_Wrapper(nn.Module):
 
         self.supports_batch: bool = True
 
+        # Says this model takes a cell argument.  NAMD reads the forward()
+        # signature as well and refuses to load a model whose flag and
+        # signature disagree, so the two must be kept in step.
+        self.supports_pbc: bool = True
+
     # -----------------------------------------------------------------
     #  Helpers
     # -----------------------------------------------------------------
 
+    def _ha2kcal(self, dev: torch.device) -> torch.Tensor:
+        """The Hartree -> kcal/mol factor on *dev* (lean: moved once, then reused)."""
+        if self.lean and self.ha_to_kcal.device != dev:
+            self.ha_to_kcal = self.ha_to_kcal.to(dev)
+        return self.ha_to_kcal.to(dev)
+
     def _z_to_spec(self, Z: torch.Tensor) -> torch.Tensor:
         """Atomic numbers → TorchANI species indices."""
+        if self.lean:
+            table = self.z_to_species
+            if table.device != Z.device:
+                table = table.to(Z.device)
+                self.z_to_species = table
+            max_z = int(table.size(0)) - 1
+            torch._assert_async(
+                ((Z >= 0) & (Z <= max_z)).all(),
+                "Encountered atomic number outside the model's element set",
+            )
+            species = table[Z.clamp(0, max_z)]
+            torch._assert_async(
+                (species >= 0).all(),
+                "Encountered atomic number not registered in the TorchANI "
+                "element list — check the --elements argument",
+            )
+            return species
         table = self.z_to_species.to(Z.device)
         max_z = int(table.size(0)) - 1
         if bool((Z < 0).any()) or bool((Z > max_z).any()):
@@ -137,6 +216,7 @@ class TorchANI_Wrapper(nn.Module):
         Z: torch.Tensor,
         pc_coords: torch.Tensor,
         pc_charges: torch.Tensor,
+        cell: torch.Tensor,
     ):
         dev = coords.device
         N = coords.size(0)
@@ -146,33 +226,160 @@ class TorchANI_Wrapper(nn.Module):
         positions = coords.to(torch.float32).unsqueeze(0)       # [1, N, 3]
         positions = positions.requires_grad_(True)
 
-        # TorchANI forward: (species, coordinates) → (species, energies)
-        _, energy_ha = self.inner(species, positions)            # [1, 1]
+        # NAMD sends the box as [1, 3, 3], all zeros when the system is not
+        # periodic.  Anything else would be a caller bug rather than something
+        # to guess about, so just take the first entry.
+        cell3 = cell.reshape(-1, 3, 3)[0]
+        periodic = cell_is_periodic(cell3)
 
-        # Forces via autograd
-        grad_list = torch.autograd.grad(
-            [energy_ha.sum()],
-            [positions],
-            create_graph=False,
-            retain_graph=False,
-        )
-        grad_opt = grad_list[0]
-        assert grad_opt is not None, "autograd returned None gradient"
-        grad = grad_opt                                           # [1, N, 3]
+        # The handle the virial is differentiated against.  It is built in the
+        # model's own float32 so the periodic call below has nothing to promote,
+        # and it holds zero, so the geometry TorchANI sees is the geometry it
+        # would have seen without it.
+        cell32 = cell3.to(torch.float32)
+        D = make_strain(cell32)
 
-        forces_ha = -grad.squeeze(0)                             # [N, 3]
+        if periodic:
+            # Call the inner TorchANI model rather than the export wrapper:
+            # only the inner one takes a cell.  The trailing arguments are its
+            # defaults (charge, atomic, ensemble_values, molecule indices), and
+            # all three box directions are periodic because NAMD only ever
+            # hands us a full box.
+            #
+            # Positions and box are deformed together.  TorchANI works out its
+            # own images from the cell it is handed, so deforming that cell is
+            # what carries the strain through to the imaged neighbours; the
+            # shift vectors apply_strain also returns have no use here.
+            no_shifts = torch.zeros((0, 3), dtype=torch.float32, device=dev)
+            coords_s, cell_s, _ = apply_strain(positions, cell32, no_shifts, D)
+            pbc = torch.ones(3, dtype=torch.bool, device=dev)
+            result = self.inner.ani(
+                (species, coords_s), cell_s, pbc,
+                0, False, False, None,
+            )
+            energy_ha = result[1]
+        else:
+            # TorchANI forward: (species, coordinates) → (species, energies)
+            _, energy_ha = self.inner(species, positions)        # [1, 1]
+
+        # Forces and virial out of one backward pass.  The scale stays at 1.0
+        # so both come back in Hartree and the conversion below happens in
+        # float64, which is the order the forces were computed in before the
+        # virial existed and is what keeps them bit for bit the same.
+        grad_forces, grad_virial = forces_and_virial(energy_ha, positions, D, 1.0)
+
+        forces_ha = grad_forces.squeeze(0)                       # [N, 3]
         energy_ha_scalar = energy_ha.squeeze()                   # scalar
 
-        ha2kcal = self.ha_to_kcal.to(dev)
+        ha2kcal = self._ha2kcal(dev)
         energy  = energy_ha_scalar.to(torch.float64) * ha2kcal
         forces  = forces_ha.to(torch.float64) * ha2kcal
         charges = torch.zeros(N, dtype=torch.float64, device=dev)
 
-        return energy, forces, charges
+        # A cluster never touched the strain, so the gradient against it is
+        # absent and the helper hands back zeros.  Saying so here rather than
+        # relying on that keeps the non-periodic answer stated rather than
+        # inferred.
+        if periodic:
+            virial = finalize(grad_virial.to(torch.float64) * ha2kcal)
+        else:
+            virial = zero_virial(coords)
+
+        return energy, forces, charges, virial
 
     # -----------------------------------------------------------------
     #  Batched forward
     # -----------------------------------------------------------------
+
+    def _forward_batch_pbc(
+        self,
+        coords: torch.Tensor,
+        Z: torch.Tensor,
+        ptr: torch.Tensor,
+        cells: torch.Tensor,
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+        """
+        Periodic batched evaluation, one molecule at a time.
+
+        The padded ``[B, N_max, 3]`` call that the non-periodic path uses is
+        not an option here: TorchANI's periodic neighbour list builds its pair
+        indices from the atom dimension alone and ignores the molecule
+        dimension, so with more than one molecule every walker after the first
+        gets a neighbour list belonging to the first one.  Walkers also carry
+        their own boxes, which the padded call has nowhere to put.  Looping is
+        cheap next to the model itself, since a batch is a handful of walkers.
+        """
+        dev = coords.device
+        N_total = coords.size(0)
+        B = ptr.size(0) - 1
+        ptr_dev = ptr.to(dev)
+        pbc = torch.ones(3, dtype=torch.bool, device=dev)
+        ha2kcal = self._ha2kcal(dev)
+
+        energy_chunks: List[torch.Tensor] = []
+        force_chunks: List[torch.Tensor] = []
+        virial_chunks: List[torch.Tensor] = []
+
+        for b in range(B):
+            start = int(ptr_dev[b])
+            end = int(ptr_dev[b + 1])
+            if end <= start:
+                # An empty walker still owes the caller an energy slot.  These
+                # are collected in float64 so that a molecule contributing a
+                # placeholder and one contributing a real energy always stack.
+                energy_chunks.append(
+                    torch.zeros((), dtype=torch.float64, device=dev)
+                )
+                # It owes a virial slot too.  Skipping it here would shorten
+                # the stack below, and every walker after the empty one would
+                # then be handed the virial belonging to its neighbour.
+                virial_chunks.append(
+                    torch.zeros((3, 3), dtype=torch.float64, device=dev)
+                )
+                continue
+
+            species = self._z_to_spec(Z[start:end]).unsqueeze(0)     # [1, n]
+            positions = coords[start:end].to(torch.float32).unsqueeze(0)
+            positions = positions.requires_grad_(True)
+
+            # Each walker carries its own box, so each gets its own strain.
+            cell32 = cells[b].to(torch.float32)
+            D = make_strain(cell32)
+            no_shifts = torch.zeros((0, 3), dtype=torch.float32, device=dev)
+            coords_s, cell_s, _ = apply_strain(positions, cell32, no_shifts, D)
+
+            result = self.inner.ani(
+                (species, coords_s), cell_s, pbc,
+                0, False, False, None,
+            )
+            energy_ha = result[1]
+
+            # One backward pass per walker for both, as in forward().
+            grad_forces, grad_virial = forces_and_virial(
+                energy_ha, positions, D, 1.0,
+            )
+
+            force_chunks.append(grad_forces.squeeze(0))               # [n, 3]
+            energy_chunks.append(energy_ha.squeeze().to(torch.float64))
+            virial_chunks.append(
+                finalize(grad_virial.to(torch.float64) * ha2kcal)
+            )
+
+        energies = torch.stack(energy_chunks) * ha2kcal
+
+        if len(force_chunks) > 0:
+            forces = torch.cat(force_chunks, 0).to(torch.float64) * ha2kcal
+        else:
+            forces = torch.zeros((N_total, 3), dtype=torch.float64, device=dev)
+
+        if len(virial_chunks) > 0:
+            virials = torch.stack(virial_chunks)
+        else:
+            virials = zero_virials(B, coords)
+
+        charges = torch.zeros(N_total, dtype=torch.float64, device=dev)
+
+        return energies, forces, charges, virials
 
     @torch.jit.export
     def forward_batch(
@@ -183,13 +390,15 @@ class TorchANI_Wrapper(nn.Module):
         ptr: torch.Tensor,
         pc_coords: torch.Tensor,
         pc_charges: torch.Tensor,
+        cells: torch.Tensor,
     ):
         """
         Evaluate TorchANI for a batch of molecules.
 
         Molecules are padded to equal length and passed to TorchANI in
         its native ``[B, N_max, 3]`` format.  Padding atoms have
-        species index ``-1``.
+        species index ``-1``.  Periodic batches cannot use that layout and
+        go one molecule at a time instead; see ``_forward_batch_pbc``.
 
         Args:
             coords:     [N_total, 3]  float64
@@ -198,16 +407,27 @@ class TorchANI_Wrapper(nn.Module):
             ptr:        [B+1]         int64
             pc_coords:  [P, 3]        float64  (ignored)
             pc_charges: [P]           float64  (ignored)
+            cells:      [B, 3, 3]     one box per molecule, rows are lattice
+                                      vectors; all zeros means non-periodic.
 
         Returns:
             energies:  [B]           float64  kcal/mol.
             forces:    [N_total, 3]  float64  kcal/mol/Å.
             charges:   [N_total]     float64  e.
+            virials:   [B, 3, 3]     float64  kcal/mol, one per molecule,
+                                     all zero when the batch is not periodic.
         """
         dev = coords.device
         N_total = coords.size(0)
         B = ptr.size(0) - 1
         Z = Z.to(torch.int64)
+
+        # NAMD guarantees every walker in a batch agrees about periodicity, so
+        # the first cell decides for the whole batch.
+        cells3 = cells.reshape(-1, 3, 3)
+        if cell_is_periodic(cells3[0]):
+            return self._forward_batch_pbc(coords, Z, ptr, cells3)
+
         spec_flat = self._z_to_spec(Z)  # [N_total]
 
         # Determine max molecule size for padding (one shape sync — kept).
@@ -248,7 +468,7 @@ class TorchANI_Wrapper(nn.Module):
         forces_pad = -grad  # [B, N_max, 3]
 
         # Un-pad back to concatenated layout.
-        ha2kcal = self.ha_to_kcal.to(dev)
+        ha2kcal = self._ha2kcal(dev)
         energies = energies_ha.squeeze(-1).to(torch.float64) * ha2kcal  # [B]
 
         # Gather each real atom's force from its [molecule, local] slot,
@@ -261,7 +481,10 @@ class TorchANI_Wrapper(nn.Module):
 
         charges = torch.zeros(N_total, dtype=torch.float64, device=dev)
 
-        return energies, forces, charges
+        # Nothing was strained on this path, so there is no virial to report.
+        virials = zero_virials(B, coords)
+
+        return energies, forces, charges, virials
 
 
 # -------------------------------------------------------------------
@@ -277,7 +500,7 @@ if __name__ == "__main__":
     parser.add_argument("--out", default="mlff_model.pt",
                         help="Output TorchScript file")
     parser.add_argument("--device", default="cpu")
-    parser.add_argument("--elements", default="1,6,7,8,16,17",
+    parser.add_argument("--elements", default="1,6,7,8,16,9,17",
                         help="Comma-separated atomic numbers in species order")
 
     args = parser.parse_args()

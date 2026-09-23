@@ -1,0 +1,2372 @@
+Charm++: standalone mode (not using charmrun)
+Charm++> Running in non-SMP mode: 1 processes (PEs)
+Charm++> Using recursive bisection (scheme 3) for topology aware partitions
+Converse/Charm++ Commit ID: v80000
+Charm++> scheduler running in netpoll mode.
+CharmLB> Load balancer assumes all CPUs are same.
+Charm++> Running on 1 hosts (1 sockets x 8 cores x 2 PUs = 16-way SMP)
+Charm++> cpu topology info is gathered in 0.000 seconds.
+CharmLB> Load balancing instrumentation for communication is off.
+Info: NAMD 3.1alpha4pre for Linux-x86_64-netlrts
+Info: 
+Info: Please visit http://www.ks.uiuc.edu/Research/namd/
+Info: for updates, documentation, and support information.
+Info: 
+Info: Please cite Phillips et al., J. Chem. Phys. 153:044130 (2020) doi:10.1063/5.0014475
+Info: in all publications reporting results obtained with NAMD.
+Info: 
+Info: Based on Charm++/Converse 80000 for netlrts-linux-x86_64
+Info: Built Fri Jun 5 14:59:11 CEST 2026 by rat on Cerb
+Info: 1 NAMD  3.1alpha4pre  Linux-x86_64-netlrts  1    Cerb  rat
+Info: Running on 1 processors, 1 nodes, 1 physical nodes.
+Info: CPU topology information available.
+Info: Charm++/Converse parallel runtime startup completed at 0.00316688 s
+Info: 469.102 MB of memory in use based on /proc/self/stat
+Info: Configuration file is /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/diagnostics/pbc_feedtest/pbc64_200.conf
+Info: Changed directory to /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/diagnostics/pbc_feedtest
+TCL: Suspending until startup complete.
+Warning: Option "1-4scaling" has been deprecated. Instead use "oneFourScaling".
+Info: EXTENDED SYSTEM FILE   /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/diagnostics/pbc_feedtest/cell_64.xsc
+Info: SIMULATION PARAMETERS:
+Info: TIMESTEP               0.25
+Info: NUMBER OF STEPS        0
+Info: STEPS PER CYCLE        1
+Info: PERIODIC CELL BASIS 1  64 0 0
+Info: PERIODIC CELL BASIS 2  0 64 0
+Info: PERIODIC CELL BASIS 3  0 0 64
+Info: PERIODIC CELL CENTER   0 0 0
+Info: WRAPPING ALL CLUSTERS AROUND PERIODIC BOUNDARIES ON OUTPUT.
+Info: LOAD BALANCER  Centralized
+Info: LOAD BALANCING STRATEGY  New Load Balancers -- DEFAULT
+Info: LDB PERIOD             200 steps
+Info: FIRST LDB TIMESTEP     5
+Info: LAST LDB TIMESTEP     -1
+Info: LDB BACKGROUND SCALING 1
+Info: HOM BACKGROUND SCALING 1
+Info: PME BACKGROUND SCALING 1
+Info: MIN ATOMS PER PATCH    40
+Info: EMPTY PATCH LOAD       40 ATOMS
+Info: INITIAL TEMPERATURE    300
+Info: CENTER OF MASS MOVING INITIALLY? NO
+Info: DIELECTRIC             1
+Info: EXCLUDE                SCALED ONE-FOUR
+Info: 1-4 ELECTROSTATICS SCALED BY 0.833333
+Info: MODIFIED 1-4 VDW PARAMETERS WILL BE USED
+Info: NO DCD TRAJECTORY OUTPUT
+Info: NO EXTENDED SYSTEM TRAJECTORY OUTPUT
+Info: NO VELOCITY DCD OUTPUT
+Info: NO FORCE DCD OUTPUT
+Info: OUTPUT FILENAME        /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/diagnostics/pbc_feedtest/out_pbc64_200
+Info: NO RESTART FILE
+Info: NAMD will save positions and velocities to /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/diagnostics/pbc_feedtest/out_pbc64_200.crash.csv when  atoms are moving too fast.
+Info: SWITCHING ACTIVE
+Info: SWITCHING ON           10
+Info: SWITCHING OFF          12
+Info: PAIRLIST DISTANCE      14
+Info: PAIRLIST SHRINK RATE   0.01
+Info: PAIRLIST GROW RATE     0.01
+Info: PAIRLIST TRIGGER       0.3
+Info: PAIRLISTS PER CYCLE    2
+Info: PAIRLISTS ENABLED
+Info: MARGIN                 0
+Info: HYDROGEN GROUP CUTOFF  2.5
+Info: PATCH DIMENSION        16.5
+Info: ENERGY OUTPUT STEPS    10
+Info: ENERGY EVALUATION STEPS    10
+Info: OUTPUT ENERGY PRECISION 4
+Info: CROSSTERM ENERGY INCLUDED IN DIHEDRAL
+Info: TIMING OUTPUT STEPS    100
+Info: QM FORCES ACTIVE
+Info: QM PDB PARAMETER FILE: /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/mono_shell5/qm.pdb
+Info: QM SOFTWARE: fennol
+Info: QM ATOM CHARGES FROM QM SOFTWARE: NONE
+Info: QM EXECUTABLE PATH: /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/models/fennix_enzyme/mono_shell5/manifest.json
+Info: QM COLUMN: beta
+Info: QM WILL DETECT BONDS BETWEEN QM AND MM ATOMS.
+Info: QM BOND COLUMN: occ
+Info: QM-MM BOND SCHEME: Charge Shift.
+Info: QM BASE DIRECTORY: /tmp/namd_feedtest_pbc64
+Info: QM FORCES WILL REPLACE ALL NAMD FORCES!
+Info: QM POINT CHARGES WILL BE SELECTED EVERY 1 STEPS.
+Info: QM executions per node: 1
+Info: LANGEVIN DYNAMICS ACTIVE
+Info: LANGEVIN TEMPERATURE   300
+Info: LANGEVIN USING BBK INTEGRATOR
+Info: LANGEVIN DAMPING COEFFICIENT IS 5 INVERSE PS
+Info: LANGEVIN DYNAMICS APPLIED TO HYDROGENS
+Info: PARTICLE MESH EWALD (PME) ACTIVE
+Info: PME TOLERANCE               1e-06
+Info: PME EWALD COEFFICIENT       0.257952
+Info: PME INTERPOLATION ORDER     4
+Info: PME GRID DIMENSIONS         64 64 64
+Info: PME MAXIMUM GRID SPACING    1
+Info: Attempting to read FFTW data from FFTW_NAMD_3.1alpha4pre_Linux-x86_64-netlrts.txt
+Info: Optimizing 6 FFT steps.  1... 2... 3... 4... 5... 6...   Done.
+Info: Writing FFTW data to FFTW_NAMD_3.1alpha4pre_Linux-x86_64-netlrts.txt
+Info: FULL ELECTROSTATIC EVALUATION FREQUENCY      1
+Info: USING VERLET I (r-RESPA) MTS SCHEME.
+Info: C1 SPLITTING OF LONG RANGE ELECTROSTATICS
+Info: PLACING ATOMS IN PATCHES BY HYDROGEN GROUPS
+Info: RIGID BONDS TO HYDROGEN : ALL
+Info:         ERROR TOLERANCE : 1e-08
+Info:          MAX ITERATIONS : 100
+Info: RIGID WATER USING SETTLE ALGORITHM
+Info: RANDOM NUMBER SEED     1780670205
+Info: USE HYDROGEN BONDS?    NO
+Info: Using AMBER format force field!
+Info: AMBER PARM FILE        /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/mono_shell5/system.prmtop
+Info: COORDINATE PDB         /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/mono_shell5/system.pdb
+Info: Exclusions will be read from PARM file!
+Info: SCNB (VDW SCALING)     2
+Info: USING ARITHMETIC MEAN TO COMBINE L-J SIGMA PARAMETERS
+Info: === Start reading AMBER parm7 format file /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/mono_shell5/system.prmtop ===
+Info: Complete reading ATOM_NAME with 4525 fields.
+Info: Complete reading CHARGE with 4525 fields.
+Info: Complete reading ATOMIC_NUMBER with 4525 fields.
+Info: Complete reading MASS with 4525 fields.
+Info: Complete reading ATOM_TYPE_INDEX with 4525 fields.
+Info: Complete reading NUMBER_EXCLUDED_ATOMS with 4525 fields.
+Info: Complete reading NONBONDED_PARM_INDEX with 256 fields.
+Info: Complete reading RESIDUE_LABEL with 635 fields.
+Info: Complete reading RESIDUE_POINTER with 635 fields.
+Info: Complete reading BOND_FORCE_CONSTANT with 60 fields.
+Info: Complete reading BOND_EQUIL_VALUE with 60 fields.
+Info: Complete reading ANGLE_FORCE_CONSTANT with 133 fields.
+Info: Complete reading ANGLE_EQUIL_VALUE with 133 fields.
+Info: Complete reading DIHEDRAL_FORCE_CONSTANT with 175 fields.
+Info: Complete reading DIHEDRAL_PERIODICITY with 175 fields.
+Info: Complete reading DIHEDRAL_PHASE with 175 fields.
+Info: Complete reading SCEE_SCALE_FACTOR with 175 fields.
+Info: Complete reading SCNB_SCALE_FACTOR with 175 fields.
+Info: Complete reading LENNARD_JONES_ACOEF with 136 fields.
+Info: Complete reading LENNARD_JONES_BCOEF with 136 fields.
+Info: Complete reading BONDS_INC_HYDROGEN with 8658 fields.
+Info: Complete reading BONDS_WITHOUT_HYDROGEN with 4962 fields.
+Info: Complete reading ANGLES_INC_HYDROGEN with 15024 fields.
+Info: Complete reading ANGLES_WITHOUT_HYDROGEN with 8928 fields.
+Info: Complete reading DIHEDRALS_INC_HYDROGEN with 37290 fields.
+Info: Complete reading DIHEDRALS_WITHOUT_HYDROGEN with 35780 fields.
+Info: Complete reading EXCLUDED_ATOMS_LIST with 19711 fields.
+Info: Complete reading HBOND_ACOEF with 0 fields.
+Info: Complete reading HBOND_BCOEF with 0 fields.
+Info: Complete reading AMBER_ATOM_TYPE with 4525 fields.
+Info: Complete reading TREE_CHAIN_CLASSIFICATION with 4525 fields.
+Info: Complete reading RADIUS_SET with 1 fields.
+Info: Complete reading RADII with 4525 fields.
+Info: Complete reading SCREEN with 4525 fields.
+Info: === Finish reading AMBER parm7 format file. ===
+Warning: Found 412 H-H bonds.
+Info: No lone pairs detected in waters
+Info: SUMMARY OF PARAMETERS:
+Info: 60 BONDS
+Info: 133 ANGLES
+Info: 175 DIHEDRAL
+Info: 0 IMPROPER
+Info: 0 CROSSTERM
+Info: 0 VDW
+Info: 136 VDW_PAIRS
+Info: 0 NBTHOLE_PAIRS
+Info: Reading pdb file /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/mono_shell5/system.pdb
+Info: TIME FOR READING PDB FILE: 0.00327539
+Info: 
+Info: Using the following PDB file for QM parameters: /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/mono_shell5/qm.pdb
+Info: Number of QM atoms (excluding Dummy atoms): 4525
+Info: Storing QM-MM bonds.
+Warning: We found 0 QM-MM bonds.
+Info: Applying user defined multiplicity 1 to QM group ID 1
+Info: 1) Group ID: 1 ; Group size: 4525 atoms ; Total PSF charge: 0
+Info: Found user defined charge 0 for QM group ID 1. Will ignore PSF charge.
+Info: ****************************
+Info: STRUCTURE SUMMARY:
+Info: 4525 ATOMS
+Info: 4540 BONDS
+Info: 5988 ANGLES
+Info: 14614 DIHEDRALS
+Info: 0 IMPROPERS
+Info: 0 CROSSTERMS
+Info: 19130 EXCLUSIONS
+Info: 2886 RIGID BONDS
+Info: 10689 DEGREES OF FREEDOM
+Info: 2051 HYDROGEN GROUPS
+Info: 4 ATOMS IN LARGEST HYDROGEN GROUP
+Info: 2051 MIGRATION GROUPS
+Info: 4 ATOMS IN LARGEST MIGRATION GROUP
+Info: TOTAL MASS = 30883.5 amu
+Info: TOTAL CHARGE = -6.56699e-06 e
+Info: MASS DENSITY = 0.195635 g/cm^3
+Info: ATOM DENSITY = 0.0172615 atoms/A^3
+Info: *****************************
+Info: 
+Info: Entering startup at 0.032032 s, 23.8622 MB of memory in use
+Info: Startup phase 0 took 4.9825e-05 s, 23.8622 MB of memory in use
+Info: The QM region will remove 4540 bonds, 5988 angles, 14614 dihedrals, 0 impropers and 0 crossterms.
+Info: ADDED 0 IMPLICIT EXCLUSIONS
+Info: Startup phase 1 took 0.00115619 s, 23.8622 MB of memory in use
+Info: NONBONDED TABLE R-SQUARED SPACING: 0.0625
+Info: NONBONDED TABLE SIZE: 769 POINTS
+Info: INCONSISTENCY IN FAST TABLE ENERGY VS FORCE: 0.000325096 AT 11.9556
+Info: INCONSISTENCY IN SCOR TABLE ENERGY VS FORCE: 0.000324844 AT 11.9556
+Info: INCONSISTENCY IN VDWA TABLE ENERGY VS FORCE: 0.0040507 AT 0.251946
+Info: INCONSISTENCY IN VDWB TABLE ENERGY VS FORCE: 0.00150189 AT 0.251946
+Info: Startup phase 2 took 0.000335187 s, 23.8622 MB of memory in use
+Info: Startup phase 3 took 2.13e-05 s, 23.8622 MB of memory in use
+Info: Startup phase 4 took 2.5659e-05 s, 23.8622 MB of memory in use
+Info: Startup phase 5 took 1.6732e-05 s, 23.8622 MB of memory in use
+Info: PATCH GRID IS 3 (PERIODIC) BY 3 (PERIODIC) BY 3 (PERIODIC)
+Info: PATCH GRID IS 1-AWAY BY 1-AWAY BY 1-AWAY
+Info: REMOVING COM VELOCITY -0.0472965 -0.0248202 0.0132123
+Info: LARGEST PATCH (13) HAS 988 ATOMS
+Info: TORUS A SIZE 1 USING 0
+Info: TORUS B SIZE 1 USING 0
+Info: TORUS C SIZE 1 USING 0
+Info: TORUS MINIMAL MESH SIZE IS 1 BY 1 BY 1
+Info: Placed 100% of base nodes on same physical node as patch
+Info: Startup phase 6 took 0.000651918 s, 23.8622 MB of memory in use
+Info: PME using 1 and 1 processors for FFT and reciprocal sum.
+Info: PME GRID LOCATIONS: 0
+Info: PME TRANS LOCATIONS: 0
+Info: PME USING 1 GRID NODES AND 1 TRANS NODES
+Info: Optimizing 4 FFT steps.  1... 2... 3... 4...   Done.
+Info: Startup phase 7 took 0.000748563 s, 23.8622 MB of memory in use
+Info: Startup phase 8 took 2.2372e-05 s, 23.8622 MB of memory in use
+Info: Startup phase 9 took 1.7664e-05 s, 23.8622 MB of memory in use
+Info: Startup phase 10 took 1.593e-05 s, 23.8622 MB of memory in use
+Info: Startup phase 11 took 1.6682e-05 s, 23.8622 MB of memory in use
+LDB: Central LB being created...
+Info: Startup phase 12 took 3.2301e-05 s, 23.8622 MB of memory in use
+Info: Startup phase 13 took 3.6179e-05 s, 23.8622 MB of memory in use
+Info: Startup phase 14 took 2.8665e-05 s, 23.8622 MB of memory in use
+Info: Startup phase 15 took 1.7302e-05 s, 23.8622 MB of memory in use
+Info: CREATING 547 COMPUTE OBJECTS
+Info: Startup phase 16 took 0.00139959 s, 23.8622 MB of memory in use
+Info: Startup phase 17 took 4.6829e-05 s, 23.8622 MB of memory in use
+Info: Startup phase 18 took 0.000102675 s, 23.8622 MB of memory in use
+Info: Finished startup at 0.0367736 s, 23.8622 MB of memory in use
+
+TCL: Running for 200 steps
+Info: List of ranks running QM simulations: 0.
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+I0605 16:36:46.276739 1248101 service.cc:158] XLA service 0x5f6543933ac0 initialized for platform CUDA (this does not guarantee that XLA will be used). Devices:
+I0605 16:36:46.276806 1248101 service.cc:166]   StreamExecutor device (0): NVIDIA GeForce RTX 3070 Laptop GPU, Compute Capability 8.6
+I0605 16:36:46.277552 1248101 se_gpu_pjrt_client.cc:1339] Using BFC allocator.
+I0605 16:36:46.277683 1248101 gpu_helpers.cc:139] XLA backend will use up to 1288411596 bytes on device 0 for BFCAllocator.
+I0605 16:36:46.277795 1248101 gpu_helpers.cc:177] XLA backend will use up to 7300998707 bytes on device 0 for CollectiveBFCAllocator.
+I0605 16:36:46.288419 1248101 cuda_dnn.cc:463] Loaded cuDNN version 91400
+I0605 16:36:49.899981 1248101 dot_search_space.cc:229] All configs were filtered out because none of them sufficiently match the hints. Maybe the hints set does not contain a good representative set of valid configs? Working around this by using the full hints set instead.
+I0605 16:36:49.900075 1248101 dot_search_space.cc:229] All configs were filtered out because none of them sufficiently match the hints. Maybe the hints set does not contain a good representative set of valid configs? Working around this by using the full hints set instead.
+I0605 16:36:49.900101 1248101 dot_search_space.cc:229] All configs were filtered out because none of them sufficiently match the hints. Maybe the hints set does not contain a good representative set of valid configs? Working around this by using the full hints set instead.
+I0605 16:36:49.900347 1248101 dot_search_space.cc:229] All configs were filtered out because none of them sufficiently match the hints. Maybe the hints set does not contain a good representative set of valid configs? Working around this by using the full hints set instead.
+I0605 16:36:49.900378 1248101 dot_search_space.cc:229] All configs were filtered out because none of them sufficiently match the hints. Maybe the hints set does not contain a good representative set of valid configs? Working around this by using the full hints set instead.
+I0605 16:36:49.900408 1248101 dot_search_space.cc:229] All configs were filtered out because none of them sufficiently match the hints. Maybe the hints set does not contain a good representative set of valid configs? Working around this by using the full hints set instead.
+I0605 16:36:49.900831 1248101 dot_search_space.cc:229] All configs were filtered out because none of them sufficiently match the hints. Maybe the hints set does not contain a good representative set of valid configs? Working around this by using the full hints set instead.
+I0605 16:36:52.629340 1248123 subprocess_compilation.cc:347] ptxas warning : Registers are spilled to local memory in function 'gemm_fusion_dot_289', 460 bytes spill stores, 444 bytes spill loads
+
+I0605 16:36:53.973370 1248113 subprocess_compilation.cc:347] ptxas warning : Registers are spilled to local memory in function 'gemm_fusion_dot_122', 8 bytes spill stores, 8 bytes spill loads
+
+I0605 16:36:55.888475 1248115 subprocess_compilation.cc:347] ptxas warning : Registers are spilled to local memory in function 'gemm_fusion_dot_80', 580 bytes spill stores, 580 bytes spill loads
+
+I0605 16:36:58.133831 1248119 subprocess_compilation.cc:347] ptxas warning : Registers are spilled to local memory in function 'gemm_fusion_dot_125', 4 bytes spill stores, 4 bytes spill loads
+
+QMENERGY:       0         1.0000    -25837.3022
+
+ETITLE:      TS           BOND          ANGLE          DIHED          IMPRP               ELECT            VDW       BOUNDARY           MISC        KINETIC               TOTAL           TEMP      POTENTIAL         TOTAL3        TEMPAVG            PRESSURE      GPRESSURE         VOLUME       PRESSAVG      GPRESSAVG
+
+QMETITLE:      TS           QMID         ENERGY  PMECORRENERGY
+
+ENERGY:       0         0.0000         0.0000         0.0000         0.0000              0.0000         0.0000         0.0000    -25837.3022      3178.4909         -22658.8113       299.2776    -25837.3022    -22658.6186       299.2776           2446.9501      2480.5882    262144.0000      2446.9501      2480.5882
+
+LDB: ============= START OF LOAD BALANCING ============== 28.3852
+LDB: ============== END OF LOAD BALANCING =============== 28.3853
+LDB: =============== DONE WITH MIGRATION ================ 28.3853
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:       1         1.0000    -25831.7873
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:       2         1.0000    -25820.3576
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:       3         1.0000    -25803.3791
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:       4         1.0000    -25780.2326
+
+LDB: ============= START OF LOAD BALANCING ============== 28.6452
+LDB: ============== END OF LOAD BALANCING =============== 28.6453
+LDB: =============== DONE WITH MIGRATION ================ 28.6453
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:       5         1.0000    -25752.2917
+
+Info: Initial time: 1 CPUs 0.063751 s/step 2.95143 days/ns 23.8622 MB memory
+LDB: ============= START OF LOAD BALANCING ============== 28.7042
+LDB: ============== END OF LOAD BALANCING =============== 28.7042
+LDB: =============== DONE WITH MIGRATION ================ 28.7042
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:       6         1.0000    -25717.7971
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:       7         1.0000    -25681.1432
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:       8         1.0000    -25639.6500
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:       9         1.0000    -25594.6012
+
+LDB: ============= START OF LOAD BALANCING ============== 28.9436
+LDB: ============== END OF LOAD BALANCING =============== 28.9437
+LDB: =============== DONE WITH MIGRATION ================ 28.9437
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      10         1.0000    -25547.2383
+
+Info: Initial time: 1 CPUs 0.0596114 s/step 2.75979 days/ns 23.8622 MB memory
+ENERGY:      10         0.0000         0.0000         0.0000         0.0000              0.0000         0.0000         0.0000    -25547.2383      2879.3878         -22667.8505       271.1150    -25547.2383    -22667.6547       287.1556           2148.3798      2189.9265    262144.0000      2343.8621      2369.7195
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      11         1.0000    -25498.1976
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      12         1.0000    -25448.6445
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      13         1.0000    -25398.2975
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      14         1.0000    -25349.1976
+
+LDB: ============= START OF LOAD BALANCING ============== 29.2276
+LDB: ============== END OF LOAD BALANCING =============== 29.2276
+LDB: =============== DONE WITH MIGRATION ================ 29.2277
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      15         1.0000    -25301.7193
+
+Info: Initial time: 1 CPUs 0.0565863 s/step 2.61974 days/ns 23.8622 MB memory
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      16         1.0000    -25255.0490
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      17         1.0000    -25211.5879
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      18         1.0000    -25170.3509
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      19         1.0000    -25132.8863
+
+LDB: ============= START OF LOAD BALANCING ============== 29.5233
+LDB: ============== END OF LOAD BALANCING =============== 29.5234
+LDB: =============== DONE WITH MIGRATION ================ 29.5234
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      20         1.0000    -25099.8415
+
+Info: Benchmark time: 1 CPUs 0.0587825 s/step 2.72141 days/ns 23.8622 MB memory
+ENERGY:      20         0.0000         0.0000         0.0000         0.0000              0.0000         0.0000         0.0000    -25099.8415      2452.7471         -22647.0944       230.9437    -25099.8415    -22646.9499       247.2807           1438.3796      1498.7182    262144.0000      1804.9409      1824.1773
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      21         1.0000    -25071.0730
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      22         1.0000    -25047.4816
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      23         1.0000    -25028.8816
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      24         1.0000    -25016.0950
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      25         1.0000    -25007.8380
+
+Info: Benchmark time: 1 CPUs 0.0583529 s/step 2.70152 days/ns 23.8622 MB memory
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      26         1.0000    -25006.7626
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      27         1.0000    -25009.7157
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      28         1.0000    -25018.5358
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      29         1.0000    -25032.5723
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      30         1.0000    -25051.4820
+
+Info: Benchmark time: 1 CPUs 0.0597817 s/step 2.76767 days/ns 23.8622 MB memory
+ENERGY:      30         0.0000         0.0000         0.0000         0.0000              0.0000         0.0000         0.0000    -25051.4820      2430.8319         -22620.6501       228.8802    -25051.4820    -22621.7387       225.9917            910.4214       855.8335    262144.0000      1135.2320      1124.6115
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      31         1.0000    -25073.6010
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      32         1.0000    -25098.9997
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      33         1.0000    -25128.1004
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      34         1.0000    -25159.0169
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      35         1.0000    -25191.1637
+
+Info: Benchmark time: 1 CPUs 0.0710513 s/step 3.28941 days/ns 23.8622 MB memory
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      36         1.0000    -25225.2642
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      37         1.0000    -25259.8798
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      38         1.0000    -25294.3294
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      39         1.0000    -25328.5172
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      40         1.0000    -25362.6458
+
+Info: Benchmark time: 1 CPUs 0.0560398 s/step 2.59443 days/ns 23.8622 MB memory
+ENERGY:      40         0.0000         0.0000         0.0000         0.0000              0.0000         0.0000         0.0000    -25362.6458      2761.9480         -22600.6979       260.0571    -25362.6458    -22600.3359       244.8634            625.3885       552.8734    262144.0000       666.7779       653.7081
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      41         1.0000    -25394.7081
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      42         1.0000    -25424.7406
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      43         1.0000    -25453.3205
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      44         1.0000    -25479.9804
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      45         1.0000    -25503.7914
+
+Info: Benchmark time: 1 CPUs 0.0576485 s/step 2.66891 days/ns 23.8622 MB memory
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      46         1.0000    -25524.9729
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      47         1.0000    -25542.4046
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      48         1.0000    -25556.3230
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      49         1.0000    -25567.8568
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      50         1.0000    -25575.8379
+
+ENERGY:      50         0.0000         0.0000         0.0000         0.0000              0.0000         0.0000         0.0000    -25575.8379      2985.6465         -22590.1914       281.1200    -25575.8379    -22589.8752       273.5673            695.4339       633.1252    262144.0000       596.2755       570.5248
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      51         1.0000    -25580.4520
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      52         1.0000    -25582.6395
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      53         1.0000    -25581.2065
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      54         1.0000    -25578.1211
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      55         1.0000    -25572.9467
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      56         1.0000    -25565.7060
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      57         1.0000    -25556.6017
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      58         1.0000    -25546.6303
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      59         1.0000    -25535.9156
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      60         1.0000    -25524.9814
+
+ENERGY:      60         0.0000         0.0000         0.0000         0.0000              0.0000         0.0000         0.0000    -25524.9814      2930.8995         -22594.0819       275.9651    -25524.9814    -22593.9812       279.8199            956.2634       962.5578    262144.0000       826.4810       799.6357
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      61         1.0000    -25514.0331
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      62         1.0000    -25503.3494
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      63         1.0000    -25493.3921
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      64         1.0000    -25482.8745
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      65         1.0000    -25475.0004
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      66         1.0000    -25468.1454
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      67         1.0000    -25462.2982
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      68         1.0000    -25458.6610
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      69         1.0000    -25456.9747
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      70         1.0000    -25456.5355
+
+ENERGY:      70         0.0000         0.0000         0.0000         0.0000              0.0000         0.0000         0.0000    -25456.5355      2884.1166         -22572.4189       271.5602    -25456.5355    -22571.0677       272.3978           1346.4264      1376.8216    262144.0000      1213.1016      1192.7325
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      71         1.0000    -25458.8242
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      72         1.0000    -25462.3714
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      73         1.0000    -25467.9793
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      74         1.0000    -25475.7154
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      75         1.0000    -25485.0253
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      76         1.0000    -25495.2923
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      77         1.0000    -25507.1922
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      78         1.0000    -25520.9923
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      79         1.0000    -25535.2512
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      80         1.0000    -25550.1408
+
+ENERGY:      80         0.0000         0.0000         0.0000         0.0000              0.0000         0.0000         0.0000    -25550.1408      2993.4777         -22556.6631       281.8573    -25550.1408    -22556.0183       276.4575           1643.6874      1653.1263    262144.0000      1520.5644      1546.3510
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      81         1.0000    -25566.5196
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      82         1.0000    -25582.7239
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      83         1.0000    -25599.1816
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      84         1.0000    -25615.2310
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      85         1.0000    -25631.0693
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      86         1.0000    -25646.1756
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      87         1.0000    -25660.8090
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      88         1.0000    -25674.5331
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      89         1.0000    -25686.4668
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      90         1.0000    -25698.2174
+
+ENERGY:      90         0.0000         0.0000         0.0000         0.0000              0.0000         0.0000         0.0000    -25698.2174      3154.0921         -22544.1253       296.9803    -25698.2174    -22542.4122       290.0682           1684.2594      1686.6773    262144.0000      1666.3233      1693.2921
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      91         1.0000    -25707.4822
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      92         1.0000    -25716.8934
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      93         1.0000    -25723.8470
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      94         1.0000    -25729.6941
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      95         1.0000    -25734.5137
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      96         1.0000    -25738.7253
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      97         1.0000    -25740.4904
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      98         1.0000    -25742.3006
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      99         1.0000    -25742.4610
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     100         1.0000    -25741.5883
+
+TIMING: 100  CPU: 113.22, 0.0423882/step  Wall: 34.2183, 0.0586966/step, 0.00163046 hours remaining, 23.862211 MB of memory in use.
+PERFORMANCE: 100  averaging 0.367994 ns/day, 0.0586966 sec/step with standard deviation 0
+ETITLE:      TS           BOND          ANGLE          DIHED          IMPRP               ELECT            VDW       BOUNDARY           MISC        KINETIC               TOTAL           TEMP      POTENTIAL         TOTAL3        TEMPAVG            PRESSURE      GPRESSURE         VOLUME       PRESSAVG      GPRESSAVG
+
+QMETITLE:      TS           QMID         ENERGY  PMECORRENERGY
+
+ENERGY:     100         0.0000         0.0000         0.0000         0.0000              0.0000         0.0000         0.0000    -25741.5883      3205.0415         -22536.5469       301.7776    -25741.5883    -22536.6432       300.3747           1514.9686      1515.8458    262144.0000      1566.9966      1603.2481
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     101         1.0000    -25740.8451
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     102         1.0000    -25739.3024
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     103         1.0000    -25737.9229
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     104         1.0000    -25736.4393
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     105         1.0000    -25735.0655
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     106         1.0000    -25734.1506
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     107         1.0000    -25733.3060
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     108         1.0000    -25732.4305
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     109         1.0000    -25733.0808
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     110         1.0000    -25733.8662
+
+ENERGY:     110         0.0000         0.0000         0.0000         0.0000              0.0000         0.0000         0.0000    -25733.8662      3196.0655         -22537.8007       300.9324    -25733.8662    -22536.4291       300.7898           1361.7386      1308.6841    262144.0000      1399.6548      1397.3896
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     111         1.0000    -25735.4596
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     112         1.0000    -25738.0553
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     113         1.0000    -25741.1661
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     114         1.0000    -25744.8568
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     115         1.0000    -25749.9241
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     116         1.0000    -25755.1097
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     117         1.0000    -25761.3313
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     118         1.0000    -25767.8654
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     119         1.0000    -25774.2869
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     120         1.0000    -25781.5191
+
+ENERGY:     120         0.0000         0.0000         0.0000         0.0000              0.0000         0.0000         0.0000    -25781.5191      3259.0739         -22522.4452       306.8651    -25781.5191    -22521.4445       303.5830           1181.2698      1211.4972    262144.0000      1256.2191      1242.5951
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     121         1.0000    -25789.6860
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     122         1.0000    -25797.7403
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     123         1.0000    -25805.9015
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     124         1.0000    -25814.7131
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     125         1.0000    -25822.9504
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     126         1.0000    -25832.3165
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     127         1.0000    -25840.1934
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     128         1.0000    -25848.6137
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     129         1.0000    -25856.2767
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     130         1.0000    -25863.4245
+
+ENERGY:     130         0.0000         0.0000         0.0000         0.0000              0.0000         0.0000         0.0000    -25863.4245      3356.4355         -22506.9889       316.0324    -25863.4245    -22506.9707       312.3354           1318.8125      1264.8690    262144.0000      1242.3309      1228.1282
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     131         1.0000    -25870.7552
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     132         1.0000    -25876.7291
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     133         1.0000    -25881.9062
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     134         1.0000    -25887.1143
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     135         1.0000    -25891.4948
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     136         1.0000    -25895.1123
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     137         1.0000    -25897.6516
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     138         1.0000    -25899.8250
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     139         1.0000    -25900.6470
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     140         1.0000    -25901.5028
+
+ENERGY:     140         0.0000         0.0000         0.0000         0.0000              0.0000         0.0000         0.0000    -25901.5028      3378.7924         -22522.7104       318.1375    -25901.5028    -22519.3553       317.5366           1356.1434      1410.7416    262144.0000      1369.3657      1344.0092
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     141         1.0000    -25901.0805
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     142         1.0000    -25899.6110
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     143         1.0000    -25897.1956
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     144         1.0000    -25894.7886
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     145         1.0000    -25891.6158
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     146         1.0000    -25887.5620
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     147         1.0000    -25882.9000
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     148         1.0000    -25877.7651
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     149         1.0000    -25873.3677
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     150         1.0000    -25868.0695
+
+ENERGY:     150         0.0000         0.0000         0.0000         0.0000              0.0000         0.0000         0.0000    -25868.0695      3343.5833         -22524.4862       314.8223    -25868.0695    -22524.8338       317.1216           1520.4052      1504.7189    262144.0000      1464.2730      1472.1254
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     151         1.0000    -25862.7178
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     152         1.0000    -25857.5857
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     153         1.0000    -25853.3770
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     154         1.0000    -25849.1204
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     155         1.0000    -25844.7653
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     156         1.0000    -25840.3427
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     157         1.0000    -25836.7871
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     158         1.0000    -25832.7135
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     159         1.0000    -25830.2445
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     160         1.0000    -25827.2210
+
+ENERGY:     160         0.0000         0.0000         0.0000         0.0000              0.0000         0.0000         0.0000    -25827.2210      3277.2932         -22549.9278       308.5806    -25827.2210    -22550.3336       311.4536           1469.1670      1452.1861    262144.0000      1502.0673      1490.0885
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     161         1.0000    -25825.2504
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     162         1.0000    -25823.9019
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     163         1.0000    -25823.2037
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     164         1.0000    -25822.6238
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     165         1.0000    -25822.5027
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     166         1.0000    -25823.0039
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     167         1.0000    -25822.9841
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     168         1.0000    -25823.9835
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     169         1.0000    -25825.7993
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     170         1.0000    -25827.6039
+
+ENERGY:     170         0.0000         0.0000         0.0000         0.0000              0.0000         0.0000         0.0000    -25827.6039      3268.4780         -22559.1259       307.7506    -25827.6039    -22560.3905       307.7872           1283.7448      1276.8974    262144.0000      1357.7050      1361.6041
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     171         1.0000    -25829.9067
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     172         1.0000    -25832.5699
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     173         1.0000    -25835.5287
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     174         1.0000    -25839.2138
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     175         1.0000    -25842.7412
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     176         1.0000    -25846.6881
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     177         1.0000    -25850.2775
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     178         1.0000    -25854.5059
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     179         1.0000    -25857.6617
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     180         1.0000    -25862.2702
+
+ENERGY:     180         0.0000         0.0000         0.0000         0.0000              0.0000         0.0000         0.0000    -25862.2702      3292.8652         -22569.4050       310.0468    -25862.2702    -22568.5251       308.7755           1122.6553      1115.3793    262144.0000      1167.0027      1181.6307
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     181         1.0000    -25866.8055
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     182         1.0000    -25871.0734
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     183         1.0000    -25875.1272
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     184         1.0000    -25880.1411
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     185         1.0000    -25884.8059
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     186         1.0000    -25888.1588
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     187         1.0000    -25892.3140
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     188         1.0000    -25896.2919
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     189         1.0000    -25900.6217
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     190         1.0000    -25904.0337
+
+ENERGY:     190         0.0000         0.0000         0.0000         0.0000              0.0000         0.0000         0.0000    -25904.0337      3333.7200         -22570.3137       313.8936    -25904.0337    -22569.1376       312.0628           1081.7822      1079.2208    262144.0000      1051.9005      1080.5912
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     191         1.0000    -25907.4007
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     192         1.0000    -25910.3257
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     193         1.0000    -25912.8453
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     194         1.0000    -25915.7815
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     195         1.0000    -25918.1491
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     196         1.0000    -25920.5505
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     197         1.0000    -25922.7013
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     198         1.0000    -25924.2187
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     199         1.0000    -25925.1758
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:     200         1.0000    -25926.5468
+
+TIMING: 200  CPU: 117.41, 0.0419024/step  Wall: 40.4348, 0.0621645/step, 0 hours remaining, 23.862211 MB of memory in use.
+PERFORMANCE: 200  averaging 0.357435 ns/day, 0.0604305 sec/step with standard deviation 0.00245221
+ETITLE:      TS           BOND          ANGLE          DIHED          IMPRP               ELECT            VDW       BOUNDARY           MISC        KINETIC               TOTAL           TEMP      POTENTIAL         TOTAL3        TEMPAVG            PRESSURE      GPRESSURE         VOLUME       PRESSAVG      GPRESSAVG
+
+QMETITLE:      TS           QMID         ENERGY  PMECORRENERGY
+
+ENERGY:     200         0.0000         0.0000         0.0000         0.0000              0.0000         0.0000         0.0000    -25926.5468      3351.0634         -22575.4834       315.5266    -25926.5468    -22576.8071       315.2293           1250.2457      1217.5994    262144.0000      1130.2784      1142.3379
+
+WRITING EXTENDED SYSTEM TO OUTPUT FILE AT STEP 200
+WRITING COORDINATES TO OUTPUT FILE AT STEP 200
+The last position output (seq=-2) takes 0.006 seconds, 23.862 MB of memory in use
+WRITING VELOCITIES TO OUTPUT FILE AT STEP 200
+The last velocity output (seq=-2) takes 0.004 seconds, 23.862 MB of memory in use
+====================================================
+
+WallClock: 40.480656  CPUTime: 117.455627  Memory: 23.862211 MB
+[Partition 0][Node 0] End of program

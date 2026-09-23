@@ -1,0 +1,83 @@
+INFRA_DONE  (infra agent, 2026-09-21)  -- NAMD MLFF inference on the RTX 5080 (sm_120) works again.
+
+LIBTORCH
+  /home/rat/compile_NAMD_MACE/libtorch-2.11.0+cu130      (same torch build number as the allegro env: 2.11.0+cu130, cxx11 ABI)
+  The old /home/rat/compile_NAMD_MACE/libtorch (2.6.0+cu126, no sm_120) is untouched.
+  The zip does not bundle cufft/cusparse/curand/cusolver/nvJitLink; they are SYMLINKED from the allegro nvidia cu13 wheels (disk),
+  plus soname links libcublas.so.13, libcublasLt.so.13, libnvrtc-builtins.so.13.0 (lib/README.extra_cuda_libs).
+  => the NVRTC fuser works in NAMD without adding nvidia/cu13/lib to LD_LIBRARY_PATH.
+
+WHAT CHANGED
+  shim source   /home/rat/compile_NAMD_MACE/namd_fennix/src/mlff_shim/mlff_shim.cpp  (.pre_extralibs.bak = original)
+                  + NAMD_MLFF_EXTRA_LIBS hook (see below), + leaks the model at process exit (fixes an abort at the end of a finished run with 2.11)
+  build script  .../src/mlff_shim/build_and_test.sh   (defaults TORCH=libtorch-2.11.0+cu130, CUDA=allegro nvidia/cu13 headers; no -lcudart)
+  docs          .../src/mlff_shim/BUILD.local.md
+  installed     namd_benchmarks/lib/libnamd_mlff.so          (C++ libtorch 2.11 zip)        <- default
+                namd_benchmarks/lib/libnamd_mlff_pytorch.so  (built against allegro's pip torch/lib)
+                namd_benchmarks/lib/mlff_shim_test
+                namd_benchmarks/lib/*.libtorch2.6.bak        (old builds)
+  namd3         namd3 itself links libtorch (colvars torchann, -rdynamic): it HAD to be relinked against 2.11, otherwise inline torch
+                symbols from 2.6 inside namd3 interpose the shim ("set_stride is not allowed on a Tensor created from .data" in
+                mlff_eval_batch). Make.config TORCHDIR -> 2.11, colvarcomp_torchann.o rebuilt, namd3 relinked.
+                Backups: Linux-x86_64-g++/namd3.libtorch2.6.bak, Make.config.libtorch2.6.bak, obj/colvarcomp_torchann.o.libtorch2.6.bak
+  env.sh        namd_benchmarks/env.sh (.libtorch2.6.bak = old): LIBTORCH_ROOT defaults to libtorch-2.11.0+cu130 (overridable);
+                NAMD_MLFF_LIB now overridable, defaults to lib/libnamd_mlff.so, or to lib/libnamd_mlff_pytorch.so when
+                LIBTORCH_ROOT=<...>/site-packages/torch.
+
+REBUILD THE SHIM
+  cd /home/rat/compile_NAMD_MACE/namd_fennix
+  OUT=/home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/lib bash src/mlff_shim/build_and_test.sh
+  # pip-torch variant (build into a temp dir, then copy libnamd_mlff.so -> lib/libnamd_mlff_pytorch.so):
+  TORCH=/home/rat/miniconda3/envs/allegro/lib/python3.12/site-packages/torch OUT=/tmp/x bash src/mlff_shim/build_and_test.sh
+  # + analytic self-test:  STUB_ENV=allegro OUT=... bash src/mlff_shim/build_and_test.sh
+  If you edit the shim, back up the installed .so first; other agents' NAMD runs use it.
+
+RUN mlff_shim_test  (take the GPU lock)
+  cd /home/rat/PycharmProjects/ML_models_NAMD && source namd_benchmarks/env.sh
+  flock scripts/opt/.gpu_bench.lock namd_benchmarks/lib/mlff_shim_test $NAMD_MLFF_LIB <model.pt> 0      # 0 = cuda:0, -1 = CPU
+  Verified ALL CHECKS PASSED on GPU: namd_benchmarks/models/{schnet,mace_off23,ani2x,nequip_oam}.pt, models/fulvene_state0_namd.pt
+  NAMD run (namd_benchmarks/run_benchmark.sh, 30 atoms, walk0, 500 steps): schnet, mace, ani2x, nequip_oam all ok; step-0 potential
+  matches the old libtorch-2.6 runs (identical to 4 decimals for schnet/mace, ~1e-7 relative for ani2x/nequip).
+
+NAMD_MLFF_EXTRA_LIBS  (custom-op libraries)
+  export NAMD_MLFF_EXTRA_LIBS=/abs/libA.so:/abs/libB.so      # dependencies first
+  Each is dlopen'd RTLD_NOW|RTLD_GLOBAL in order before torch::jit::load, in mlff_load (the only load path in the dlopen shim).
+  Failure -> mlff_load fails with "NAMD_MLFF_EXTRA_LIBS: dlopen(<path>) failed: <dlerror>" (NAMD prints it and stops).
+  Also exported to the mlff_shim_test (reads the same env var). bench_common.py has the matching --extra-lib.
+  ELF audit of what exists in allegro:
+   * cuequivariance_ops_torch/_ext/cuequivariance_ops_torch_ext*.so NEEDs libtorch_python.so (+ libcue_ops.so, libnvrtc.so.13).
+     libtorch_python from the pip wheel does NOT load against the C++ zip libtorch (missing _cslt_sparse_mm_impl / nvshmem symbols).
+     WORKING recipe (verified in mlff_shim_test AND in a full namd3 run: schnet walk0 500 steps ok, E0 identical, with the cuEq libs loaded):
+       export LIBTORCH_ROOT=/home/rat/miniconda3/envs/allegro/lib/python3.12/site-packages/torch
+       source namd_benchmarks/env.sh          # -> NAMD_MLFF_LIB=lib/libnamd_mlff_pytorch.so
+       SP=/home/rat/miniconda3/envs/allegro/lib/python3.12/site-packages
+       export LD_LIBRARY_PATH=$SP/nvidia/cu13/lib:$LD_LIBRARY_PATH
+       export NAMD_MLFF_EXTRA_LIBS=/home/rat/miniconda3/envs/allegro/lib/libpython3.12.so.1.0:$SP/torch/lib/libtorch_python.so:$SP/cuequivariance_ops/lib/libcue_ops.so:$SP/cuequivariance_ops_torch/_ext/cuequivariance_ops_torch_ext.cpython-312-x86_64-linux-gnu.so
+     Python is never initialised in that process. It loads fine, but no cuEq artifact has been run through NAMD yet (the mace agent
+     should test its artifact with mlff_shim_test before using it in NAMD).
+   * vesin/lib/libvesin.so: plain C library, no torch ops (vesin-torch is not installed). It loads fine.
+   * torchani 2.7.9 in allegro ships no compiled cuAEV .so. OpenEquivariance is not installed.
+   * Anything built with torch.utils.cpp_extension usually NEEDs libtorch_python -> use the pip-torch recipe above.
+     Pure-libtorch op libs (no libtorch_python in `readelf -d`) work with the default zip shim.
+
+CAVEATS
+  * You can only have one libtorch per process: always `source namd_benchmarks/env.sh`, and keep LIBTORCH_ROOT and NAMD_MLFF_LIB paired
+    (env.sh does this). Don't prepend another torch/lib to LD_LIBRARY_PATH for NAMD runs.
+  * If you switch LIBTORCH_ROOT, use a FRESH shell (or `unset NAMD_MLFF_LIB` first). NAMD_MLFF_LIB is now sticky once exported, so
+    re-sourcing env.sh would keep the old shim while LD_LIBRARY_PATH leads with the new libtorch -> mixed-libtorch failures.
+  * MULTI-WALKER IS BROKEN (walk>=2, bug in the NAMD code, NOT caused by libtorch): the batch server partition segfaults as soon as a client
+    connects ("MLFF client: server closed before sending its capability word" / "failed to read energy"). I reproduced it on CPU
+    with the OLD stack (namd3.libtorch2.6.bak + libtorch 2.6 + old shim), and namd3.prefix_bak (Jun 5 build) works on CPU. So the
+    regression is in the Jul-31 namd3 source (ComputeMLFF.C PBC/protocol changes). walk0 and walk1 work. I have not patched it.
+  * The colvars torchann component was recompiled against 2.11 but not exercised.
+  * Existing run cells I overwrote while smoke-testing (runs/{schnet,mace,ani2x,nequip_oam}/w10_30atoms/walk0, schnet walk1/walk2)
+    were backed up to scripts/opt/infra/runs_backup_pre_libtorch211/.
+
+PHASE 2 ADDENDUM (runtime knobs; the installed shim now has them, all opt-in, defaults unchanged)
+  NAMD_MLFF_JIT_PROFILING=0 | NAMD_MLFF_JIT_OPTIMIZE=0 | NAMD_MLFF_JIT_TEXPR=0/1 | NAMD_MLFF_JIT_FUSION=DYNAMIC:20 |
+  NAMD_MLFF_JIT_PROFILED_RUNS=N | NAMD_MLFF_FREEZE=1 | NAMD_MLFF_TF32=1 (numerics change) | PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+  bench_common.py: new --jitter SIGMA (fresh MD-like coords per call; default 0 = old behaviour) and --jit-profiling/--jit-optimize/
+  --jit-texpr/--jit-fusion/--tf32 (process-global, same knobs as the shim env vars).
+  C-ABI benchmark like NAMD: scripts/opt/infra/shim_bench <shim.so> <model.pt> <geom.pdb|xyz> [W] [warmup] [iters] [jitter] [gpu]
+    (for CUDA-graph / shim work: compare against this, not only Python). Result: no knob is a clear steady-state win; defaults kept.
+  Timing caveat: host load average was ~27 (user jobs) during phase 2; small-system ANI/X-MACE/MACE/NequIP timings are host-bound and swung 2-3x.

@@ -1,0 +1,58 @@
+{
+ "meta": {
+  "torch": "2.11.0+cu130",
+  "gpu": "NVIDIA GeForce RTX 5080 Laptop GPU",
+  "time": "2026-09-23 13:09:48",
+  "argv": [
+   "/home/rat/PycharmProjects/ML_models_NAMD/scripts/opt/nequip/../bench_common.py",
+   "--extra-lib",
+   "scripts/opt/nequip/oeq_native/liboeq_native.so",
+   "--model",
+   "oeq=models/opt/nequip_oeq.pt",
+   "--model",
+   "fast_oeq=models/opt/nequip_fast_oeq.pt",
+   "--systems",
+   "900",
+   "--walkers",
+   "4",
+   "--jitter",
+   "0.02",
+   "--warmup",
+   "8",
+   "--iters",
+   "15",
+   "--rounds",
+   "2",
+   "--out",
+   "scripts/opt/results/nequip_final_w900_W4.json"
+  ]
+ },
+ "results": [
+  {
+   "system": "water900",
+   "n_atoms": 900,
+   "walkers": 4,
+   "model": "oeq",
+   "peak_alloc_mib": 6347.0,
+   "dE_max_kcal": 0.0,
+   "dF_max_kcal_A": 0.0,
+   "median_ms": 131.519,
+   "p10_ms": 129.023,
+   "p90_ms": 134.585,
+   "n": 30
+  },
+  {
+   "system": "water900",
+   "n_atoms": 900,
+   "walkers": 4,
+   "model": "fast_oeq",
+   "peak_alloc_mib": 3639.7,
+   "dE_max_kcal": 0.0010640746768331155,
+   "dF_max_kcal_A": 0.00035189971923799135,
+   "median_ms": 116.666,
+   "p10_ms": 114.587,
+   "p90_ms": 118.4,
+   "n": 30
+  }
+ ]
+}

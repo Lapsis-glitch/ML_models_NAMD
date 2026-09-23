@@ -1,0 +1,8 @@
+RESULT model=schnet.pt n=900 alloc_conf='' max_alloc_MiB=296.5 max_reserved_MiB=322.0 final_reserved_MiB=322.0 device_used_delta_MiB=382.0
+RESULT model=schnet.pt n=900 alloc_conf='expandable_segments:True' max_alloc_MiB=293.2 max_reserved_MiB=310.0 final_reserved_MiB=310.0 device_used_delta_MiB=370.0
+RESULT model=ani2x.pt n=900 alloc_conf='' max_alloc_MiB=130.4 max_reserved_MiB=166.0 final_reserved_MiB=166.0 device_used_delta_MiB=226.0
+RESULT model=ani2x.pt n=900 alloc_conf='expandable_segments:True' max_alloc_MiB=129.2 max_reserved_MiB=166.0 final_reserved_MiB=166.0 device_used_delta_MiB=226.0
+RESULT model=nequip_oam.pt n=300 alloc_conf='' max_alloc_MiB=1807.1 max_reserved_MiB=2104.0 final_reserved_MiB=2104.0 device_used_delta_MiB=2206.0
+RESULT model=nequip_oam.pt n=300 alloc_conf='expandable_segments:True' max_alloc_MiB=1792.6 max_reserved_MiB=2074.0 final_reserved_MiB=2074.0 device_used_delta_MiB=2176.0
+RESULT model=mace_off23.pt n=300 alloc_conf='' max_alloc_MiB=1521.9 max_reserved_MiB=2032.0 final_reserved_MiB=2032.0 device_used_delta_MiB=2094.0
+RESULT model=mace_off23.pt n=300 alloc_conf='expandable_segments:True' max_alloc_MiB=1518.5 max_reserved_MiB=1778.0 final_reserved_MiB=1778.0 device_used_delta_MiB=1840.0

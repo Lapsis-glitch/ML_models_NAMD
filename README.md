@@ -602,7 +602,7 @@ python -m src.cli --model-type TYPE --compiled PATH [OPTIONS]
 | `--r-max` | schnet only | — | Cutoff radius in Å (also accepted as a NequIP fallback when the deployed model has no `r_max` attribute, e.g. NequIP-OAM-L: `--r-max 6.0`) |
 | `--energy-key` | | `energy` | SchNetPack output dict key for energy |
 | `--forces-key` | | `forces` | SchNetPack output dict key for forces |
-| `--elements` | | `1,6,7,8,16,17` | TorchANI species order (atomic numbers) |
+| `--elements` | | `1,6,7,8,16,9,17` | TorchANI species order (atomic numbers; ANI-2x = H C N O S F Cl) |
 | `--state` | | `0` | X-MACE electronic state index to expose (0 = ground) |
 
 ---

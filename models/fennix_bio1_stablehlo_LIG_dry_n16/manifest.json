@@ -1,0 +1,107 @@
+{
+  "model_path": "/home/rat/PycharmProjects/ML_models_NAMD/models/fennix-bio1S.fnx",
+  "model_type": "FENNIX-BIO1",
+  "n_atoms": 16,
+  "z_list": [
+    6,
+    6,
+    6,
+    6,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    8,
+    1,
+    1
+  ],
+  "total_charge": 1,
+  "total_charge_source": "cli",
+  "source_system": {
+    "type": "pdb",
+    "path": "/mnt/d/Nancy_D/NAMD_xTB/namd_fennix/LIG_dry.pdb",
+    "symbols": [
+      "C",
+      "C",
+      "C",
+      "C",
+      "H",
+      "H",
+      "H",
+      "H",
+      "H",
+      "H",
+      "H",
+      "H",
+      "H",
+      "O",
+      "H",
+      "H"
+    ],
+    "explicit_formal_charge_records": 0
+  },
+  "input_signature": [
+    {
+      "name": "coordinates",
+      "shape": [
+        16,
+        3
+      ],
+      "dtype": "float32",
+      "units": "Angstrom"
+    }
+  ],
+  "output_signature": [
+    {
+      "name": "energy",
+      "shape": [
+        1
+      ],
+      "dtype": "float32",
+      "units": "eV"
+    },
+    {
+      "name": "forces",
+      "shape": [
+        16,
+        3
+      ],
+      "dtype": "float32",
+      "units": "eV/Angstrom"
+    }
+  ],
+  "conversion": {
+    "ev_to_kcal": 23.0621
+  },
+  "fennol": {
+    "cutoff": 7.5,
+    "energy_unit": "ev",
+    "energy_terms": [
+      "nn_energies_mean",
+      "ff_energy"
+    ]
+  },
+  "jax": {
+    "jax_version": "0.7.2",
+    "devices": [
+      "cuda:0"
+    ]
+  },
+  "artifacts": {
+    "stablehlo_mlir": "fennix_bio1_eval.stablehlo.mlir",
+    "hlo_text": "fennix_bio1_eval.hlo.txt",
+    "compile_options_pb": "compile_options.pb",
+    "reference_npz": "reference.npz",
+    "reference_runtime": "reference_runtime.txt"
+  },
+  "validation": {
+    "energy_max_abs_diff_ev": 0.0002722740173339844,
+    "forces_max_abs_diff_ev_a": 0.003993988037109375
+  },
+  "runtime_note": "This artifact is specialized to fixed atom identity/count. Runtime Python is not required by the intended PJRT C++ consumer."
+}

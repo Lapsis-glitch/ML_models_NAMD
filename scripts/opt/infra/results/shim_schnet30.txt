@@ -1,0 +1,25 @@
+# model=schnet.pt geom=qm.pdb W=1 rounds=3 iters=200 shim=libnamd_mlff.so
+round=1 config=default RESULT load_ms=350.0 warmup_ms=1566.6 median_ms=3.092 p10_ms=2.721 p90_ms=3.544 E0=134.882481 n=30 W=1
+round=1 config=legacy RESULT load_ms=283.5 warmup_ms=813.5 median_ms=3.417 p10_ms=2.960 p90_ms=4.075 E0=134.882514 n=30 W=1
+round=1 config=noopt RESULT load_ms=282.8 warmup_ms=662.3 median_ms=3.546 p10_ms=3.113 p90_ms=4.180 E0=134.882492 n=30 W=1
+round=1 config=notexpr RESULT load_ms=297.8 warmup_ms=778.0 median_ms=4.031 p10_ms=3.583 p90_ms=4.614 E0=134.882492 n=30 W=1
+round=1 config=dyn20 RESULT load_ms=292.2 warmup_ms=1165.1 median_ms=3.099 p10_ms=2.794 p90_ms=3.751 E0=134.882481 n=30 W=1
+round=1 config=freeze RESULT load_ms=477.3 warmup_ms=1460.1 median_ms=3.091 p10_ms=2.738 p90_ms=3.572 E0=134.882525 n=30 W=1
+round=1 config=tf32 RESULT load_ms=310.9 warmup_ms=1531.1 median_ms=3.009 p10_ms=2.623 p90_ms=3.614 E0=134.774359 n=30 W=1
+round=1 config=expseg RESULT load_ms=320.9 warmup_ms=1484.4 median_ms=3.146 p10_ms=2.850 p90_ms=3.782 E0=134.882503 n=30 W=1
+round=2 config=default RESULT load_ms=295.4 warmup_ms=1502.3 median_ms=3.085 p10_ms=2.765 p90_ms=3.841 E0=134.882503 n=30 W=1
+round=2 config=legacy RESULT load_ms=288.1 warmup_ms=759.2 median_ms=3.231 p10_ms=2.803 p90_ms=3.919 E0=134.882470 n=30 W=1
+round=2 config=noopt RESULT load_ms=275.1 warmup_ms=641.4 median_ms=3.560 p10_ms=3.226 p90_ms=4.096 E0=134.882503 n=30 W=1
+round=2 config=notexpr RESULT load_ms=272.6 warmup_ms=763.3 median_ms=3.860 p10_ms=3.468 p90_ms=4.387 E0=134.882481 n=30 W=1
+round=2 config=dyn20 RESULT load_ms=301.9 warmup_ms=1183.5 median_ms=3.125 p10_ms=2.768 p90_ms=3.661 E0=134.882481 n=30 W=1
+round=2 config=freeze RESULT load_ms=476.4 warmup_ms=1462.3 median_ms=3.102 p10_ms=2.788 p90_ms=3.564 E0=134.882470 n=30 W=1
+round=2 config=tf32 RESULT load_ms=301.6 warmup_ms=1469.5 median_ms=3.065 p10_ms=2.694 p90_ms=3.739 E0=134.774051 n=30 W=1
+round=2 config=expseg RESULT load_ms=294.3 warmup_ms=1639.2 median_ms=3.520 p10_ms=2.780 p90_ms=4.894 E0=134.882470 n=30 W=1
+round=3 config=default RESULT load_ms=286.8 warmup_ms=1530.4 median_ms=3.216 p10_ms=2.813 p90_ms=3.928 E0=134.882547 n=30 W=1
+round=3 config=legacy RESULT load_ms=329.0 warmup_ms=918.8 median_ms=3.169 p10_ms=2.848 p90_ms=3.870 E0=134.882503 n=30 W=1
+round=3 config=noopt RESULT load_ms=306.0 warmup_ms=702.3 median_ms=3.457 p10_ms=3.103 p90_ms=4.111 E0=134.882525 n=30 W=1
+round=3 config=notexpr RESULT load_ms=306.1 warmup_ms=804.0 median_ms=4.113 p10_ms=3.678 p90_ms=4.761 E0=134.882503 n=30 W=1
+round=3 config=dyn20 RESULT load_ms=295.8 warmup_ms=1216.1 median_ms=3.269 p10_ms=2.881 p90_ms=3.901 E0=134.882492 n=30 W=1
+round=3 config=freeze RESULT load_ms=492.8 warmup_ms=1503.9 median_ms=3.110 p10_ms=2.758 p90_ms=3.761 E0=134.882503 n=30 W=1
+round=3 config=tf32 RESULT load_ms=299.8 warmup_ms=1521.4 median_ms=2.976 p10_ms=2.662 p90_ms=3.708 E0=134.781584 n=30 W=1
+round=3 config=expseg RESULT load_ms=292.6 warmup_ms=1496.1 median_ms=3.019 p10_ms=2.687 p90_ms=3.609 E0=134.882492 n=30 W=1

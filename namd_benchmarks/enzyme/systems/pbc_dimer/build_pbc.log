@@ -1,0 +1,372 @@
+Info) VMD for LINUXAMD64, version 2.0.0a5 (March 13, 2025)
+Info) http://www.ks.uiuc.edu/Research/vmd/                         
+Info) Email questions and bug reports to vmd@ks.uiuc.edu           
+Info) Please include this reference in published work using VMD:   
+Info)    Humphrey, W., Dalke, A. and Schulten, K., `VMD - Visual   
+Info)    Molecular Dynamics', J. Molec. Graphics 1996, 14.1, 33-38.
+Info) -------------------------------------------------------------
+Info) Multithreading available, 16 CPUs.
+Info)   CPU features: SSE2 SSE4.1 AVX AVX2 FMA F16 HT 
+Info)   Detected VM or hypervisor execution environment
+Info) Free system memory: 39GB (70%)
+Info) Creating CUDA device pool and initializing hardware...
+Info) Detected 1 available CUDA accelerator::
+Info) [0] NVIDIA GeForce RTX 3070 Laptop GPU 40 SM_8.6 1.6 GHz, 8.0GB RAM SP64 KT AE1 ZC
+Info) Dynamically loaded 2 plugins in directory:
+Info) /usr/local/lib/vmd_2.0/plugins/LINUXAMD64/molfile
+OptiXRenderer) ERROR: Failed to load OptiX shared library.
+OptiXRenderer)        NVIDIA driver may be too old.
+OptiXRenderer)        Check/update NVIDIA driver
+ERROR) Duplicate resname "4YS"
+ERROR) Duplicate resname "YGA"
+/home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/toppar
+12.00
+0.1500
+/home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/pbc_dimer
+2.0
+psfgen) clearing structure, preserving topology and aliases
+psfgen) reading topology file /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/toppar/top_all36_prot.rtf
+
+psfgen) >>>>>>>>CHARMM36 All-Hydrogen Topology File for Proteins <<<<<<
+psfgen) >>>>> Includes phi, psi cross term map (CMAP) correction <<<<<<<
+psfgen) >>>>>>>>>>>>>>>>>>>>>>>>>> May 2011 <<<<<<<<<<<<<<<<<<<<<<<<<<<<
+psfgen)  All comments to the CHARMM web site: www.charmm.org
+psfgen)              parameter set discussion forum
+psfgen) 
+psfgen) Created by CHARMM version 36 1
+psfgen) cross-term entries present in topology definitions
+psfgen) reading topology file /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/toppar/toppar_water_ions_namd.str
+
+psfgen)  Toplogy and parameter information for water and ions.
+psfgen) 
+psfgen) reading topology from stream file
+psfgen)  Topology for water and ions
+psfgen) 
+psfgen) Created by CHARMM version 31 1
+psfgen) skipping parameters in stream file
+psfgen)  Parameters for water and ions
+psfgen) 
+psfgen) skipping parameters in stream file
+psfgen)  NBFix between carboxylate and sodium
+psfgen) 
+psfgen) aliasing residue HIS to HSD
+psfgen) aliasing residue ILE atom CD1 to CD
+psfgen) aliasing residue HOH to TIP3
+psfgen) building segment A
+psfgen) enabling angle autogeneration
+psfgen) enabling dihedral autogeneration
+psfgen) reading residues from pdb file /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/pbc_dimer/enzyme_A.pdb
+psfgen) extracted 215 residues from pdb file
+Info: generating structure...
+psfgen) Info: skipping improper N-C-CA-HN at beginning of segment.
+psfgen) Info: skipping cross-term C-N-CA-C-N-CA-C-N at beginning of segment.
+psfgen) Info: skipping conformation C-N-CA-C at beginning of segment.
+psfgen) Info: skipping conformation C-CA-N-HN at beginning of segment.
+psfgen) Info: skipping bond C-N at end of segment.
+psfgen) Info: skipping improper C-CA-N-O at end of segment.
+psfgen) Info: skipping cross-term C-N-CA-C-N-CA-C-N at end of segment.
+psfgen) Info: skipping conformation CA-C-N-CA at end of segment.
+psfgen) Info: skipping conformation N-CA-C-O at end of segment.
+psfgen) Info: skipping conformation N-CA-C-N at end of segment.
+segment complete.
+psfgen) building segment B
+psfgen) enabling angle autogeneration
+psfgen) enabling dihedral autogeneration
+psfgen) reading residues from pdb file /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/pbc_dimer/enzyme_B.pdb
+psfgen) extracted 215 residues from pdb file
+Info: generating structure...
+psfgen) Info: skipping improper N-C-CA-HN at beginning of segment.
+psfgen) Info: skipping cross-term C-N-CA-C-N-CA-C-N at beginning of segment.
+psfgen) Info: skipping conformation C-N-CA-C at beginning of segment.
+psfgen) Info: skipping conformation C-CA-N-HN at beginning of segment.
+psfgen) Info: skipping bond C-N at end of segment.
+psfgen) Info: skipping improper C-CA-N-O at end of segment.
+psfgen) Info: skipping cross-term C-N-CA-C-N-CA-C-N at end of segment.
+psfgen) Info: skipping conformation CA-C-N-CA at end of segment.
+psfgen) Info: skipping conformation N-CA-C-O at end of segment.
+psfgen) Info: skipping conformation N-CA-C-N at end of segment.
+segment complete.
+psfgen) reading coordinates from pdb file /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/pbc_dimer/enzyme_A.pdb for segment A
+psfgen) Warning: failed to set coordinate for atom O	 LEU:225	  A
+psfgen) reading coordinates from pdb file /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/pbc_dimer/enzyme_B.pdb for segment B
+psfgen) Warning: failed to set coordinate for atom O	 LEU:1225	  B
+psfgen) Info: guessing coordinates for 3304 atoms (4 non-hydrogen)
+psfgen) regenerating all angles
+psfgen) regenerating all dihedrals
+psfgen) Info: writing psf file /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/pbc_dimer/system_dry.psf
+psfgen) total of 6562 atoms
+psfgen) total of 6608 bonds
+psfgen) total of 11976 angles
+psfgen) total of 17392 dihedrals
+psfgen) total of 1120 impropers
+psfgen) total of 0 explicit exclusions
+psfgen) total of 426 cross-terms
+psfgen) Info: psf file complete.
+psfgen) Info: writing pdb file /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/pbc_dimer/system_dry.pdb
+psfgen) Info: Atoms with guessed coordinates will have occupancy of 0.0.
+psfgen) Info: pdb file complete.
+
+
+
+
+psfplugin) Detected a Charmm PSF file
+Info) Using plugin psf for structure file /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/pbc_dimer/system_dry.psf
+Info) Analyzing structure ...
+Info)    Atoms: 6562
+Info)    Bonds: 6608
+Info)    Angles: 11976  Dihedrals: 17392  Impropers: 1120  Cross-terms: 426
+Info)    Bondtypes: 0  Angletypes: 0  Dihedraltypes: 0  Impropertypes: 0
+Info)    Residues: 430
+Info)    Waters: 0
+Info)    Segments: 2
+Info)    Fragments: 2   Protein: 2   Nucleic: 0
+0
+Info) Using plugin pdb for coordinates from file /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/pbc_dimer/system_dry.pdb
+Info) Finished with coordinate file /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/pbc_dimer/system_dry.pdb.
+0
+atomselect0
+24.75823211669922 -17.715150833129883 25.90213966369629
+Info) Opened coordinate file /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/pbc_dimer/system_dry.pdb for writing.
+Info) Finished with coordinate file /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/pbc_dimer/system_dry.pdb.
+{-23.98623275756836 -24.16485023498535 -35.97914123535156} {22.974769592285156 24.169151306152344 35.980857849121094}
+0.0
+95.95999908447266
+47.97999954223633
+BUILDPBC extent=71.95999908447266 L=95.95999908447266
+1.7
+Info) generating solute plus one replica of water...
+psfgen) reading structure from psf file /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/pbc_dimer/system_dry.psf
+psfgen) reading coordinates, insertion codes, and element symbols from pdb file /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/pbc_dimer/system_dry.pdb
+psfgen) reading structure from psf file /usr/local/lib/vmd_2.0/plugins/noarch/tcl/solvate1.7/wat.psf
+psfgen) reading coordinates, insertion codes, and element symbols from pdb file /usr/local/lib/vmd_2.0/plugins/noarch/tcl/solvate1.7/wat.pdb
+psfgen) psf file does not contain cross-terms
+psfgen) Info: writing psf file combine.psf
+psfgen) total of 34345 atoms
+psfgen) total of 25130 bonds
+psfgen) total of 30498 angles
+psfgen) total of 17392 dihedrals
+psfgen) total of 1120 impropers
+psfgen) total of 0 explicit exclusions
+psfgen) total of 426 cross-terms
+psfgen) Info: psf file complete.
+psfgen) Info: writing pdb file combine.pdb
+psfgen) Info: pdb file complete.
+psfplugin) Detected a Charmm PSF file
+Info) Using plugin psf for structure file combine.psf
+Info) Analyzing structure ...
+Info)    Atoms: 34345
+Info)    Bonds: 25130
+Info)    Angles: 30498  Dihedrals: 17392  Impropers: 1120  Cross-terms: 426
+Info)    Bondtypes: 0  Angletypes: 0  Dihedraltypes: 0  Impropertypes: 0
+Info)    Residues: 9691
+Info)    Waters: 9261
+Info)    Segments: 3
+Info)    Fragments: 9263   Protein: 2   Nucleic: 0
+Info) Using plugin pdb for coordinates from file combine.pdb
+Info) Finished with coordinate file combine.pdb.
+Info) generating water residue lists...
+Info) single water residue type, creating residue list...
+Info) replicating 8 water segments, 2 by 2 by 2
+psfgen) reading topology file /usr/local/lib/vmd_2.0/plugins/noarch/tcl/solvate1.7/wat.top
+
+psfgen) >>>>>> Combined CHARMM All-Hydrogen Topology File for <<<<<<<<<
+psfgen) >>>>>>>>> CHARMM22 Proteins and CHARMM27 Lipids <<<<<<<<<<
+psfgen) from
+psfgen) >>>>>>>>CHARMM22 All-Hydrogen Topology File for Proteins <<<<<<
+psfgen) >>>>>>>>>>>>>>>>>>>>> August 1999 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+psfgen) >>>>>>> Direct comments to Alexander D. MacKerell Jr. <<<<<<<<<
+psfgen) >>>>>> 410-706-7442 or email: alex,mmiris.ab.umd.edu  <<<<<<<<<
+psfgen) and
+psfgen)   \\\\\\\ CHARMM27 All-Hydrogen Lipid Topology File ///////
+psfgen)   \\\\\\\\\\\\\\\\\\ Developmental /////////////////////////
+psfgen) 		Alexander D. MacKerell Jr.
+psfgen) 			August 1999
+psfgen)  All comments to ADM jr.  email: alex,mmiris.ab.umd.edu
+psfgen) 		telephone: 410-706-7442
+psfgen) 
+psfgen) Created by CHARMM version 27 1
+psfgen) building segment WT1
+psfgen) setting patch for first residue to NONE
+psfgen) setting patch for last residue to NONE
+Info: generating structure...
+segment complete.
+psfgen) building segment WT2
+psfgen) setting patch for first residue to NONE
+psfgen) setting patch for last residue to NONE
+Info: generating structure...
+segment complete.
+psfgen) building segment WT3
+psfgen) setting patch for first residue to NONE
+psfgen) setting patch for last residue to NONE
+Info: generating structure...
+segment complete.
+psfgen) building segment WT4
+psfgen) setting patch for first residue to NONE
+psfgen) setting patch for last residue to NONE
+Info: generating structure...
+segment complete.
+psfgen) building segment WT5
+psfgen) setting patch for first residue to NONE
+psfgen) setting patch for last residue to NONE
+Info: generating structure...
+segment complete.
+psfgen) building segment WT6
+psfgen) setting patch for first residue to NONE
+psfgen) setting patch for last residue to NONE
+Info: generating structure...
+segment complete.
+psfgen) building segment WT7
+psfgen) setting patch for first residue to NONE
+psfgen) setting patch for last residue to NONE
+Info: generating structure...
+segment complete.
+psfgen) building segment WT8
+psfgen) setting patch for first residue to NONE
+psfgen) setting patch for last residue to NONE
+Info: generating structure...
+segment complete.
+psfgen) Info: writing psf file /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/pbc_dimer/system_solv.psf
+psfgen) total of 83848 atoms
+psfgen) total of 58132 bonds
+psfgen) total of 37738 angles
+psfgen) total of 17392 dihedrals
+psfgen) total of 1120 impropers
+psfgen) total of 0 explicit exclusions
+psfgen) total of 426 cross-terms
+psfgen) Info: psf file complete.
+psfgen) Info: writing pdb file /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/pbc_dimer/system_solv.pdb
+psfgen) Info: pdb file complete.
+psfgen) clearing structure, preserving topology and aliases
+psfplugin) Detected a Charmm PSF file
+Info) Using plugin psf for structure file /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/pbc_dimer/system_solv.psf
+Info) Analyzing structure ...
+Info)    Atoms: 83848
+Info)    Bonds: 58132
+Info)    Angles: 37738  Dihedrals: 17392  Impropers: 1120  Cross-terms: 426
+Info)    Bondtypes: 0  Angletypes: 0  Dihedraltypes: 0  Impropertypes: 0
+Info)    Residues: 26192
+Info)    Waters: 25762
+Info)    Segments: 10
+Info)    Fragments: 25764   Protein: 2   Nucleic: 0
+Info) Using plugin pdb for coordinates from file /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/pbc_dimer/system_solv.pdb
+Info) Finished with coordinate file /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/pbc_dimer/system_solv.pdb.
+Info) Opened coordinate file /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/pbc_dimer/system_solv.pdb for writing.
+Info) Finished with coordinate file /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/pbc_dimer/system_solv.pdb.
+Info) Extra structure overlap safety check...
+Info) Solvate completed successfully.
+can't read "errorInfo": no such variable
+1.5
+Autoionize) Reading /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/pbc_dimer/system_solv.psf//home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/pbc_dimer/system_solv.pdb...
+psfgen) clearing structure, preserving topology and aliases
+psfgen) reading structure from psf file /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/pbc_dimer/system_solv.psf
+psfgen) reading coordinates, insertion codes, and element symbols from pdb file /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/pbc_dimer/system_solv.pdb
+psfplugin) Detected a Charmm PSF file
+Info) Using plugin psf for structure file /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/pbc_dimer/system_solv.psf
+Info) Analyzing structure ...
+Info)    Atoms: 83848
+Info)    Bonds: 58132
+Info)    Angles: 37738  Dihedrals: 17392  Impropers: 1120  Cross-terms: 426
+Info)    Bondtypes: 0  Angletypes: 0  Dihedraltypes: 0  Impropertypes: 0
+Info)    Residues: 26192
+Info)    Waters: 25762
+Info)    Segments: 10
+Info)    Fragments: 25764   Protein: 2   Nucleic: 0
+Info) Using plugin pdb for coordinates from file /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/pbc_dimer/system_solv.pdb
+Info) Finished with coordinate file /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/pbc_dimer/system_solv.pdb.
+Autoionize) System net charge before adding ions: -15.999994076788425e.
+Autoionize) Number of ions required for neutralizing the system: 16 SOD and 0 CLA.
+Autoionize) Desired salt concentration: 0.1500 mol/L.
+Autoionize) Ions to be placed:
+Autoionize)   88 SOD
+Autoionize)   72 CLA
+Autoionize) Required min distance from molecule: 5A.
+Autoionize) Required min distance between ions: 5A.
+Autoionize) Output file prefix '/home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/pbc_dimer/system'.
+Autoionize) Ions will be added to segname ION.
+Autoionize) Obtained positions for 160 ions.
+Autoionize) Tagged 160 water molecules for deletion.
+Autoionize) Deleted 160 water molecules.
+Autoionize) Reading CHARMM topology file...
+psfgen) reading topology file /usr/local/lib/vmd_2.0/plugins/noarch/tcl/readcharmmtop1.2/toppar_water_ions_namd.str
+
+psfgen)  Toplogy and parameter information for water and ions.
+psfgen) 
+psfgen) reading topology from stream file
+psfgen)  Topology for water and ions
+psfgen) 
+psfgen) Created by CHARMM version 31 1
+psfgen) skipping parameters in stream file
+psfgen)  Parameters for water and ions
+psfgen) 
+psfgen) skipping parameters in stream file
+psfgen)  NBFix between carboxylate and sodium
+psfgen) 
+psfgen) building segment ION
+psfgen) setting patch for first residue to NONE
+psfgen) setting patch for last residue to NONE
+Info: generating structure...
+segment complete.
+Autoionize) Randomizing ion positions...
+Autoionize) Assigning ion coordinates...
+psfgen) Info: writing psf file /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/pbc_dimer/system.psf
+psfgen) total of 83528 atoms
+psfgen) total of 57812 bonds
+psfgen) total of 37578 angles
+psfgen) total of 17392 dihedrals
+psfgen) total of 1120 impropers
+psfgen) total of 0 explicit exclusions
+psfgen) total of 426 cross-terms
+psfgen) Info: psf file complete.
+psfgen) Info: writing pdb file /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/pbc_dimer/system.pdb
+psfgen) Info: pdb file complete.
+Autoionize) Loading new system with added ions...
+psfplugin) Detected a Charmm PSF file
+Info) Using plugin psf for structure file /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/pbc_dimer/system.psf
+Info) Analyzing structure ...
+Info)    Atoms: 83528
+Info)    Bonds: 57812
+Info)    Angles: 37578  Dihedrals: 17392  Impropers: 1120  Cross-terms: 426
+Info)    Bondtypes: 0  Angletypes: 0  Dihedraltypes: 0  Impropertypes: 0
+Info)    Residues: 26192
+Info)    Waters: 25602
+Info)    Segments: 11
+Info)    Fragments: 25764   Protein: 2   Nucleic: 0
+Info) Using plugin pdb for coordinates from file /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/pbc_dimer/system.pdb
+Info) Finished with coordinate file /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/pbc_dimer/system.pdb.
+Info) Opened coordinate file /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/pbc_dimer/system.pdb for writing.
+Info) Finished with coordinate file /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/pbc_dimer/system.pdb.
+Autoionize) System net charge after adding ions: 5.923211574554443e-6e.
+Autoionize) All done.
+psfplugin) Detected a Charmm PSF file
+Info) Using plugin psf for structure file /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/pbc_dimer/system.psf
+Info) Analyzing structure ...
+Info)    Atoms: 83528
+Info)    Bonds: 57812
+Info)    Angles: 37578  Dihedrals: 17392  Impropers: 1120  Cross-terms: 426
+Info)    Bondtypes: 0  Angletypes: 0  Dihedraltypes: 0  Impropertypes: 0
+Info)    Residues: 26192
+Info)    Waters: 25602
+Info)    Segments: 11
+Info)    Fragments: 25764   Protein: 2   Nucleic: 0
+5
+Info) Using plugin pdb for coordinates from file /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/pbc_dimer/system.pdb
+Info) Finished with coordinate file /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/pbc_dimer/system.pdb.
+5
+1.9
+Info) ======================
+Info) Please cite TopoTools as:
+Info) Axel Kohlmeyer & Josh Vermaas, (2022). TopoTools: Release 1.9
+Info) https://doi.org/10.5281/zenodo.598373
+Info) ======================
+
+atomselect197
+83528
+5.923211574554443e-6
+Info) Opened coordinate file /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/pbc_dimer/system.pdb for writing.
+Info) Finished with coordinate file /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/pbc_dimer/system.pdb.
+Info) Opened coordinate file /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/pbc_dimer/qm.pdb for writing.
+Info) Finished with coordinate file /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/pbc_dimer/qm.pdb.
+BUILDPBC natoms=83528 netcharge=5.923211574554443e-6
+file20
+Info) VMD for LINUXAMD64, version 2.0.0a5 (March 13, 2025)
+Info) Exiting normally.

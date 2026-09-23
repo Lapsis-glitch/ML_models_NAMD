@@ -1,0 +1,9 @@
+{
+  "n_atoms_model0_input": 3000, "iters": 100, "jitter": 0.02, "exec": "namd", "mem_fraction": 0.9, "client_peak_bytes": 695833088,
+  "models": [
+    {"label": "base", "manifest": "/home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/models/fennix/w1000/manifest.json", "exec": "namd", "median_ms": 4.55813, "p10_ms": 3.47793, "p90_ms": 5.69076, "compile_s": 10.0533, "max_dE_kcal": 0, "max_dF_kcal_A": 0, "E0_kcal": -11641.8, "compiled_device_bytes": 172941600, "temp_bytes": 122870600},
+    {"label": "fast", "manifest": "/home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/models/fennix/w1000/manifest.json", "exec": "fast", "median_ms": 3.14208, "p10_ms": 2.96245, "p90_ms": 3.40477, "compile_s": 7.23814, "max_dE_kcal": 0.0907901, "max_dF_kcal_A": 0.113345, "E0_kcal": -11641.8, "compiled_device_bytes": 172941600, "temp_bytes": 122870600},
+    {"label": "fp32", "manifest": "/home/rat/PycharmProjects/ML_models_NAMD/models/opt/fennix_fp32/w1000/manifest.json", "exec": "fast", "median_ms": 5.44037, "p10_ms": 4.77523, "p90_ms": 5.83589, "compile_s": 4.5211, "max_dE_kcal": 1.99175, "max_dF_kcal_A": 0.135217, "E0_kcal": -11640.6, "compiled_device_bytes": 173634848, "temp_bytes": 124083272},
+    {"label": "w4", "manifest": "/home/rat/PycharmProjects/ML_models_NAMD/models/opt/fennix_w4/w1000/manifest.json", "exec": "fast", "median_ms": 10.1982, "p10_ms": 9.77544, "p90_ms": 11.0796, "compile_s": 11.5364, "max_dE_kcal": 2.82012, "max_dF_kcal_A": 0.158767, "E0_kcal": -11639.6, "compiled_device_bytes": 781964284, "temp_bytes": 695507792}
+  ]
+}

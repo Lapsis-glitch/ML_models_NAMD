@@ -49,7 +49,7 @@ def main(argv=None):
                         help="[schnet] Output dict key for forces")
 
     # TorchANI-specific
-    parser.add_argument("--elements", default="1,6,7,8,16,17",
+    parser.add_argument("--elements", default="1,6,7,8,16,9,17",
                         help="[torchani] Comma-separated atomic numbers "
                              "in species order (default: ANI-2x)")
 

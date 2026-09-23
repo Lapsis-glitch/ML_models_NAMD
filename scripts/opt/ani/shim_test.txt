@@ -1,0 +1,20 @@
+-- baseline (extra libs: none)
+single: energy=-47934.328057 forces[0]=(-6.624777,-7.611073,-0.000000) charges[0]=0.0000
+batch:  energies=(-47934.328057,-47932.805626) bforces[0]=-6.624776
+
+ALL CHECKS PASSED
+-- fast (extra libs: /home/rat/PycharmProjects/ML_models_NAMD/scripts/opt/ani/cuaev_native/libcuaev_native_precise.so)
+single: energy=-47934.332840 forces[0]=(-6.624796,-7.611098,-0.000000) charges[0]=0.0000
+batch:  energies=(-47934.332840,-47932.808999) bforces[0]=-6.624796
+
+ALL CHECKS PASSED
+-- fast_nocache (extra libs: /home/rat/PycharmProjects/ML_models_NAMD/scripts/opt/ani/cuaev_native/libcuaev_native_precise.so)
+single: energy=-47934.332840 forces[0]=(-6.624791,-7.611070,-0.000000) charges[0]=0.0000
+batch:  energies=(-47934.332840,-47932.808999) bforces[0]=-6.624791
+
+ALL CHECKS PASSED
+-- fast_acc32 (extra libs: /home/rat/PycharmProjects/ML_models_NAMD/scripts/opt/ani/cuaev_native/libcuaev_native_precise.so)
+single: energy=-47934.328057 forces[0]=(-6.624796,-7.611098,-0.000000) charges[0]=0.0000
+batch:  energies=(-47934.328057,-47932.805626) bforces[0]=-6.624796
+
+ALL CHECKS PASSED

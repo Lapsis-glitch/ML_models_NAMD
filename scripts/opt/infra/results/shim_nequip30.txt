@@ -1,0 +1,9 @@
+# model=nequip_oam.pt geom=qm.pdb W=1 rounds=2 iters=40 shim=libnamd_mlff.so
+round=1 config=default RESULT load_ms=1825.1 warmup_ms=13188.7 median_ms=135.227 p10_ms=66.784 p90_ms=192.467 E0=-3193.791937 n=30 W=1
+round=1 config=legacy RESULT load_ms=1463.5 warmup_ms=14268.7 median_ms=94.136 p10_ms=70.177 p90_ms=232.361 E0=-3193.791927 n=30 W=1
+round=1 config=noopt RESULT load_ms=1919.8 warmup_ms=4965.4 median_ms=126.250 p10_ms=104.204 p90_ms=166.117 E0=-3193.791575 n=30 W=1
+round=1 config=freeze RESULT load_ms=4682.7 warmup_ms=11364.4 median_ms=84.739 p10_ms=70.375 p90_ms=150.852 E0=-3193.791976 n=30 W=1
+round=2 config=default RESULT load_ms=1624.3 warmup_ms=14162.8 median_ms=96.967 p10_ms=75.454 p90_ms=131.824 E0=-3193.791960 n=30 W=1
+round=2 config=legacy RESULT load_ms=1653.6 warmup_ms=8027.8 median_ms=224.058 p10_ms=148.402 p90_ms=314.752 E0=-3193.791928 n=30 W=1
+round=2 config=noopt RESULT load_ms=1490.7 warmup_ms=2204.9 median_ms=56.346 p10_ms=52.577 p90_ms=63.722 E0=-3193.791587 n=30 W=1
+round=2 config=freeze RESULT load_ms=3103.7 warmup_ms=5750.7 median_ms=52.648 p10_ms=48.926 p90_ms=60.360 E0=-3193.791927 n=30 W=1

@@ -1,0 +1,10 @@
+model=ani2x
+backend=mlff
+n_waters=10
+n_atoms=30
+walkers=0
+steps=500
+status=ok
+exit_code=0
+wall_seconds=22
+gpu_peak_mib=3520

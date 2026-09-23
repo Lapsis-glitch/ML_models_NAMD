@@ -1,0 +1,7 @@
+# Single TIP3P water molecule -> AMBER prmtop/inpcrd for the NAMD FeNNol test.
+# Atom order is O, H1, H2 (matches the FENNIX artifact z_list = [8,1,1]).
+source leaprc.water.tip3p
+m = WAT
+saveamberparm m water.prmtop water.inpcrd
+savepdb m water.tleap.pdb
+quit

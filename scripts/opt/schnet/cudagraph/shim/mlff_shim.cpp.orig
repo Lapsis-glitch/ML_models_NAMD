@@ -1,0 +1,674 @@
+/**
+ ***  Implementation of the NAMD MLFF libtorch shim (see mlff_shim.h).
+ ***
+ ***  This translation unit is the ONLY place libtorch is linked.  It is built
+ ***  into a standalone libnamd_mlff.so; NAMD never links it, it dlopen's it.
+ ***
+ ***  Performance: each MlffModel owns grow-only persistent device buffers and
+ ***  pinned host buffers, copies host<->device asynchronously (non_blocking) on
+ ***  the current CUDA stream, and synchronizes once per call.  This mirrors the
+ ***  buffer reuse in ComputeMLFF.C's MLFFThread (commit b43411a7) so swapping
+ ***  NAMD onto the shim carries no hot-path regression.
+ ***
+ ***  Grad scoping (mirrors ComputeMLFF.C): forward() runs with autograd ENABLED
+ ***  and the coordinate leaf marked requires_grad, because MLFF wrappers compute
+ ***  forces via torch.autograd.grad(energy, coords) inside forward().  Only the
+ ***  host<->device data movement is wrapped in NoGradGuard.
+ **/
+
+#include "mlff_shim.h"
+
+#include <torch/script.h>
+#include <torch/torch.h>
+#include <torch/csrc/jit/runtime/graph_executor.h>
+#include <torch/csrc/jit/passes/tensorexpr_fuser.h>
+#include <torch/csrc/jit/python/update_graph_executor_opt.h>
+
+/* CUDA stream / device helpers exist only in a CUDA libtorch.  Guard so the
+ * shim still compiles against a CPU-only libtorch (the calls are also gated at
+ * runtime on device.is_cuda()). */
+#if __has_include(<c10/cuda/CUDAStream.h>)
+#  include <c10/cuda/CUDAStream.h>
+#  include <c10/cuda/CUDAFunctions.h>
+#  define MLFF_HAVE_CUDA 1
+#else
+#  define MLFF_HAVE_CUDA 0
+#endif
+
+#include <dlfcn.h>
+
+#include <algorithm>
+#include <atomic>
+#include <cstdlib>
+#include <mutex>
+#include <new>
+#include <string>
+#include <vector>
+#include <cstring>
+#include <cstdio>
+#include <stdexcept>
+
+namespace {
+
+/* Thread-local last-error buffer backing mlff_last_error(). */
+thread_local std::string g_lastError;
+void setError(const std::string &msg) { g_lastError = msg; }
+
+/* Set by an atexit hook once the process has started exiting.  NAMD's
+ * MLFFThread is destroyed from an exit handler, which with libtorch >= 2.7 can
+ * run after libtorch's CUDA stream/allocator statics are gone; freeing device
+ * tensors then throws inside a noexcept destructor ("Unrecognized stream ...")
+ * and aborts the run after it has finished.  mlff_free leaks the model instead
+ * when this is set -- the OS reclaims everything at exit anyway. */
+std::atomic<bool> g_processExiting{false};
+void markProcessExiting() { g_processExiting.store(true); }
+/* Registered on the first EVAL, not at load: NAMD registers its own
+ * atexit(cleanupMLFFThread) right after the model load returns, and exit
+ * handlers run in reverse order, so ours must be registered later than that
+ * to run first. */
+void armExitHook() {
+    static std::once_flag once;
+    std::call_once(once, [] { std::atexit(markProcessExiting); });
+}
+
+/* ---- Optional TorchScript runtime knobs (all default to libtorch's own
+ * defaults when the env var is unset).  See BUILD.local.md.
+ *   NAMD_MLFF_JIT_PROFILING=0     legacy executor (getExecutorMode/getProfilingMode = false)
+ *   NAMD_MLFF_JIT_OPTIMIZE=0      setGraphExecutorOptimize(false)   (thread-local: re-applied per eval)
+ *   NAMD_MLFF_JIT_TEXPR=0|1       setTensorExprFuserEnabled
+ *   NAMD_MLFF_JIT_FUSION=S        fusion strategy, e.g. "DYNAMIC:20" or "STATIC:2,DYNAMIC:10"
+ *   NAMD_MLFF_JIT_PROFILED_RUNS=N getNumProfiledRuns()
+ *   NAMD_MLFF_FREEZE=1            torch::jit::freeze the module at load (keeps forward_batch)
+ *   NAMD_MLFF_TF32=1              allow TF32 in cuBLAS/cuDNN (changes fp32 numerics!) */
+int envFlag(const char *name) {           /* -1 = unset, else 0/1 */
+    const char *v = std::getenv(name);
+    if (!v || !*v) return -1;
+    return (v[0] == '0' || v[0] == 'n' || v[0] == 'N' || v[0] == 'f' || v[0] == 'F') ? 0 : 1;
+}
+int g_jitOptimize = -1;
+void applyGlobalKnobs() {
+    static std::once_flag once;
+    std::call_once(once, [] {
+        std::string summary;
+        int prof = envFlag("NAMD_MLFF_JIT_PROFILING");
+        if (prof >= 0) {
+            torch::jit::getExecutorMode() = (prof != 0);
+            torch::jit::getProfilingMode() = (prof != 0);
+            summary += " JIT_PROFILING=" + std::to_string(prof);
+        }
+        g_jitOptimize = envFlag("NAMD_MLFF_JIT_OPTIMIZE");
+        if (g_jitOptimize >= 0) summary += " JIT_OPTIMIZE=" + std::to_string(g_jitOptimize);
+        int te = envFlag("NAMD_MLFF_JIT_TEXPR");
+        if (te >= 0) {
+            torch::jit::setTensorExprFuserEnabled(te != 0);
+            summary += " JIT_TEXPR=" + std::to_string(te);
+        }
+        if (const char *fs = std::getenv("NAMD_MLFF_JIT_FUSION")) {
+            torch::jit::FusionStrategy strat;
+            std::string str(fs);
+            size_t pos = 0;
+            while (pos < str.size()) {
+                size_t end = str.find(',', pos);
+                if (end == std::string::npos) end = str.size();
+                std::string item = str.substr(pos, end - pos);
+                pos = end + 1;
+                size_t c = item.find(':');
+                if (c == std::string::npos) continue;
+                std::string kind = item.substr(0, c);
+                size_t depth = std::strtoul(item.c_str() + c + 1, nullptr, 10);
+                if (kind == "STATIC" || kind == "static")
+                    strat.emplace_back(torch::jit::FusionBehavior::STATIC, depth);
+                else if (kind == "DYNAMIC" || kind == "dynamic")
+                    strat.emplace_back(torch::jit::FusionBehavior::DYNAMIC, depth);
+            }
+            if (!strat.empty()) {
+                torch::jit::setFusionStrategy(strat);
+                summary += std::string(" JIT_FUSION=") + fs;
+            }
+        }
+        if (const char *nr = std::getenv("NAMD_MLFF_JIT_PROFILED_RUNS")) {
+            torch::jit::getNumProfiledRuns() = std::strtoul(nr, nullptr, 10);
+            summary += std::string(" JIT_PROFILED_RUNS=") + nr;
+        }
+        int tf32 = envFlag("NAMD_MLFF_TF32");
+        if (tf32 >= 0) {
+            at::globalContext().setAllowTF32CuBLAS(tf32 != 0);
+            at::globalContext().setAllowTF32CuDNN(tf32 != 0);
+            summary += " TF32=" + std::to_string(tf32);
+        }
+        if (envFlag("NAMD_MLFF_FREEZE") >= 0)
+            summary += " FREEZE=" + std::to_string(envFlag("NAMD_MLFF_FREEZE"));
+        if (!summary.empty())
+            std::fprintf(stderr, "MLFF shim: runtime knobs:%s\n", summary.c_str());
+    });
+}
+/* setGraphExecutorOptimize is thread-local and NAMD evaluates on a worker
+ * thread, so it is (re)applied on the evaluating thread each call. */
+inline void applyThreadKnobs() {
+    if (g_jitOptimize >= 0) torch::jit::setGraphExecutorOptimize(g_jitOptimize != 0);
+}
+
+/* NAMD_MLFF_EXTRA_LIBS: colon-separated list of shared libraries that
+ * register TorchScript custom ops (cuEquivariance, TorchANI cuAEV, vesin,
+ * OpenEquivariance, ...).  Each is dlopen'd RTLD_NOW|RTLD_GLOBAL before
+ * torch::jit::load so the ops exist when the archive is deserialized.  The
+ * handles are intentionally never closed (op registrations must outlive every
+ * model).  Re-dlopen of an already-loaded path is a cheap refcount bump, so
+ * calling this on every load is fine.  Returns false and sets `err` on the
+ * first library that fails to load. */
+bool loadExtraLibs(std::string &err) {
+    const char *env = std::getenv("NAMD_MLFF_EXTRA_LIBS");
+    if (!env || !*env) return true;
+    /* NAMD dlopens this shim RTLD_LOCAL, so libtorch's own libraries are not
+     * in the global symbol scope.  Op libraries whose NEEDED list is
+     * incomplete (e.g. libtorch_nvshmem.so from a pip wheel needs c10_cuda
+     * symbols but only lists libc10.so) would then fail with an undefined
+     * symbol.  Promote the already-loaded libtorch libraries to global scope
+     * first; RTLD_NOLOAD never loads anything new. */
+    static const char *const kTorchLibs[] = {
+        "libc10.so", "libc10_cuda.so", "libtorch_cpu.so", "libtorch_cuda.so",
+        "libtorch.so"};
+    for (const char *lib : kTorchLibs)
+        ::dlopen(lib, RTLD_NOW | RTLD_GLOBAL | RTLD_NOLOAD);
+    std::string list(env);
+    size_t pos = 0;
+    while (pos <= list.size()) {
+        size_t end = list.find(':', pos);
+        if (end == std::string::npos) end = list.size();
+        std::string path = list.substr(pos, end - pos);
+        pos = end + 1;
+        if (path.empty()) continue;
+        if (!::dlopen(path.c_str(), RTLD_NOW | RTLD_GLOBAL)) {
+            const char *de = ::dlerror();
+            err = "NAMD_MLFF_EXTRA_LIBS: dlopen(" + path + ") failed: " +
+                  (de ? de : "unknown error");
+            return false;
+        }
+    }
+    return true;
+}
+
+/* Number of arguments a scripted method declares, counting `self`.
+ * -1 if there is no such method. */
+int64_t methodArity(torch::jit::Module &mod, const char *name) {
+    try {
+        auto m = mod.get_method(name);
+        return static_cast<int64_t>(m.function().getSchema().arguments().size());
+    } catch (...) {
+        return -1;
+    }
+}
+
+/* One resident model: the TorchScript module, its device, and its resident
+ * input/output buffers.  evaluate paths are serialized by m_mtx so the shared
+ * buffers cannot race (NAMD already serializes, this is belt-and-suspenders). */
+struct ModelImpl {
+    torch::jit::Module module;
+    torch::Device      device;
+    bool               hasBatch;
+    /* Whether forward()/forward_batch() were exported with a trailing cell
+     * argument.  Worked out from their signatures when the model is loaded. */
+    bool               takesCell      = false;
+    bool               batchTakesCell = false;
+    std::mutex         mtx;
+
+    /* ---- serial-path buffers ---- */
+    torch::Tensor d_coords, d_Z, d_pc_xyz, d_pc_q, d_pc_empty_xyz, d_pc_empty_q;
+    torch::Tensor h_coords, h_Z, h_pc_xyz, h_pc_q, h_energy, h_forces, h_charges;
+    int64_t maxN = 0, maxPC = 0;
+
+    /* ---- batch-path buffers ---- */
+    torch::Tensor db_coords, db_Z, db_batch, db_ptr;
+    torch::Tensor hb_coords, hb_Z, hb_batch, hb_ptr, hb_energies, hb_forces, hb_charges;
+    int64_t maxNTotal = 0, maxB = 0;
+
+    ModelImpl(torch::jit::Module m, torch::Device d, bool hb)
+        : module(std::move(m)), device(d), hasBatch(hb) {}
+
+    torch::TensorOptions dF64() const { return torch::TensorOptions().dtype(torch::kFloat64).device(device); }
+    torch::TensorOptions dI64() const { return torch::TensorOptions().dtype(torch::kInt64).device(device); }
+    torch::TensorOptions hF64() const {
+        return torch::TensorOptions().dtype(torch::kFloat64)
+                   .device(torch::kCPU).pinned_memory(device.is_cuda());
+    }
+    torch::TensorOptions hI64() const {
+        return torch::TensorOptions().dtype(torch::kInt64)
+                   .device(torch::kCPU).pinned_memory(device.is_cuda());
+    }
+
+    /* Copy n row-major 3x3 cells onto the model's device as an [n,3,3] tensor.
+     * No grad: the cell is a constant input, and letting gradients flow back
+     * into it would corrupt the forces. */
+    torch::Tensor cellTensor(const double *cells, int n) {
+        torch::NoGradGuard ng;
+        auto host = torch::from_blob(const_cast<double *>(cells), {n, 3, 3},
+                                     torch::TensorOptions().dtype(torch::kFloat64));
+        return host.to(device, /*non_blocking=*/false).clone();
+    }
+    /* All-zero cell: how the wrapper is told "this one is not periodic". */
+    torch::Tensor zeroCells(int n) { return torch::zeros({n, 3, 3}, dF64()); }
+
+    void ensureEmptyPC() {
+        if (!d_pc_empty_xyz.defined()) {
+            d_pc_empty_xyz = torch::zeros({0, 3}, dF64());
+            d_pc_empty_q   = torch::zeros({0},    dF64());
+        }
+    }
+
+    void ensureSerial(int numQM, int numPC) {
+        if (numQM > maxN) {
+            int64_t n = std::max<int64_t>(numQM, std::max<int64_t>(maxN * 2, 64));
+            d_coords  = torch::empty({n, 3}, dF64());
+            d_Z       = torch::empty({n},    dI64());
+            h_coords  = torch::empty({n, 3}, hF64());
+            h_Z       = torch::empty({n},    hI64());
+            h_forces  = torch::empty({n, 3}, hF64());
+            h_charges = torch::empty({n},    hF64());
+            maxN = n;
+        }
+        if (numPC > maxPC) {
+            int64_t n = std::max<int64_t>(numPC, std::max<int64_t>(maxPC * 2, 32));
+            d_pc_xyz = torch::empty({n, 3}, dF64());
+            d_pc_q   = torch::empty({n},    dF64());
+            h_pc_xyz = torch::empty({n, 3}, hF64());
+            h_pc_q   = torch::empty({n},    hF64());
+            maxPC = n;
+        }
+        if (!h_energy.defined()) h_energy = torch::empty({1}, hF64());
+        ensureEmptyPC();
+    }
+
+    void ensureBatch(int N_total, int B) {
+        if (N_total > maxNTotal) {
+            int64_t n = std::max<int64_t>(N_total, std::max<int64_t>(maxNTotal * 2, 64));
+            db_coords = torch::empty({n, 3}, dF64());
+            db_Z      = torch::empty({n},    dI64());
+            db_batch  = torch::empty({n},    dI64());
+            hb_coords = torch::empty({n, 3}, hF64());
+            hb_Z      = torch::empty({n},    hI64());
+            hb_batch  = torch::empty({n},    hI64());
+            hb_forces = torch::empty({n, 3}, hF64());
+            hb_charges= torch::empty({n},    hF64());
+            maxNTotal = n;
+        }
+        if (B > maxB) {
+            int64_t n = std::max<int64_t>(B, std::max<int64_t>(maxB * 2, 8));
+            db_ptr      = torch::empty({n + 1}, dI64());
+            hb_ptr      = torch::empty({n + 1}, hI64());
+            hb_energies = torch::empty({n},     hF64());
+            maxB = n;
+        }
+        ensureEmptyPC();
+    }
+
+    void syncIfCuda() {
+#if MLFF_HAVE_CUDA
+        if (device.is_cuda())
+            at::cuda::getCurrentCUDAStream(device.index()).synchronize();
+#endif
+    }
+    void pinThread() {
+#if MLFF_HAVE_CUDA
+        if (device.is_cuda()) c10::cuda::set_device(device.index());
+#endif
+    }
+};
+
+}  // namespace
+
+extern "C" {
+
+int mlff_cuda_available(void) {
+    try { return torch::cuda::is_available() ? 1 : 0; }
+    catch (...) { return 0; }
+}
+
+int mlff_device_count(void) {
+    try { return torch::cuda::is_available()
+                  ? static_cast<int>(torch::cuda::device_count()) : 0; }
+    catch (...) { return 0; }
+}
+
+MlffModel *mlff_load(const char *model_path, int gpu_id, int *supports_batch) {
+    if (supports_batch) *supports_batch = 0;
+    try {
+        const bool wantCuda = (gpu_id >= 0) && torch::cuda::is_available();
+        torch::Device dev = wantCuda
+            ? torch::Device(torch::kCUDA, static_cast<c10::DeviceIndex>(gpu_id))
+            : torch::Device(torch::kCPU);
+
+        std::string libErr;
+        if (!loadExtraLibs(libErr)) {
+            setError(libErr);
+            return nullptr;
+        }
+        applyGlobalKnobs();
+        applyThreadKnobs();
+        torch::jit::Module mod = torch::jit::load(model_path, dev);
+        mod.eval();
+        if (envFlag("NAMD_MLFF_FREEZE") == 1) {
+            std::vector<std::string> keep;
+            if (mod.find_method("forward_batch").has_value()) keep.push_back("forward_batch");
+            mod = torch::jit::freeze(mod, keep);
+        }
+
+        bool hasBatch = false;
+        try { hasBatch = mod.find_method("forward_batch").has_value(); }
+        catch (...) { hasBatch = false; }
+        if (supports_batch) *supports_batch = hasBatch ? 1 : 0;
+
+        /* Ask the model's own signatures whether they take a cell, instead of
+         * trusting a flag that could be stale.  Counting `self`, forward has 5
+         * arguments without a cell and 6 with one; forward_batch has 7 and 8. */
+        const int64_t fwdArgs = methodArity(mod, "forward");
+        if (fwdArgs >= 0 && fwdArgs != 5 && fwdArgs != 6) {
+            setError("mlff_load: forward() takes " + std::to_string(fwdArgs - 1) +
+                     " arguments; expected 4, or 5 with a trailing cell");
+            return nullptr;
+        }
+        const int64_t fwdBatchArgs = hasBatch ? methodArity(mod, "forward_batch") : -1;
+        if (fwdBatchArgs >= 0 && fwdBatchArgs != 7 && fwdBatchArgs != 8) {
+            setError("mlff_load: forward_batch() takes " + std::to_string(fwdBatchArgs - 1) +
+                     " arguments; expected 6, or 7 with a trailing cells argument");
+            return nullptr;
+        }
+
+        ModelImpl *impl = new ModelImpl(std::move(mod), dev, hasBatch);
+        impl->takesCell      = (fwdArgs == 6);
+        impl->batchTakesCell = (fwdBatchArgs == 8);
+        return reinterpret_cast<MlffModel *>(impl);
+    } catch (const std::exception &e) {
+        setError(std::string("mlff_load: ") + e.what());
+        return nullptr;
+    } catch (...) {
+        setError("mlff_load: unknown error");
+        return nullptr;
+    }
+}
+
+void mlff_free(MlffModel *m) {
+    if (g_processExiting.load()) return;   /* see markProcessExiting */
+    delete reinterpret_cast<ModelImpl *>(m);
+}
+
+/* Shared body for mlff_eval and mlff_eval_pbc.  `cell` is 9 doubles or NULL;
+ * everything else is identical, so the two entry points cannot drift apart. */
+static int evalImpl(MlffModel *handle,
+                    const double *coords, const int64_t *Z, int numQM,
+                    const double *pc_xyz, const double *pc_q, int numPC,
+                    const double *cell,
+                    double *energy_out, double *forces_out, double *charges_out,
+                    double *virial_out, int *have_virial_out) {
+    if (have_virial_out) *have_virial_out = 0;
+    if (!handle || !coords || !Z || !energy_out || !forces_out || numQM <= 0) {
+        setError("mlff_eval: bad arguments");
+        return 1;
+    }
+    ModelImpl &M = *reinterpret_cast<ModelImpl *>(handle);
+    std::lock_guard<std::mutex> lk(M.mtx);
+    if (cell && !M.takesCell) {
+        setError("mlff_eval_pbc: a cell was given but this model was exported "
+                 "without one");
+        return 1;
+    }
+    try {
+        armExitHook();
+        applyThreadKnobs();
+        M.pinThread();
+        M.ensureSerial(numQM, numPC);
+        const bool havePC = (numPC > 0 && pc_xyz && pc_q);
+
+        {   /* host -> pinned -> device, no autograd graph */
+            torch::NoGradGuard ng;
+            std::memcpy(M.h_coords.data_ptr<double>(), coords, sizeof(double) * numQM * 3);
+            std::memcpy(M.h_Z.data_ptr<int64_t>(),     Z,      sizeof(int64_t) * numQM);
+            M.d_coords.narrow(0, 0, numQM).copy_(M.h_coords.narrow(0, 0, numQM), true);
+            M.d_Z.narrow(0, 0, numQM).copy_(M.h_Z.narrow(0, 0, numQM), true);
+            if (havePC) {
+                std::memcpy(M.h_pc_xyz.data_ptr<double>(), pc_xyz, sizeof(double) * numPC * 3);
+                std::memcpy(M.h_pc_q.data_ptr<double>(),   pc_q,   sizeof(double) * numPC);
+                M.d_pc_xyz.narrow(0, 0, numPC).copy_(M.h_pc_xyz.narrow(0, 0, numPC), true);
+                M.d_pc_q.narrow(0, 0, numPC).copy_(M.h_pc_q.narrow(0, 0, numPC), true);
+            }
+        }
+
+        /* Leaf views aliasing the persistent device storage. */
+        torch::Tensor tCoords = torch::from_blob(
+            M.d_coords.data_ptr<double>(), {numQM, 3}, M.dF64());
+        tCoords.requires_grad_(true);
+        torch::Tensor tZ = torch::from_blob(
+            M.d_Z.data_ptr<int64_t>(), {numQM}, M.dI64());
+        torch::Tensor tPCx = havePC
+            ? torch::from_blob(M.d_pc_xyz.data_ptr<double>(), {numPC, 3}, M.dF64())
+            : M.d_pc_empty_xyz;
+        torch::Tensor tPCq = havePC
+            ? torch::from_blob(M.d_pc_q.data_ptr<double>(), {numPC}, M.dF64())
+            : M.d_pc_empty_q;
+
+        std::vector<torch::jit::IValue> inputs{tCoords, tZ, tPCx, tPCq};
+        if (M.takesCell)
+            inputs.push_back(cell ? M.cellTensor(cell, 1) : M.zeroCells(1));
+        torch::IValue out = M.module.forward(inputs);   /* autograd enabled */
+
+        auto tup = out.toTuple();
+        const auto &els = tup->elements();
+        if (els.size() < 2)
+            throw std::runtime_error("forward returned fewer than 2 outputs");
+
+        const bool wantCharges = (charges_out != nullptr) && (els.size() >= 3);
+        /* A fourth output is the periodic virial; older exports return three. */
+        const bool wantVirial = (virial_out != nullptr) && (els.size() >= 4);
+        torch::Tensor hVirial;
+        {   /* device -> pinned, no autograd graph */
+            torch::NoGradGuard ng;
+            M.h_energy.copy_(els[0].toTensor().reshape({1}), true);
+            M.h_forces.narrow(0, 0, numQM).copy_(els[1].toTensor().contiguous(), true);
+            if (wantCharges)
+                M.h_charges.narrow(0, 0, numQM).copy_(els[2].toTensor().contiguous(), true);
+            if (wantVirial) {
+                hVirial = els[3].toTensor().reshape({9}).to(torch::kFloat64)
+                              .to(torch::kCPU).contiguous();
+            }
+        }
+        M.syncIfCuda();
+
+        energy_out[0] = M.h_energy.data_ptr<double>()[0];
+        std::memcpy(forces_out, M.h_forces.data_ptr<double>(), sizeof(double) * numQM * 3);
+        if (charges_out) {
+            if (wantCharges)
+                std::memcpy(charges_out, M.h_charges.data_ptr<double>(), sizeof(double) * numQM);
+            else
+                std::memset(charges_out, 0, sizeof(double) * numQM);
+        }
+        if (wantVirial) {
+            std::memcpy(virial_out, hVirial.data_ptr<double>(), sizeof(double) * 9);
+            if (have_virial_out) *have_virial_out = 1;
+        }
+        return 0;
+    } catch (const std::exception &e) {
+        setError(std::string("mlff_eval: ") + e.what());
+        return 2;
+    } catch (...) {
+        setError("mlff_eval: unknown error");
+        return 3;
+    }
+}
+
+/* Shared body for mlff_eval_batch and mlff_eval_batch_pbc.  `cells` is B*9
+ * doubles or NULL. */
+static int evalBatchImpl(MlffModel *handle,
+                         int B, int N_total,
+                         const double *coords, const int64_t *Z,
+                         const int64_t *batch, const int64_t *ptr,
+                         const double *cells,
+                         double *energies_out, double *forces_out,
+                         double *charges_out,
+                         double *virials_out, int *have_virial_out) {
+    if (have_virial_out) *have_virial_out = 0;
+    if (!handle || !coords || !Z || !batch || !ptr ||
+        !energies_out || !forces_out || B <= 0 || N_total <= 0) {
+        setError("mlff_eval_batch: bad arguments");
+        return 1;
+    }
+    ModelImpl &M = *reinterpret_cast<ModelImpl *>(handle);
+    std::lock_guard<std::mutex> lk(M.mtx);
+    if (!M.hasBatch) {
+        setError("mlff_eval_batch: model has no forward_batch method");
+        return 1;
+    }
+    if (cells && !M.batchTakesCell) {
+        setError("mlff_eval_batch_pbc: cells were given but this model's "
+                 "forward_batch was exported without them");
+        return 1;
+    }
+    try {
+        armExitHook();
+        applyThreadKnobs();
+        M.pinThread();
+        M.ensureBatch(N_total, B);
+
+        {   /* host -> pinned -> device, no autograd graph */
+            torch::NoGradGuard ng;
+            std::memcpy(M.hb_coords.data_ptr<double>(), coords, sizeof(double) * N_total * 3);
+            std::memcpy(M.hb_Z.data_ptr<int64_t>(),     Z,      sizeof(int64_t) * N_total);
+            std::memcpy(M.hb_batch.data_ptr<int64_t>(), batch,  sizeof(int64_t) * N_total);
+            std::memcpy(M.hb_ptr.data_ptr<int64_t>(),   ptr,    sizeof(int64_t) * (B + 1));
+            M.db_coords.narrow(0, 0, N_total).copy_(M.hb_coords.narrow(0, 0, N_total), true);
+            M.db_Z.narrow(0, 0, N_total).copy_(M.hb_Z.narrow(0, 0, N_total), true);
+            M.db_batch.narrow(0, 0, N_total).copy_(M.hb_batch.narrow(0, 0, N_total), true);
+            M.db_ptr.narrow(0, 0, B + 1).copy_(M.hb_ptr.narrow(0, 0, B + 1), true);
+        }
+
+        torch::Tensor tCoords = torch::from_blob(
+            M.db_coords.data_ptr<double>(), {N_total, 3}, M.dF64());
+        tCoords.requires_grad_(true);
+        torch::Tensor tZ     = torch::from_blob(M.db_Z.data_ptr<int64_t>(),     {N_total}, M.dI64());
+        torch::Tensor tBatch = torch::from_blob(M.db_batch.data_ptr<int64_t>(), {N_total}, M.dI64());
+        torch::Tensor tPtr   = torch::from_blob(M.db_ptr.data_ptr<int64_t>(),   {B + 1},   M.dI64());
+
+        std::vector<torch::jit::IValue> inputs{
+            tCoords, tZ, tBatch, tPtr, M.d_pc_empty_xyz, M.d_pc_empty_q};
+        if (M.batchTakesCell)
+            inputs.push_back(cells ? M.cellTensor(cells, B) : M.zeroCells(B));
+        torch::IValue out = M.module.get_method("forward_batch")(inputs);
+
+        auto tup = out.toTuple();
+        const auto &els = tup->elements();
+        if (els.size() < 2)
+            throw std::runtime_error("forward_batch returned fewer than 2 outputs");
+
+        const bool wantCharges = (charges_out != nullptr) && (els.size() >= 3);
+        const bool wantVirial  = (virials_out != nullptr) && (els.size() >= 4);
+        torch::Tensor hVirial;
+        {
+            torch::NoGradGuard ng;
+            M.hb_energies.narrow(0, 0, B).copy_(els[0].toTensor().reshape({B}), true);
+            M.hb_forces.narrow(0, 0, N_total).copy_(els[1].toTensor().contiguous(), true);
+            if (wantCharges)
+                M.hb_charges.narrow(0, 0, N_total).copy_(els[2].toTensor().contiguous(), true);
+            if (wantVirial) {
+                hVirial = els[3].toTensor().reshape({B * 9}).to(torch::kFloat64)
+                              .to(torch::kCPU).contiguous();
+            }
+        }
+        M.syncIfCuda();
+
+        std::memcpy(energies_out, M.hb_energies.data_ptr<double>(), sizeof(double) * B);
+        std::memcpy(forces_out,   M.hb_forces.data_ptr<double>(),   sizeof(double) * N_total * 3);
+        if (charges_out) {
+            if (wantCharges)
+                std::memcpy(charges_out, M.hb_charges.data_ptr<double>(), sizeof(double) * N_total);
+            else
+                std::memset(charges_out, 0, sizeof(double) * N_total);
+        }
+        if (wantVirial) {
+            std::memcpy(virials_out, hVirial.data_ptr<double>(),
+                        sizeof(double) * static_cast<size_t>(B) * 9);
+            if (have_virial_out) *have_virial_out = 1;
+        }
+        return 0;
+    } catch (const std::exception &e) {
+        setError(std::string("mlff_eval_batch: ") + e.what());
+        return 2;
+    } catch (...) {
+        setError("mlff_eval_batch: unknown error");
+        return 3;
+    }
+}
+
+/* ---- Public entry points ---------------------------------------------- */
+/* The non-periodic ones pass a NULL cell, so they behave exactly as they did
+ * before periodic support existed. */
+
+int mlff_eval(MlffModel *handle,
+              const double *coords, const int64_t *Z, int numQM,
+              const double *pc_xyz, const double *pc_q, int numPC,
+              double *energy_out, double *forces_out, double *charges_out) {
+    return evalImpl(handle, coords, Z, numQM, pc_xyz, pc_q, numPC, nullptr,
+                    energy_out, forces_out, charges_out, nullptr, nullptr);
+}
+
+int mlff_eval_pbc(MlffModel *handle,
+                  const double *coords, const int64_t *Z, int numQM,
+                  const double *pc_xyz, const double *pc_q, int numPC,
+                  const double *cell,
+                  double *energy_out, double *forces_out, double *charges_out) {
+    return evalImpl(handle, coords, Z, numQM, pc_xyz, pc_q, numPC, cell,
+                    energy_out, forces_out, charges_out, nullptr, nullptr);
+}
+
+int mlff_eval_batch(MlffModel *handle,
+                    int B, int N_total,
+                    const double *coords, const int64_t *Z,
+                    const int64_t *batch, const int64_t *ptr,
+                    double *energies_out, double *forces_out,
+                    double *charges_out) {
+    return evalBatchImpl(handle, B, N_total, coords, Z, batch, ptr, nullptr,
+                         energies_out, forces_out, charges_out, nullptr, nullptr);
+}
+
+int mlff_eval_batch_pbc(MlffModel *handle,
+                        int B, int N_total,
+                        const double *coords, const int64_t *Z,
+                        const int64_t *batch, const int64_t *ptr,
+                        const double *cells,
+                        double *energies_out, double *forces_out,
+                        double *charges_out) {
+    return evalBatchImpl(handle, B, N_total, coords, Z, batch, ptr, cells,
+                         energies_out, forces_out, charges_out, nullptr, nullptr);
+}
+
+int mlff_eval_virial(MlffModel *handle,
+                     const double *coords, const int64_t *Z, int numQM,
+                     const double *pc_xyz, const double *pc_q, int numPC,
+                     const double *cell,
+                     double *energy_out, double *forces_out, double *charges_out,
+                     double *virial_out, int *have_virial_out) {
+    return evalImpl(handle, coords, Z, numQM, pc_xyz, pc_q, numPC, cell,
+                    energy_out, forces_out, charges_out,
+                    virial_out, have_virial_out);
+}
+
+int mlff_eval_batch_virial(MlffModel *handle,
+                           int B, int N_total,
+                           const double *coords, const int64_t *Z,
+                           const int64_t *batch, const int64_t *ptr,
+                           const double *cells,
+                           double *energies_out, double *forces_out,
+                           double *charges_out,
+                           double *virials_out, int *have_virial_out) {
+    return evalBatchImpl(handle, B, N_total, coords, Z, batch, ptr, cells,
+                         energies_out, forces_out, charges_out,
+                         virials_out, have_virial_out);
+}
+
+int mlff_supports_pbc(MlffModel *handle) {
+    if (!handle) return 0;
+    return reinterpret_cast<ModelImpl *>(handle)->takesCell ? 1 : 0;
+}
+
+const char *mlff_last_error(void) {
+    return g_lastError.c_str();
+}
+
+}  // extern "C"

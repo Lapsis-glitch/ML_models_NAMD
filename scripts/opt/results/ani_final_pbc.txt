@@ -1,0 +1,12 @@
+water30 PBC L=11.7            base  median   15.617 ms  dE 0.00e+00  dF 0.00e+00  dV 0.00e+00  peak(1 call) 341 MiB
+water30 PBC L=11.7            fast  median    7.002 ms  dE 4.42e-02  dF 7.28e-05  dV 1.36e-04  peak(1 call) 341 MiB
+water30 PBC L=11.7    fast_nocache  median    7.492 ms  dE 4.42e-02  dF 5.11e-05  dV 1.13e-04  peak(1 call) 341 MiB
+water300 PBC L=19.5            base  median   20.753 ms  dE 0.00e+00  dF 0.00e+00  dV 0.00e+00  peak(1 call) 428 MiB
+water300 PBC L=19.5            fast  median    9.236 ms  dE 7.56e-01  dF 8.26e-04  dV 9.16e-04  peak(1 call) 360 MiB
+water300 PBC L=19.5    fast_nocache  median    9.721 ms  dE 7.56e-01  dF 8.30e-04  dV 8.98e-04  peak(1 call) 357 MiB
+water900 PBC L=26.0            base  median   58.103 ms  dE 0.00e+00  dF 0.00e+00  dV 0.00e+00  peak(1 call) 1133 MiB
+water900 PBC L=26.0            fast  median   10.000 ms  dE 6.63e-01  dF 1.81e-03  dV 2.39e-03  peak(1 call) 398 MiB
+water900 PBC L=26.0    fast_nocache  median   10.000 ms  dE 6.63e-01  dF 1.81e-03  dV 2.39e-03  peak(1 call) 399 MiB
+water3000 PBC L=36.1            base  median 3118.552 ms  dE 0.00e+00  dF 0.00e+00  dV 0.00e+00  peak(1 call) 9024 MiB
+water3000 PBC L=36.1            fast  median   13.205 ms  dE 6.22e+00  dF 3.46e-03  dV 2.39e-02  peak(1 call) 469 MiB
+water6000 PBC L=44.2            fast  median   19.552 ms  dE 0.00e+00  dF 0.00e+00  dV 0.00e+00  peak(1 call) 692 MiB

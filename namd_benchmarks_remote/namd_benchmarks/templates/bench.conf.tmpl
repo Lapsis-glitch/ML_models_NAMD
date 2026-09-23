@@ -1,0 +1,64 @@
+# ===========================================================================
+# NAMD3 ML-FF / FeNNol / xTB QM benchmark — templated config.
+# Whole water box is the QM region (beta=1 for every atom); qmReplaceAll on,
+# so the ML/QM engine supplies ALL forces and NAMD's own MM forces are ignored.
+# Placeholders are substituted by run_benchmark.sh.
+# ===========================================================================
+
+amber                   yes
+parmfile                @PRMTOP@
+coordinates             @COORDS@
+temperature             300
+
+# --- output / timing -------------------------------------------------------
+binaryoutput            no
+outputname              @OUTPUTNAME@
+outputenergies          @OUTPUTFREQ@
+outputtiming            @OUTPUTFREQ@
+outputpressure          0
+binaryrestart           no
+restartfreq             1000000
+dcdfreq                 1000000
+
+# --- (MM forces are discarded by qmReplaceAll; kept valid for startup) ------
+cutoff                  12.0
+pairlistdist            14.0
+switching               on
+switchdist              10.0
+exclude                 scaled1-4
+1-4scaling              0.833333
+rigidbonds              all
+
+# --- thermostat ------------------------------------------------------------
+langevin                on
+langevintemp            300
+langevinHydrogen        on
+langevindamping         5
+
+# --- integrator ------------------------------------------------------------
+timestep                1.0
+firstTimestep           0
+stepspercycle           @STEPSPERCYCLE@
+fullElectFrequency      1
+nonbondedfreq           1
+
+# --- QM / ML-FF engine -----------------------------------------------------
+QMForces                on
+QMSoftware              @QMSOFTWARE@
+QMExecPath              @QMEXEC@
+QMColumn                beta
+qmParamPDB              @QMPDB@
+QMBaseDir               @QMBASEDIR@
+QMChargeMode            @QMCHARGEMODE@
+qmBondColumn            occ
+QMSimsPerNode           1
+qmReplaceAll            on
+QMVdWParams             off
+qmElecEmbed             off
+QMSwitching             off
+QMPointChargeScheme     none
+QMMult                  1 1
+QMCharge                1 @QMCHARGE@
+@EXTRA@
+
+run                     @STEPS@

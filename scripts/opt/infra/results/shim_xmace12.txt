@@ -1,0 +1,16 @@
+# model=fulvene_state0_namd.pt geom=fulvene1.xyz W=1 rounds=3 iters=150 shim=libnamd_mlff.so
+round=1 config=default RESULT load_ms=1511.3 warmup_ms=6362.5 median_ms=49.388 p10_ms=35.733 p90_ms=75.881 E0=-143991.689674 n=12 W=1
+round=1 config=legacy RESULT load_ms=1499.6 warmup_ms=3998.4 median_ms=35.243 p10_ms=30.189 p90_ms=60.981 E0=-143991.689674 n=12 W=1
+round=1 config=noopt RESULT load_ms=1205.6 warmup_ms=2849.3 median_ms=42.289 p10_ms=32.779 p90_ms=77.377 E0=-143991.689674 n=12 W=1
+round=1 config=dyn20 RESULT load_ms=1352.0 warmup_ms=5203.4 median_ms=37.071 p10_ms=30.327 p90_ms=77.483 E0=-143991.689674 n=12 W=1
+round=1 config=freeze RESULT load_ms=2273.9 warmup_ms=5146.3 median_ms=43.709 p10_ms=27.910 p90_ms=96.388 E0=-143991.689674 n=12 W=1
+round=2 config=default RESULT load_ms=1266.0 warmup_ms=6073.7 median_ms=46.227 p10_ms=30.935 p90_ms=79.379 E0=-143991.689674 n=12 W=1
+round=2 config=legacy RESULT load_ms=1525.3 warmup_ms=4065.0 median_ms=72.212 p10_ms=37.039 p90_ms=116.656 E0=-143991.689674 n=12 W=1
+round=2 config=noopt RESULT load_ms=1420.4 warmup_ms=3364.1 median_ms=51.834 p10_ms=35.244 p90_ms=104.000 E0=-143991.689674 n=12 W=1
+round=2 config=dyn20 RESULT load_ms=1466.3 warmup_ms=4854.1 median_ms=34.933 p10_ms=30.176 p90_ms=58.841 E0=-143991.689674 n=12 W=1
+round=2 config=freeze RESULT load_ms=2049.5 warmup_ms=6334.0 median_ms=49.401 p10_ms=33.534 p90_ms=82.833 E0=-143991.689674 n=12 W=1
+round=3 config=default RESULT load_ms=1452.5 warmup_ms=6340.8 median_ms=52.862 p10_ms=35.443 p90_ms=114.308 E0=-143991.689674 n=12 W=1
+round=3 config=legacy RESULT load_ms=1846.3 warmup_ms=4918.9 median_ms=51.155 p10_ms=38.253 p90_ms=65.911 E0=-143991.689674 n=12 W=1
+round=3 config=noopt RESULT load_ms=1435.5 warmup_ms=2675.0 median_ms=38.996 p10_ms=33.428 p90_ms=71.163 E0=-143991.689674 n=12 W=1
+round=3 config=dyn20 RESULT load_ms=1784.3 warmup_ms=11731.2 median_ms=40.524 p10_ms=32.207 p90_ms=74.965 E0=-143991.689674 n=12 W=1
+round=3 config=freeze RESULT load_ms=2301.6 warmup_ms=7100.1 median_ms=44.726 p10_ms=29.658 p90_ms=78.936 E0=-143991.689674 n=12 W=1

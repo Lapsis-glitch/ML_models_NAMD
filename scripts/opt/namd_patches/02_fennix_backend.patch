@@ -1,0 +1,294 @@
+--- a/src/ComputeFennix.C	2026-06-02 11:17:23.000000000 +0200
++++ b/src/ComputeFennix.C	2026-09-23 14:29:53.805496396 +0200
+@@ -39,6 +39,8 @@
+ ***    NAMD_FENNIX_PLUGIN   fallback plugin path if qmFennixPluginPath is unset
+ ***    FENNIX_MEM_FRACTION  PJRT device memory fraction cap (default 0.15)
+ ***    FENNIX_ALLOC         PJRT allocator ("platform"|"bfc"|"cuda_async")
++***    [fxopt] FENNIX_LEGACY_EXEC=1  use the original execute_compiled() path (A/B only)
++***    [fxopt] FENNIX_TIMING=1       per-phase ms timers (FENNIX_TIMING_EVERY, default 100)
+ **/
+ 
+ #ifdef NAMD_FENNIX
+@@ -56,8 +58,10 @@
+ #include "fennix_pjrt/pjrt_plugin.cpp"
+ #include "fennix_pjrt/artifact_bundle.cpp"
+ 
++#include <chrono>
+ #include <map>
+ #include <memory>
++#include <unordered_map>
+ #include <mutex>
+ #include <string>
+ #include <vector>
+@@ -123,6 +127,18 @@
+         const std::string mlir = read_text_file(m_spec.stablehlo_path);
+         const std::string co   = read_text_file(m_spec.compile_options_path);
+         m_exe = m_plugin.compile_mlir(mlir, co);
++        m_dev = m_plugin.first_addressable_device();
++        {
++            const char *le = std::getenv("FENNIX_LEGACY_EXEC");
++            m_legacy = (le && *le && *le != '0');
++        }
++        {
++            size_t ne = 1, nf = 1;
++            for (int64_t d : m_spec.energy_dims) ne *= (d > 0 ? static_cast<size_t>(d) : 1);
++            for (int64_t d : m_spec.forces_dims) nf *= (d > 0 ? static_cast<size_t>(d) : 1);
++            m_eHost.assign(ne, 0.0f);
++            m_fHost.assign(nf, 0.0f);
++        }
+ 
+         /* One warmup execution (the standalone probe observed first-run GPU
+          * variance; warming up once stabilizes it).  Best-effort. */
+@@ -155,6 +171,21 @@
+     {
+         std::lock_guard<std::mutex> lk(m_mtx);
+ 
++        if (!m_legacy) {
++            /* [fxopt] fewer host syncs, no per-step output allocation / size query */
++            float *outs[2] = { m_eHost.data(), m_fHost.data() };
++            size_t cnts[2] = { m_eHost.size(), m_fHost.size() };
++            m_plugin.execute_into(m_exe, coords.data(), m_spec.input_dims, m_dev,
++                                  outs, cnts, 2);
++            if (m_eHost.empty())
++                throw std::runtime_error("model returned an empty energy output");
++            energyKcal = static_cast<double>(m_eHost[0]) * m_spec.ev_to_kcal;
++            forcesKcal.resize(m_fHost.size());
++            for (size_t i = 0; i < m_fHost.size(); ++i)
++                forcesKcal[i] = static_cast<double>(m_fHost[i]) * m_spec.ev_to_kcal;
++            return;
++        }
++
+         PjrtExecutionResult res =
+             m_plugin.execute_compiled(m_exe, coords, m_spec.input_dims);
+ 
+@@ -196,8 +227,33 @@
+     ArtifactSpec         m_spec;
+     PjrtExecutableHandle m_exe;
+     std::mutex           m_mtx;
++    PJRT_Device         *m_dev = nullptr;   // [fxopt] cached (was re-queried every call)
++    bool                 m_legacy = false;  // [fxopt] FENNIX_LEGACY_EXEC=1
++    std::vector<float>   m_eHost, m_fHost;  // [fxopt] persistent host output buffers
+ };
+ 
++/* [fxopt] QM atom id -> index into Molecule::get_qmAtmIndx()/get_qmAtmChrg(), built once.
++ * Replaces the per-step O(numQMAtoms x globalNumQMAtoms) linear search in the charge-restore
++ * loop (36M comparisons/step at 6000 QM atoms).  Charges are still read from qmAtmChrg every
++ * step, only the index search is cached; rebuilt if the global QM atom table changes. */
++struct FennixQmIndexCache {
++    const int *indxPtr = nullptr;
++    int        count   = -1;
++    std::unordered_map<int, int> idToQi;
++};
++
++FennixQmIndexCache &fennixQmIndexCache()
++{
++    static FennixQmIndexCache *c = new FennixQmIndexCache();
++    return *c;
++}
++
++inline double fennixNowMs()
++{
++    return std::chrono::duration<double, std::milli>(
++        std::chrono::steady_clock::now().time_since_epoch()).count();
++}
++
+ /* One backend per distinct manifest path (i.e. per fixed QM-region
+  * composition).  Guarded by g_fennixMapMtx for lazy creation.
+  *
+@@ -293,6 +349,15 @@
+     Molecule      *molPtr   = Node::Object()->molecule;
+     SimParameters *simParams = Node::Object()->simParameters;
+ 
++    static const bool   fxTiming = [] { const char *e = std::getenv("FENNIX_TIMING");
++                                        return e && *e && *e != '0'; }();
++    static const long   fxEvery  = [] { const char *e = std::getenv("FENNIX_TIMING_EVERY");
++                                        long v = (e && *e) ? std::atol(e) : 100; return v > 0 ? v : 100; }();
++    static long   fxCalls = 0;
++    static double fxPre = 0, fxInfer = 0, fxPost = 0;
++    const double tStart = fxTiming ? fennixNowMs() : 0.0;
++    double tInfer0 = 0, tInfer1 = 0;
++
+     /* -------------------------------------------------------------- */
+     /*  Phase-1 hard gates: refuse what the current artifact cannot     */
+     /*  honor, rather than silently computing the wrong physics.        */
+@@ -381,6 +446,7 @@
+     /* -------------------------------------------------------------- */
+     double              energyKcal = 0.0;
+     std::vector<double> forcesKcal;
++    if (fxTiming) tInfer0 = fennixNowMs();
+     try {
+         backend->evaluate(coords, energyKcal, forcesKcal);
+     } catch (const std::exception &e) {
+@@ -396,6 +462,7 @@
+     }
+ 
+     FENNIX_DBG("FENNIX DEBUG: energy = %.6f kcal/mol\n", energyKcal);
++    if (fxTiming) tInfer1 = fennixNowMs();
+ 
+     /* -------------------------------------------------------------- */
+     /*  Build the result message: QM-atom forces + energy.             */
+@@ -453,13 +520,21 @@
+         int        globalNumQMAtoms = molPtr->get_numQMAtoms();
+         const int *qmAtmIndx        = molPtr->get_qmAtmIndx();
+         Real      *qmAtmChrg        = molPtr->get_qmAtmChrg();
++        FennixQmIndexCache &qc = fennixQmIndexCache();
++        if (qc.indxPtr != qmAtmIndx || qc.count != globalNumQMAtoms) {
++            qc.idToQi.clear();
++            qc.idToQi.reserve(static_cast<size_t>(globalNumQMAtoms) * 2);
++            /* keep the FIRST match, exactly like the original linear search's break */
++            for (int qi = 0; qi < globalNumQMAtoms; ++qi)
++                qc.idToQi.emplace(qmAtmIndx[qi], qi);
++            qc.indxPtr = qmAtmIndx;
++            qc.count   = globalNumQMAtoms;
++        }
+         for (int i = 0; i < N; ++i) {
+-            for (int qi = 0; qi < globalNumQMAtoms; ++qi) {
+-                if (qmAtmIndx[qi] == atmP[i].id) {
+-                    atmP[i].charge     = qmAtmChrg[qi];
+-                    resForce[i].charge = qmAtmChrg[qi];
+-                    break;
+-                }
++            std::unordered_map<int, int>::const_iterator it = qc.idToQi.find(atmP[i].id);
++            if (it != qc.idToQi.end()) {
++                atmP[i].charge     = qmAtmChrg[it->second];
++                resForce[i].charge = qmAtmChrg[it->second];
+             }
+         }
+     }
+@@ -479,6 +554,19 @@
+     FENNIX_DBG("FENNIX DEBUG: <<< calcFennix done, sending group %d\n",
+                msg->grpIndx);
+ 
++    if (fxTiming) {
++        const double tEnd = fennixNowMs();
++        fxPre   += tInfer0 - tStart;
++        fxInfer += tInfer1 - tInfer0;
++        fxPost  += tEnd - tInfer1;
++        if (++fxCalls % fxEvery == 0) {
++            CkPrintf("FENNIX_TIMING: calls %ld  avg ms: pre %.3f  infer %.3f  post %.3f  total %.3f\n",
++                     fxCalls, fxPre / fxEvery, fxInfer / fxEvery, fxPost / fxEvery,
++                     (fxPre + fxInfer + fxPost) / fxEvery);
++            fxPre = fxInfer = fxPost = 0;
++        }
++    }
++
+     QMProxy[0].recvQMRes(resMsg);
+ 
+     delete msg;
+--- a/src/fennix_pjrt/pjrt_plugin.h	2026-06-02 11:17:23.000000000 +0200
++++ b/src/fennix_pjrt/pjrt_plugin.h	2026-09-23 14:29:21.961117122 +0200
+@@ -63,6 +63,20 @@
+                                          const std::vector<float>& input_values,
+                                          const std::vector<int64_t>& input_dims) const;
+     void destroy_compiled(PjrtExecutableHandle& executable) const;
++
++    // [fxopt] Low-overhead evaluate path used by the NAMD FeNNol backend each step:
++    // one H2D upload (kImmutableOnlyDuringCall: the host copy is taken inside the call, so no
++    // transfer event to await), Execute without a separate completion await, then every output
++    // copied straight into caller-owned host arrays (sizes known from the manifest -> no size-query
++    // round trip), all D2H copies awaited together.  Same executable, same numerics as
++    // execute_compiled(); only host-side sync/allocation work is removed.
++    void execute_into(const PjrtExecutableHandle& executable,
++                      const float* input_values,
++                      const std::vector<int64_t>& input_dims,
++                      PJRT_Device* device,
++                      float* const* outputs,
++                      const size_t* output_counts,
++                      size_t num_outputs) const;
+     PjrtExecutionResult compile_and_execute_mlir(const std::string& mlir,
+                                                  const std::string& compile_options,
+                                                  const std::vector<float>& input_values,
+--- a/src/fennix_pjrt/pjrt_plugin.cpp	2026-06-02 11:17:23.000000000 +0200
++++ b/src/fennix_pjrt/pjrt_plugin.cpp	2026-09-23 14:29:21.961236468 +0200
+@@ -447,6 +447,91 @@
+     }
+ }
+ 
++void PjrtPlugin::execute_into(const PjrtExecutableHandle& executable,
++                              const float* input_values,
++                              const std::vector<int64_t>& input_dims,
++                              PJRT_Device* device,
++                              float* const* outputs,
++                              const size_t* output_counts,
++                              size_t num_outputs) const {
++    if (api_ == nullptr || client_ == nullptr) {
++        throw std::runtime_error("PJRT client is not initialized");
++    }
++    if (executable.loaded == nullptr || num_outputs != executable.num_outputs) {
++        throw std::runtime_error("execute_into: executable not initialized or output count mismatch");
++    }
++
++    PJRT_Buffer* input_buffer = nullptr;
++    std::vector<PJRT_Buffer*> output_buffers(executable.num_outputs, nullptr);
++    std::vector<PJRT_Event*> copy_events(num_outputs, nullptr);
++
++    auto cleanup = [&]() {
++        for (PJRT_Event*& ev : copy_events)
++            await_and_destroy_event(ev, "PJRT_Event_Await(output copy)", "PJRT_Event_Destroy(output copy)");
++        for (PJRT_Buffer*& buffer : output_buffers) destroy_buffer(buffer, "PJRT_Buffer_Destroy(output)");
++        destroy_buffer(input_buffer, "PJRT_Buffer_Destroy(input)");
++    };
++
++    try {
++        auto upload_args = MAKE_ARGS(PJRT_Client_BufferFromHostBuffer_Args);
++        upload_args.client = client_;
++        upload_args.data = input_values;
++        upload_args.type = PJRT_Buffer_Type_F32;
++        upload_args.dims = input_dims.data();
++        upload_args.num_dims = input_dims.size();
++        upload_args.byte_strides = nullptr;
++        upload_args.num_byte_strides = 0;
++        upload_args.host_buffer_semantics = PJRT_HostBufferSemantics_kImmutableOnlyDuringCall;
++        upload_args.device = device;
++        upload_args.memory = nullptr;
++        upload_args.device_layout = nullptr;
++        upload_args.done_with_host_buffer = nullptr;
++        upload_args.buffer = nullptr;
++        check(api_->PJRT_Client_BufferFromHostBuffer(&upload_args), "PJRT_Client_BufferFromHostBuffer");
++        input_buffer = upload_args.buffer;
++        if (input_buffer == nullptr) throw std::runtime_error("PJRT_Client_BufferFromHostBuffer returned null buffer");
++        PJRT_Event* input_done = upload_args.done_with_host_buffer;  // complete for OnlyDuringCall
++        await_and_destroy_event(input_done, "PJRT_Event_Await(input transfer)", "PJRT_Event_Destroy(input transfer)");
++
++        auto execute_options = MAKE_ARGS(PJRT_ExecuteOptions);
++        execute_options.launch_id = 0;
++        execute_options.call_location = "namd_fennix";
++        execute_options.use_major_to_minor_data_layout_for_callbacks = true;
++
++        PJRT_Buffer* argument_list[1] = {input_buffer};
++        PJRT_Buffer* const* argument_lists[1] = {argument_list};
++        PJRT_Buffer** output_lists[1] = {output_buffers.data()};
++
++        auto exec_args = MAKE_ARGS(PJRT_LoadedExecutable_Execute_Args);
++        exec_args.executable = executable.loaded;
++        exec_args.options = &execute_options;
++        exec_args.argument_lists = argument_lists;
++        exec_args.num_devices = 1;
++        exec_args.num_args = 1;
++        exec_args.output_lists = output_lists;
++        exec_args.device_complete_events = nullptr;  // D2H copies below are ordered after the kernels
++        exec_args.execute_device = device;
++        check(api_->PJRT_LoadedExecutable_Execute(&exec_args), "PJRT_LoadedExecutable_Execute");
++
++        for (size_t k = 0; k < num_outputs; ++k) {
++            if (output_buffers[k] == nullptr)
++                throw std::runtime_error("PJRT_LoadedExecutable_Execute returned a null output buffer");
++            auto copy_args = MAKE_ARGS(PJRT_Buffer_ToHostBuffer_Args);
++            copy_args.src = output_buffers[k];
++            copy_args.host_layout = nullptr;
++            copy_args.dst = outputs[k];
++            copy_args.dst_size = output_counts[k] * sizeof(float);
++            copy_args.event = nullptr;
++            check(api_->PJRT_Buffer_ToHostBuffer(&copy_args), "PJRT_Buffer_ToHostBuffer(copy)");
++            copy_events[k] = copy_args.event;
++        }
++        cleanup();  // awaits all copies, frees device buffers
++    } catch (...) {
++        cleanup();
++        throw;
++    }
++}
++
+ void PjrtPlugin::destroy_compiled(PjrtExecutableHandle& executable) const {
+     destroy_executable(executable.executable, "PJRT_Executable_Destroy");
+     destroy_loaded_executable(executable.loaded, "PJRT_LoadedExecutable_Destroy");

@@ -1,0 +1,5 @@
+source leaprc.protein.ff14SB
+source leaprc.water.tip3p
+mol = loadpdb /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/mono_shell5/clean.pdb
+saveamberparm mol /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/mono_shell5/dry.prmtop /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/mono_shell5/dry.inpcrd
+quit

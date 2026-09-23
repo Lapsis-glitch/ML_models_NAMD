@@ -1,0 +1,60 @@
+=== N=900 W=4
+[bench] waiting for GPU lock /home/rat/PycharmProjects/ML_models_NAMD/scripts/opt/.gpu_bench.lock ...
+[bench] got lock after 0s
+
+      system  W                  model  median_ms      p10      p90  peakMiB speedup    dE_max    dF_max
+--------------------------------------------------------------------------------------------------------
+    water900  4                  cueqf    284.004  280.793  286.045   5031.5   1.00x  0.00e+00  0.00e+00
+    water900  4             fast_cueqf    194.342  193.274  195.752   3293.9   1.46x  3.73e-09  1.71e-13
+    water900  4   fast_cueqf_f32_EXTRA     33.688   33.158   34.498   1648.1   8.43x  1.64e-01  2.99e-03
+
+[bench] wrote scripts/opt/results/mace_final_w900_W4.json
+=== N=3000 W=1
+[bench] waiting for GPU lock /home/rat/PycharmProjects/ML_models_NAMD/scripts/opt/.gpu_bench.lock ...
+[bench] got lock after 0s
+
+      system  W                  model  median_ms      p10      p90  peakMiB speedup    dE_max    dF_max
+--------------------------------------------------------------------------------------------------------
+   water3000  1                  cueqf    267.437  267.108  270.534   4789.4   1.00x  0.00e+00  0.00e+00
+   water3000  1             fast_cueqf    184.256  183.504  185.520   3280.2   1.45x  0.00e+00  1.28e-13
+   water3000  1   fast_cueqf_f32_EXTRA     33.250   32.204   40.409   1640.6   8.04x  5.43e-01  3.79e-03
+
+[bench] wrote scripts/opt/results/mace_final_w3000_W1.json
+=== N=3000 W=4
+[bench] waiting for GPU lock /home/rat/PycharmProjects/ML_models_NAMD/scripts/opt/.gpu_bench.lock ...
+[bench] got lock after 0s
+[bench] cueqf water3000 W=4: ERROR The following operation failed in the TorchScript interpreter.
+[bench] fast_cueqf water3000 W=4: ERROR The following operation failed in the TorchScript interpreter.
+
+      system  W                  model  median_ms      p10      p90  peakMiB speedup    dE_max    dF_max
+--------------------------------------------------------------------------------------------------------
+   water3000  4                  cueqf  ERROR: The following operation failed in the TorchScript interprete
+   water3000  4             fast_cueqf  ERROR: The following operation failed in the TorchScript interprete
+   water3000  4   fast_cueqf_f32_EXTRA    144.926  140.575  152.032   6552.2   1.00x  0.00e+00  0.00e+00
+
+[bench] wrote scripts/opt/results/mace_final_w3000_W4.json
+=== N=6000 W=1
+[bench] waiting for GPU lock /home/rat/PycharmProjects/ML_models_NAMD/scripts/opt/.gpu_bench.lock ...
+[bench] got lock after 0s
+
+      system  W                  model  median_ms      p10      p90  peakMiB speedup    dE_max    dF_max
+--------------------------------------------------------------------------------------------------------
+   water6000  1                  cueqf    549.714  539.065  557.375   9937.1   1.00x  0.00e+00  0.00e+00
+   water6000  1             fast_cueqf    403.380  396.826  412.377   6903.9   1.36x  8.94e-08  1.56e-13
+   water6000  1   fast_cueqf_f32_EXTRA     72.049   70.391   77.619   3452.9   7.63x  1.09e+00  5.73e-03
+
+[bench] wrote scripts/opt/results/mace_final_w6000_W1.json
+=== N=6000 W=4
+[bench] waiting for GPU lock /home/rat/PycharmProjects/ML_models_NAMD/scripts/opt/.gpu_bench.lock ...
+[bench] got lock after 0s
+[bench] cueqf water6000 W=4: ERROR The following operation failed in the TorchScript interpreter.
+[bench] fast_cueqf water6000 W=4: ERROR The following operation failed in the TorchScript interpreter.
+[bench] fast_cueqf_f32_EXTRA water6000 W=4: ERROR The following operation failed in the TorchScript interpreter.
+
+      system  W                  model  median_ms      p10      p90  peakMiB speedup    dE_max    dF_max
+--------------------------------------------------------------------------------------------------------
+   water6000  4                  cueqf  ERROR: The following operation failed in the TorchScript interprete
+   water6000  4             fast_cueqf  ERROR: The following operation failed in the TorchScript interprete
+   water6000  4   fast_cueqf_f32_EXTRA  ERROR: The following operation failed in the TorchScript interprete
+
+[bench] wrote scripts/opt/results/mace_final_w6000_W4.json

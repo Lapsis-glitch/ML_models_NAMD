@@ -1,0 +1,77 @@
+=== N=30 W=1
+      system  W                  model  median_ms      p10      p90  peakMiB speedup    dE_max    dF_max
+     water30  1                   base     12.633   11.658   13.425     18.5   1.00x  0.00e+00  0.00e+00
+     water30  1                   fast      1.556    1.311    1.884     21.8   8.12x  4.90e-02  8.42e-05
+     water30  1           fast_nocache      2.079    1.875    2.474      0.8   6.08x  4.90e-02  8.24e-05
+=== N=30 W=4
+      system  W                  model  median_ms      p10      p90  peakMiB speedup    dE_max    dF_max
+     water30  4                   base     14.223   13.168   15.481     22.0   1.00x  0.00e+00  0.00e+00
+     water30  4                   fast      2.005    1.801    2.250     25.3   7.09x  5.73e-02  1.31e-04
+     water30  4           fast_nocache      2.399    2.108    2.717      3.3   5.93x  5.73e-02  8.42e-05
+=== N=300 W=1
+      system  W                  model  median_ms      p10      p90  peakMiB speedup    dE_max    dF_max
+    water300  1                   base     13.217   12.351   14.446     34.2   1.00x  0.00e+00  0.00e+00
+    water300  1                   fast      1.643    1.507    1.884     32.4   8.04x  5.46e-01  1.57e-04
+    water300  1           fast_nocache      2.090    1.862    2.652      8.3   6.32x  5.46e-01  1.36e-04
+=== N=300 W=4
+      system  W                  model  median_ms      p10      p90  peakMiB speedup    dE_max    dF_max
+    water300  4                   base     13.952   12.951   15.235     84.7   1.00x  0.00e+00  0.00e+00
+    water300  4                   fast      2.416    2.256    2.808     54.0   5.77x  7.02e-01  2.15e-04
+    water300  4           fast_nocache      2.597    2.401    2.866     33.3   5.37x  7.02e-01  2.06e-04
+=== N=900 W=1
+      system  W                  model  median_ms      p10      p90  peakMiB speedup    dE_max    dF_max
+    water900  1                   base     14.246   13.300   15.639     75.5   1.00x  0.00e+00  0.00e+00
+    water900  1                   fast      2.017    1.777    2.532     45.8   7.06x  6.92e-01  2.15e-04
+    water900  1           fast_nocache      2.192    1.987    2.629     25.1   6.50x  6.92e-01  2.24e-04
+=== N=900 W=4
+      system  W                  model  median_ms      p10      p90  peakMiB speedup    dE_max    dF_max
+    water900  4                   base     16.353   15.602   17.352    250.2   1.00x  0.00e+00  0.00e+00
+    water900  4                   fast      4.267    4.167    4.554    121.4   3.83x  8.34e-01  2.15e-04
+    water900  4           fast_nocache      4.519    4.390    4.639    100.6   3.62x  8.34e-01  2.15e-04
+=== N=3000 W=1
+      system  W                  model  median_ms      p10      p90  peakMiB speedup    dE_max    dF_max
+   water3000  1                   base     17.384   16.504   18.281    267.2   1.00x  0.00e+00  0.00e+00
+   water3000  1                   fast      3.416    3.254    3.540    105.4   5.09x  4.20e+00  2.57e-04
+   water3000  1           fast_nocache      3.638    3.497    3.794     84.6   4.78x  4.20e+00  2.38e-04
+=== N=3000 W=4
+      system  W                  model  median_ms      p10      p90  peakMiB speedup    dE_max    dF_max
+   water3000  4                   base     36.698   36.265   37.410   1018.5   1.00x  0.00e+00  0.00e+00
+   water3000  4                   fast     12.709   12.508   13.103    359.5   2.89x  5.34e+00  2.43e-04
+   water3000  4           fast_nocache     13.170   12.993   13.506    338.4   2.79x  5.34e+00  2.48e-04
+=== N=6000 W=1
+      system  W                  model  median_ms      p10      p90  peakMiB speedup    dE_max    dF_max
+   water6000  1                   base     25.224   24.655   27.148    910.0   1.00x  0.00e+00  0.00e+00
+   water6000  1                   fast      6.086    6.001    6.323    190.6   4.14x  5.10e+00  2.43e-04
+   water6000  1           fast_nocache      6.539    6.461    6.795    169.7   3.86x  5.10e+00  2.71e-04
+=== N=6000 W=4
+      system  W                  model  median_ms      p10      p90  peakMiB speedup    dE_max    dF_max
+   water6000  4                   base     75.615   74.450   77.663   3588.4   1.00x  0.00e+00  0.00e+00
+   water6000  4                   fast     24.674   24.223   25.083    700.5   3.06x  1.23e+01  3.74e-04
+   water6000  4           fast_nocache     25.485   24.593   26.004    678.9   2.97x  1.23e+01  3.74e-04
+=== prot_res1-2 W=1
+ prot_res1-2  1                   base     18.756   17.117   20.913     19.6   1.00x  0.00e+00  0.00e+00
+ prot_res1-2  1                   fast      1.469    1.318    1.810     54.6  12.77x  1.69e-02  1.40e-04
+ prot_res1-2  1           fast_nocache      2.954    2.627    3.625      1.0   6.35x  1.69e-02  1.09e-04
+[bench] wrote scripts/opt/results/ani_final_prot_res1-2_W1.json
+=== prot_res1-20 W=1
+prot_res1-20  1                   base     21.208   19.933   22.622     45.7   1.00x  0.00e+00  0.00e+00
+prot_res1-20  1                   fast      2.180    2.067    2.289     76.9   9.73x  2.93e-01  1.60e-04
+prot_res1-20  1           fast_nocache      3.066    2.701    3.663      9.9   6.92x  2.93e-01  1.38e-04
+[bench] wrote scripts/opt/results/ani_final_prot_res1-20_W1.json
+=== prot_mono_dry W=1
+prot_mono_dry  1                   base     24.457   22.799   28.128    384.9   1.00x  0.00e+00  0.00e+00
+prot_mono_dry  1                   fast      4.625    4.340    4.842    150.1   5.29x  1.47e+00  2.34e-04
+prot_mono_dry  1           fast_nocache      4.856    4.624    5.072     98.2   5.04x  1.47e+00  2.43e-04
+[bench] wrote scripts/opt/results/ani_final_prot_mono_dry_W1.json
+water30 PBC L=11.7            base  median   15.617 ms  dE 0.00e+00  dF 0.00e+00  dV 0.00e+00  peak(1 call) 341 MiB
+water30 PBC L=11.7            fast  median    7.002 ms  dE 4.42e-02  dF 7.28e-05  dV 1.36e-04  peak(1 call) 341 MiB
+water30 PBC L=11.7    fast_nocache  median    7.492 ms  dE 4.42e-02  dF 5.11e-05  dV 1.13e-04  peak(1 call) 341 MiB
+water300 PBC L=19.5            base  median   20.753 ms  dE 0.00e+00  dF 0.00e+00  dV 0.00e+00  peak(1 call) 428 MiB
+water300 PBC L=19.5            fast  median    9.236 ms  dE 7.56e-01  dF 8.26e-04  dV 9.16e-04  peak(1 call) 360 MiB
+water300 PBC L=19.5    fast_nocache  median    9.721 ms  dE 7.56e-01  dF 8.30e-04  dV 8.98e-04  peak(1 call) 357 MiB
+water900 PBC L=26.0            base  median   58.103 ms  dE 0.00e+00  dF 0.00e+00  dV 0.00e+00  peak(1 call) 1133 MiB
+water900 PBC L=26.0            fast  median   10.000 ms  dE 6.63e-01  dF 1.81e-03  dV 2.39e-03  peak(1 call) 398 MiB
+water900 PBC L=26.0    fast_nocache  median   10.000 ms  dE 6.63e-01  dF 1.81e-03  dV 2.39e-03  peak(1 call) 399 MiB
+water3000 PBC L=36.1            base  median 3118.552 ms  dE 0.00e+00  dF 0.00e+00  dV 0.00e+00  peak(1 call) 9024 MiB
+water3000 PBC L=36.1            fast  median   13.205 ms  dE 6.22e+00  dF 3.46e-03  dV 2.39e-02  peak(1 call) 469 MiB
+water6000 PBC L=44.2            fast  median   19.552 ms  dE 0.00e+00  dF 0.00e+00  dV 0.00e+00  peak(1 call) 692 MiB

@@ -1,0 +1,324 @@
+Charm++: standalone mode (not using charmrun)
+Charm++> Running in non-SMP mode: 1 processes (PEs)
+Charm++> Using recursive bisection (scheme 3) for topology aware partitions
+Converse/Charm++ Commit ID: v80000
+Charm++> scheduler running in netpoll mode.
+CharmLB> Load balancer assumes all CPUs are same.
+Charm++> Running on 1 hosts (1 sockets x 8 cores x 2 PUs = 16-way SMP)
+Charm++> cpu topology info is gathered in 0.000 seconds.
+CharmLB> Load balancing instrumentation for communication is off.
+Info: NAMD 3.1alpha4pre for Linux-x86_64-netlrts
+Info: 
+Info: Please visit http://www.ks.uiuc.edu/Research/namd/
+Info: for updates, documentation, and support information.
+Info: 
+Info: Please cite Phillips et al., J. Chem. Phys. 153:044130 (2020) doi:10.1063/5.0014475
+Info: in all publications reporting results obtained with NAMD.
+Info: 
+Info: Based on Charm++/Converse 80000 for netlrts-linux-x86_64
+Info: Built Fri Jun 5 14:59:11 CEST 2026 by rat on Cerb
+Info: 1 NAMD  3.1alpha4pre  Linux-x86_64-netlrts  1    Cerb  rat
+Info: Running on 1 processors, 1 nodes, 1 physical nodes.
+Info: CPU topology information available.
+Info: Charm++/Converse parallel runtime startup completed at 0.00328031 s
+Info: 469.102 MB of memory in use based on /proc/self/stat
+Info: Configuration file is /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/diagnostics/pbc_feedtest/nopbc.conf
+Info: Changed directory to /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/diagnostics/pbc_feedtest
+TCL: Suspending until startup complete.
+Warning: Option "1-4scaling" has been deprecated. Instead use "oneFourScaling".
+Info: SIMULATION PARAMETERS:
+Info: TIMESTEP               0.25
+Info: NUMBER OF STEPS        0
+Info: STEPS PER CYCLE        1
+Info: LOAD BALANCER  Centralized
+Info: LOAD BALANCING STRATEGY  New Load Balancers -- DEFAULT
+Info: LDB PERIOD             200 steps
+Info: FIRST LDB TIMESTEP     5
+Info: LAST LDB TIMESTEP     -1
+Info: LDB BACKGROUND SCALING 1
+Info: HOM BACKGROUND SCALING 1
+Info: MIN ATOMS PER PATCH    40
+Info: EMPTY PATCH LOAD       40 ATOMS
+Info: INITIAL TEMPERATURE    300
+Info: CENTER OF MASS MOVING INITIALLY? NO
+Info: DIELECTRIC             1
+Info: EXCLUDE                SCALED ONE-FOUR
+Info: 1-4 ELECTROSTATICS SCALED BY 0.833333
+Info: MODIFIED 1-4 VDW PARAMETERS WILL BE USED
+Info: NO DCD TRAJECTORY OUTPUT
+Info: NO EXTENDED SYSTEM TRAJECTORY OUTPUT
+Info: NO VELOCITY DCD OUTPUT
+Info: NO FORCE DCD OUTPUT
+Info: OUTPUT FILENAME        /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/diagnostics/pbc_feedtest/out_nopbc
+Info: NO RESTART FILE
+Info: NAMD will save positions and velocities to /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/diagnostics/pbc_feedtest/out_nopbc.crash.csv when  atoms are moving too fast.
+Info: SWITCHING ACTIVE
+Info: SWITCHING ON           10
+Info: SWITCHING OFF          12
+Info: PAIRLIST DISTANCE      14
+Info: PAIRLIST SHRINK RATE   0.01
+Info: PAIRLIST GROW RATE     0.01
+Info: PAIRLIST TRIGGER       0.3
+Info: PAIRLISTS PER CYCLE    2
+Info: PAIRLISTS ENABLED
+Info: MARGIN                 0
+Info: HYDROGEN GROUP CUTOFF  2.5
+Info: PATCH DIMENSION        16.5
+Info: OUTPUT ENERGY PRECISION 4
+Info: CROSSTERM ENERGY INCLUDED IN DIHEDRAL
+Info: TIMING OUTPUT STEPS    10
+Info: QM FORCES ACTIVE
+Info: QM PDB PARAMETER FILE: /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/mono_shell5/qm.pdb
+Info: QM SOFTWARE: fennol
+Info: QM ATOM CHARGES FROM QM SOFTWARE: NONE
+Info: QM EXECUTABLE PATH: /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/models/fennix_enzyme/mono_shell5/manifest.json
+Info: QM COLUMN: beta
+Info: QM WILL DETECT BONDS BETWEEN QM AND MM ATOMS.
+Info: QM BOND COLUMN: occ
+Info: QM-MM BOND SCHEME: Charge Shift.
+Info: QM BASE DIRECTORY: /tmp/namd_feedtest_nopbc
+Info: QM FORCES WILL REPLACE ALL NAMD FORCES!
+Info: QM POINT CHARGES WILL BE SELECTED EVERY 1 STEPS.
+Info: QM executions per node: 1
+Info: LANGEVIN DYNAMICS ACTIVE
+Info: LANGEVIN TEMPERATURE   300
+Info: LANGEVIN USING BBK INTEGRATOR
+Info: LANGEVIN DAMPING COEFFICIENT IS 5 INVERSE PS
+Info: LANGEVIN DYNAMICS APPLIED TO HYDROGENS
+Info: USING VERLET I (r-RESPA) MTS SCHEME.
+Info: C1 SPLITTING OF LONG RANGE ELECTROSTATICS
+Info: PLACING ATOMS IN PATCHES BY HYDROGEN GROUPS
+Info: RIGID BONDS TO HYDROGEN : ALL
+Info:         ERROR TOLERANCE : 1e-08
+Info:          MAX ITERATIONS : 100
+Info: RIGID WATER USING SETTLE ALGORITHM
+Info: RANDOM NUMBER SEED     1780669512
+Info: USE HYDROGEN BONDS?    NO
+Info: Using AMBER format force field!
+Info: AMBER PARM FILE        /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/mono_shell5/system.prmtop
+Info: COORDINATE PDB         /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/mono_shell5/system.pdb
+Info: Exclusions will be read from PARM file!
+Info: SCNB (VDW SCALING)     2
+Info: USING ARITHMETIC MEAN TO COMBINE L-J SIGMA PARAMETERS
+Info: === Start reading AMBER parm7 format file /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/mono_shell5/system.prmtop ===
+Info: Complete reading ATOM_NAME with 4525 fields.
+Info: Complete reading CHARGE with 4525 fields.
+Info: Complete reading ATOMIC_NUMBER with 4525 fields.
+Info: Complete reading MASS with 4525 fields.
+Info: Complete reading ATOM_TYPE_INDEX with 4525 fields.
+Info: Complete reading NUMBER_EXCLUDED_ATOMS with 4525 fields.
+Info: Complete reading NONBONDED_PARM_INDEX with 256 fields.
+Info: Complete reading RESIDUE_LABEL with 635 fields.
+Info: Complete reading RESIDUE_POINTER with 635 fields.
+Info: Complete reading BOND_FORCE_CONSTANT with 60 fields.
+Info: Complete reading BOND_EQUIL_VALUE with 60 fields.
+Info: Complete reading ANGLE_FORCE_CONSTANT with 133 fields.
+Info: Complete reading ANGLE_EQUIL_VALUE with 133 fields.
+Info: Complete reading DIHEDRAL_FORCE_CONSTANT with 175 fields.
+Info: Complete reading DIHEDRAL_PERIODICITY with 175 fields.
+Info: Complete reading DIHEDRAL_PHASE with 175 fields.
+Info: Complete reading SCEE_SCALE_FACTOR with 175 fields.
+Info: Complete reading SCNB_SCALE_FACTOR with 175 fields.
+Info: Complete reading LENNARD_JONES_ACOEF with 136 fields.
+Info: Complete reading LENNARD_JONES_BCOEF with 136 fields.
+Info: Complete reading BONDS_INC_HYDROGEN with 8658 fields.
+Info: Complete reading BONDS_WITHOUT_HYDROGEN with 4962 fields.
+Info: Complete reading ANGLES_INC_HYDROGEN with 15024 fields.
+Info: Complete reading ANGLES_WITHOUT_HYDROGEN with 8928 fields.
+Info: Complete reading DIHEDRALS_INC_HYDROGEN with 37290 fields.
+Info: Complete reading DIHEDRALS_WITHOUT_HYDROGEN with 35780 fields.
+Info: Complete reading EXCLUDED_ATOMS_LIST with 19711 fields.
+Info: Complete reading HBOND_ACOEF with 0 fields.
+Info: Complete reading HBOND_BCOEF with 0 fields.
+Info: Complete reading AMBER_ATOM_TYPE with 4525 fields.
+Info: Complete reading TREE_CHAIN_CLASSIFICATION with 4525 fields.
+Info: Complete reading RADIUS_SET with 1 fields.
+Info: Complete reading RADII with 4525 fields.
+Info: Complete reading SCREEN with 4525 fields.
+Info: === Finish reading AMBER parm7 format file. ===
+Warning: Found 412 H-H bonds.
+Info: No lone pairs detected in waters
+Info: SUMMARY OF PARAMETERS:
+Info: 60 BONDS
+Info: 133 ANGLES
+Info: 175 DIHEDRAL
+Info: 0 IMPROPER
+Info: 0 CROSSTERM
+Info: 0 VDW
+Info: 136 VDW_PAIRS
+Info: 0 NBTHOLE_PAIRS
+Info: Reading pdb file /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/mono_shell5/system.pdb
+Info: TIME FOR READING PDB FILE: 0.00310761
+Info: 
+Info: Using the following PDB file for QM parameters: /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/mono_shell5/qm.pdb
+Info: Number of QM atoms (excluding Dummy atoms): 4525
+Info: Storing QM-MM bonds.
+Warning: We found 0 QM-MM bonds.
+Info: Applying user defined multiplicity 1 to QM group ID 1
+Info: 1) Group ID: 1 ; Group size: 4525 atoms ; Total PSF charge: 0
+Info: Found user defined charge 0 for QM group ID 1. Will ignore PSF charge.
+Info: ****************************
+Info: STRUCTURE SUMMARY:
+Info: 4525 ATOMS
+Info: 4540 BONDS
+Info: 5988 ANGLES
+Info: 14614 DIHEDRALS
+Info: 0 IMPROPERS
+Info: 0 CROSSTERMS
+Info: 19130 EXCLUSIONS
+Info: 2886 RIGID BONDS
+Info: 10689 DEGREES OF FREEDOM
+Info: 2051 HYDROGEN GROUPS
+Info: 4 ATOMS IN LARGEST HYDROGEN GROUP
+Info: 2051 MIGRATION GROUPS
+Info: 4 ATOMS IN LARGEST MIGRATION GROUP
+Info: TOTAL MASS = 30883.5 amu
+Info: TOTAL CHARGE = -6.56699e-06 e
+Info: *****************************
+Info: 
+Info: Entering startup at 0.0308627 s, 23.796 MB of memory in use
+Info: Startup phase 0 took 4.7531e-05 s, 23.796 MB of memory in use
+Info: The QM region will remove 4540 bonds, 5988 angles, 14614 dihedrals, 0 impropers and 0 crossterms.
+Info: ADDED 0 IMPLICIT EXCLUSIONS
+Info: Startup phase 1 took 0.00118403 s, 23.796 MB of memory in use
+Info: NONBONDED TABLE R-SQUARED SPACING: 0.0625
+Info: NONBONDED TABLE SIZE: 769 POINTS
+Info: ABSOLUTE IMPRECISION IN FAST TABLE ENERGY: 1.69407e-21 AT 11.9974
+Info: RELATIVE IMPRECISION IN FAST TABLE ENERGY: 1.13046e-16 AT 11.9974
+Info: INCONSISTENCY IN FAST TABLE ENERGY VS FORCE: 0.000290274 AT 0.251946
+Info: INCONSISTENCY IN VDWA TABLE ENERGY VS FORCE: 0.0040507 AT 0.251946
+Info: INCONSISTENCY IN VDWB TABLE ENERGY VS FORCE: 0.00150189 AT 0.251946
+Info: Startup phase 2 took 0.000159122 s, 23.796 MB of memory in use
+Info: Startup phase 3 took 2.0329e-05 s, 23.796 MB of memory in use
+Info: Startup phase 4 took 1.8705e-05 s, 23.796 MB of memory in use
+Info: Startup phase 5 took 1.581e-05 s, 23.796 MB of memory in use
+Info: ORIGINAL ATOMS MINMAX IS -27.415 -21.646 -29.411  27.125 21.078 29.995
+Info: ADJUSTED ATOMS MINMAX IS -19.5056 -13.4867 -20.8292  20.1806 13.7408 19.2432
+Info: PATCH GRID IS 3 BY 2 BY 3
+Info: PATCH GRID IS 1-AWAY BY 1-AWAY BY 1-AWAY
+Info: REMOVING COM VELOCITY -0.0590613 0.0371698 0.0381263
+Info: LARGEST PATCH (13) HAS 444 ATOMS
+Info: TORUS A SIZE 1 USING 0
+Info: TORUS B SIZE 1 USING 0
+Info: TORUS C SIZE 1 USING 0
+Info: TORUS MINIMAL MESH SIZE IS 1 BY 1 BY 1
+Info: Placed 100% of base nodes on same physical node as patch
+Info: Startup phase 6 took 0.00202857 s, 23.796 MB of memory in use
+Info: Startup phase 7 took 4.0016e-05 s, 23.796 MB of memory in use
+Info: Startup phase 8 took 1.8235e-05 s, 23.796 MB of memory in use
+Info: Startup phase 9 took 1.6932e-05 s, 23.796 MB of memory in use
+Info: Startup phase 10 took 1.585e-05 s, 23.796 MB of memory in use
+Info: Startup phase 11 took 1.6251e-05 s, 23.796 MB of memory in use
+LDB: Central LB being created...
+Info: Startup phase 12 took 6.2589e-05 s, 23.796 MB of memory in use
+Info: Startup phase 13 took 2.3525e-05 s, 23.796 MB of memory in use
+Info: Startup phase 14 took 1.6451e-05 s, 23.796 MB of memory in use
+Info: Startup phase 15 took 1.6281e-05 s, 23.796 MB of memory in use
+Info: CREATING 204 COMPUTE OBJECTS
+Info: Startup phase 16 took 0.000515359 s, 23.796 MB of memory in use
+Info: Startup phase 17 took 3.2983e-05 s, 23.796 MB of memory in use
+Info: Startup phase 18 took 8.435e-05 s, 23.796 MB of memory in use
+Info: Finished startup at 0.0351956 s, 23.796 MB of memory in use
+
+TCL: Running for 4 steps
+Info: List of ranks running QM simulations: 0.
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+I0605 16:25:12.522075 1242835 service.cc:158] XLA service 0x65420518cdd0 initialized for platform CUDA (this does not guarantee that XLA will be used). Devices:
+I0605 16:25:12.522143 1242835 service.cc:166]   StreamExecutor device (0): NVIDIA GeForce RTX 3070 Laptop GPU, Compute Capability 8.6
+I0605 16:25:12.522846 1242835 se_gpu_pjrt_client.cc:1339] Using BFC allocator.
+I0605 16:25:12.523206 1242835 gpu_helpers.cc:139] XLA backend will use up to 1288411596 bytes on device 0 for BFCAllocator.
+I0605 16:25:12.523364 1242835 gpu_helpers.cc:177] XLA backend will use up to 7300998707 bytes on device 0 for CollectiveBFCAllocator.
+I0605 16:25:12.532757 1242835 cuda_dnn.cc:463] Loaded cuDNN version 91400
+I0605 16:25:16.417607 1242835 dot_search_space.cc:229] All configs were filtered out because none of them sufficiently match the hints. Maybe the hints set does not contain a good representative set of valid configs? Working around this by using the full hints set instead.
+I0605 16:25:16.417716 1242835 dot_search_space.cc:229] All configs were filtered out because none of them sufficiently match the hints. Maybe the hints set does not contain a good representative set of valid configs? Working around this by using the full hints set instead.
+I0605 16:25:16.417751 1242835 dot_search_space.cc:229] All configs were filtered out because none of them sufficiently match the hints. Maybe the hints set does not contain a good representative set of valid configs? Working around this by using the full hints set instead.
+I0605 16:25:16.418032 1242835 dot_search_space.cc:229] All configs were filtered out because none of them sufficiently match the hints. Maybe the hints set does not contain a good representative set of valid configs? Working around this by using the full hints set instead.
+I0605 16:25:16.418067 1242835 dot_search_space.cc:229] All configs were filtered out because none of them sufficiently match the hints. Maybe the hints set does not contain a good representative set of valid configs? Working around this by using the full hints set instead.
+I0605 16:25:16.418099 1242835 dot_search_space.cc:229] All configs were filtered out because none of them sufficiently match the hints. Maybe the hints set does not contain a good representative set of valid configs? Working around this by using the full hints set instead.
+I0605 16:25:16.418532 1242835 dot_search_space.cc:229] All configs were filtered out because none of them sufficiently match the hints. Maybe the hints set does not contain a good representative set of valid configs? Working around this by using the full hints set instead.
+I0605 16:25:19.699432 1242857 subprocess_compilation.cc:347] ptxas warning : Registers are spilled to local memory in function 'gemm_fusion_dot_289', 460 bytes spill stores, 444 bytes spill loads
+
+I0605 16:25:21.471535 1242847 subprocess_compilation.cc:347] ptxas warning : Registers are spilled to local memory in function 'gemm_fusion_dot_122', 8 bytes spill stores, 8 bytes spill loads
+
+I0605 16:25:23.789166 1242849 subprocess_compilation.cc:347] ptxas warning : Registers are spilled to local memory in function 'gemm_fusion_dot_80', 580 bytes spill stores, 580 bytes spill loads
+
+I0605 16:25:25.927258 1242856 subprocess_compilation.cc:347] ptxas warning : Registers are spilled to local memory in function 'gemm_fusion_dot_125', 4 bytes spill stores, 4 bytes spill loads
+
+QMENERGY:       0         1.0000    -25837.2685
+
+ETITLE:      TS           BOND          ANGLE          DIHED          IMPRP               ELECT            VDW       BOUNDARY           MISC        KINETIC               TOTAL           TEMP      POTENTIAL         TOTAL3        TEMPAVG
+
+QMETITLE:      TS           QMID         ENERGY
+
+ENERGY:       0         0.0000         0.0000         0.0000         0.0000              0.0000         0.0000         0.0000    -25837.2685      3193.6749         -22643.5935       300.7073    -25837.2685    -22643.4006       300.7073
+
+LDB: ============= START OF LOAD BALANCING ============== 30.8507
+LDB: ============== END OF LOAD BALANCING =============== 30.8507
+LDB: =============== DONE WITH MIGRATION ================ 30.8508
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:       1         1.0000    -25833.6481
+
+ENERGY:       1         0.0000         0.0000         0.0000         0.0000              0.0000         0.0000         0.0000    -25833.6481      3192.8126         -22640.8355       300.6261    -25833.6481    -22638.9865       300.6261
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:       2         1.0000    -25822.9194
+
+ENERGY:       2         0.0000         0.0000         0.0000         0.0000              0.0000         0.0000         0.0000    -25822.9194      3177.9025         -22645.0169       299.2222    -25822.9194    -22646.7341       299.2222
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:       3         1.0000    -25807.5540
+
+ENERGY:       3         0.0000         0.0000         0.0000         0.0000              0.0000         0.0000         0.0000    -25807.5540      3163.8023         -22643.7518       297.8946    -25807.5540    -22642.2525       297.8946
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:       4         1.0000    -25785.4069
+
+ENERGY:       4         0.0000         0.0000         0.0000         0.0000              0.0000         0.0000         0.0000    -25785.4069      3143.1105         -22642.2963       295.9463    -25785.4069    -22641.3571       295.9463
+
+LDB: ============= START OF LOAD BALANCING ============== 31.1475
+LDB: ============== END OF LOAD BALANCING =============== 31.1476
+LDB: =============== DONE WITH MIGRATION ================ 31.1476
+WRITING EXTENDED SYSTEM TO OUTPUT FILE AT STEP 4
+WRITING COORDINATES TO OUTPUT FILE AT STEP 4
+The last position output (seq=-2) takes 0.004 seconds, 23.796 MB of memory in use
+WRITING VELOCITIES TO OUTPUT FILE AT STEP 4
+The last velocity output (seq=-2) takes 0.004 seconds, 23.796 MB of memory in use
+====================================================
+
+WallClock: 31.153667  CPUTime: 124.098000  Memory: 23.796049 MB
+[Partition 0][Node 0] End of program

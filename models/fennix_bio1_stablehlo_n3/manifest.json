@@ -1,0 +1,70 @@
+{
+  "model_path": "/home/rat/PycharmProjects/ML_models_NAMD/models/fennix-bio1S.fnx",
+  "model_type": "FENNIX-BIO1",
+  "n_atoms": 3,
+  "z_list": [
+    8,
+    1,
+    1
+  ],
+  "total_charge": 0,
+  "input_signature": [
+    {
+      "name": "coordinates",
+      "shape": [
+        3,
+        3
+      ],
+      "dtype": "float32",
+      "units": "Angstrom"
+    }
+  ],
+  "output_signature": [
+    {
+      "name": "energy",
+      "shape": [
+        1
+      ],
+      "dtype": "float32",
+      "units": "eV"
+    },
+    {
+      "name": "forces",
+      "shape": [
+        3,
+        3
+      ],
+      "dtype": "float32",
+      "units": "eV/Angstrom"
+    }
+  ],
+  "conversion": {
+    "ev_to_kcal": 23.0621
+  },
+  "fennol": {
+    "cutoff": 7.5,
+    "energy_unit": "ev",
+    "energy_terms": [
+      "nn_energies_mean",
+      "ff_energy"
+    ]
+  },
+  "jax": {
+    "jax_version": "0.7.2",
+    "devices": [
+      "cuda:0"
+    ]
+  },
+  "artifacts": {
+    "stablehlo_mlir": "fennix_bio1_eval.stablehlo.mlir",
+    "hlo_text": "fennix_bio1_eval.hlo.txt",
+    "compile_options_pb": "compile_options.pb",
+    "reference_npz": "reference.npz",
+    "reference_runtime": "reference_runtime.txt"
+  },
+  "validation": {
+    "energy_max_abs_diff_ev": 0.00012952089309692383,
+    "forces_max_abs_diff_ev_a": 0.0018923282623291016
+  },
+  "runtime_note": "This artifact is specialized to fixed atom identity/count. Runtime Python is not required by the intended PJRT C++ consumer."
+}

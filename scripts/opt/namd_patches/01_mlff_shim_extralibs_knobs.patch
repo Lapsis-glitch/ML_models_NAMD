@@ -1,0 +1,339 @@
+--- a/src/mlff_shim/mlff_shim.cpp
++++ b/src/mlff_shim/mlff_shim.cpp
+@@ -20,6 +20,9 @@
+ 
+ #include <torch/script.h>
+ #include <torch/torch.h>
++#include <torch/csrc/jit/runtime/graph_executor.h>
++#include <torch/csrc/jit/passes/tensorexpr_fuser.h>
++#include <torch/csrc/jit/python/update_graph_executor_opt.h>
+ 
+ /* CUDA stream / device helpers exist only in a CUDA libtorch.  Guard so the
+  * shim still compiles against a CPU-only libtorch (the calls are also gated at
+@@ -32,12 +35,17 @@
+ #  define MLFF_HAVE_CUDA 0
+ #endif
+ 
++#include <dlfcn.h>
++
+ #include <algorithm>
++#include <atomic>
++#include <cstdlib>
+ #include <mutex>
+ #include <new>
+ #include <string>
+ #include <vector>
+ #include <cstring>
++#include <cstdio>
+ #include <stdexcept>
+ 
+ namespace {
+@@ -46,6 +54,140 @@
+ thread_local std::string g_lastError;
+ void setError(const std::string &msg) { g_lastError = msg; }
+ 
++/* Set by an atexit hook once the process has started exiting.  NAMD's
++ * MLFFThread is destroyed from an exit handler, which with libtorch >= 2.7 can
++ * run after libtorch's CUDA stream/allocator statics are gone; freeing device
++ * tensors then throws inside a noexcept destructor ("Unrecognized stream ...")
++ * and aborts the run after it has finished.  mlff_free leaks the model instead
++ * when this is set -- the OS reclaims everything at exit anyway. */
++std::atomic<bool> g_processExiting{false};
++void markProcessExiting() { g_processExiting.store(true); }
++/* Registered on the first EVAL, not at load: NAMD registers its own
++ * atexit(cleanupMLFFThread) right after the model load returns, and exit
++ * handlers run in reverse order, so ours must be registered later than that
++ * to run first. */
++void armExitHook() {
++    static std::once_flag once;
++    std::call_once(once, [] { std::atexit(markProcessExiting); });
++}
++
++/* ---- Optional TorchScript runtime knobs (all default to libtorch's own
++ * defaults when the env var is unset).  See BUILD.local.md.
++ *   NAMD_MLFF_JIT_PROFILING=0     legacy executor (getExecutorMode/getProfilingMode = false)
++ *   NAMD_MLFF_JIT_OPTIMIZE=0      setGraphExecutorOptimize(false)   (thread-local: re-applied per eval)
++ *   NAMD_MLFF_JIT_TEXPR=0|1       setTensorExprFuserEnabled
++ *   NAMD_MLFF_JIT_FUSION=S        fusion strategy, e.g. "DYNAMIC:20" or "STATIC:2,DYNAMIC:10"
++ *   NAMD_MLFF_JIT_PROFILED_RUNS=N getNumProfiledRuns()
++ *   NAMD_MLFF_FREEZE=1            torch::jit::freeze the module at load (keeps forward_batch)
++ *   NAMD_MLFF_TF32=1              allow TF32 in cuBLAS/cuDNN (changes fp32 numerics!) */
++int envFlag(const char *name) {           /* -1 = unset, else 0/1 */
++    const char *v = std::getenv(name);
++    if (!v || !*v) return -1;
++    return (v[0] == '0' || v[0] == 'n' || v[0] == 'N' || v[0] == 'f' || v[0] == 'F') ? 0 : 1;
++}
++int g_jitOptimize = -1;
++void applyGlobalKnobs() {
++    static std::once_flag once;
++    std::call_once(once, [] {
++        std::string summary;
++        int prof = envFlag("NAMD_MLFF_JIT_PROFILING");
++        if (prof >= 0) {
++            torch::jit::getExecutorMode() = (prof != 0);
++            torch::jit::getProfilingMode() = (prof != 0);
++            summary += " JIT_PROFILING=" + std::to_string(prof);
++        }
++        g_jitOptimize = envFlag("NAMD_MLFF_JIT_OPTIMIZE");
++        if (g_jitOptimize >= 0) summary += " JIT_OPTIMIZE=" + std::to_string(g_jitOptimize);
++        int te = envFlag("NAMD_MLFF_JIT_TEXPR");
++        if (te >= 0) {
++            torch::jit::setTensorExprFuserEnabled(te != 0);
++            summary += " JIT_TEXPR=" + std::to_string(te);
++        }
++        if (const char *fs = std::getenv("NAMD_MLFF_JIT_FUSION")) {
++            torch::jit::FusionStrategy strat;
++            std::string str(fs);
++            size_t pos = 0;
++            while (pos < str.size()) {
++                size_t end = str.find(',', pos);
++                if (end == std::string::npos) end = str.size();
++                std::string item = str.substr(pos, end - pos);
++                pos = end + 1;
++                size_t c = item.find(':');
++                if (c == std::string::npos) continue;
++                std::string kind = item.substr(0, c);
++                size_t depth = std::strtoul(item.c_str() + c + 1, nullptr, 10);
++                if (kind == "STATIC" || kind == "static")
++                    strat.emplace_back(torch::jit::FusionBehavior::STATIC, depth);
++                else if (kind == "DYNAMIC" || kind == "dynamic")
++                    strat.emplace_back(torch::jit::FusionBehavior::DYNAMIC, depth);
++            }
++            if (!strat.empty()) {
++                torch::jit::setFusionStrategy(strat);
++                summary += std::string(" JIT_FUSION=") + fs;
++            }
++        }
++        if (const char *nr = std::getenv("NAMD_MLFF_JIT_PROFILED_RUNS")) {
++            torch::jit::getNumProfiledRuns() = std::strtoul(nr, nullptr, 10);
++            summary += std::string(" JIT_PROFILED_RUNS=") + nr;
++        }
++        int tf32 = envFlag("NAMD_MLFF_TF32");
++        if (tf32 >= 0) {
++            at::globalContext().setAllowTF32CuBLAS(tf32 != 0);
++            at::globalContext().setAllowTF32CuDNN(tf32 != 0);
++            summary += " TF32=" + std::to_string(tf32);
++        }
++        if (envFlag("NAMD_MLFF_FREEZE") >= 0)
++            summary += " FREEZE=" + std::to_string(envFlag("NAMD_MLFF_FREEZE"));
++        if (!summary.empty())
++            std::fprintf(stderr, "MLFF shim: runtime knobs:%s\n", summary.c_str());
++    });
++}
++/* setGraphExecutorOptimize is thread-local and NAMD evaluates on a worker
++ * thread, so it is (re)applied on the evaluating thread each call. */
++inline void applyThreadKnobs() {
++    if (g_jitOptimize >= 0) torch::jit::setGraphExecutorOptimize(g_jitOptimize != 0);
++}
++
++/* NAMD_MLFF_EXTRA_LIBS: colon-separated list of shared libraries that
++ * register TorchScript custom ops (cuEquivariance, TorchANI cuAEV, vesin,
++ * OpenEquivariance, ...).  Each is dlopen'd RTLD_NOW|RTLD_GLOBAL before
++ * torch::jit::load so the ops exist when the archive is deserialized.  The
++ * handles are intentionally never closed (op registrations must outlive every
++ * model).  Re-dlopen of an already-loaded path is a cheap refcount bump, so
++ * calling this on every load is fine.  Returns false and sets `err` on the
++ * first library that fails to load. */
++bool loadExtraLibs(std::string &err) {
++    const char *env = std::getenv("NAMD_MLFF_EXTRA_LIBS");
++    if (!env || !*env) return true;
++    /* NAMD dlopens this shim RTLD_LOCAL, so libtorch's own libraries are not
++     * in the global symbol scope.  Op libraries whose NEEDED list is
++     * incomplete (e.g. libtorch_nvshmem.so from a pip wheel needs c10_cuda
++     * symbols but only lists libc10.so) would then fail with an undefined
++     * symbol.  Promote the already-loaded libtorch libraries to global scope
++     * first; RTLD_NOLOAD never loads anything new. */
++    static const char *const kTorchLibs[] = {
++        "libc10.so", "libc10_cuda.so", "libtorch_cpu.so", "libtorch_cuda.so",
++        "libtorch.so"};
++    for (const char *lib : kTorchLibs)
++        ::dlopen(lib, RTLD_NOW | RTLD_GLOBAL | RTLD_NOLOAD);
++    std::string list(env);
++    size_t pos = 0;
++    while (pos <= list.size()) {
++        size_t end = list.find(':', pos);
++        if (end == std::string::npos) end = list.size();
++        std::string path = list.substr(pos, end - pos);
++        pos = end + 1;
++        if (path.empty()) continue;
++        if (!::dlopen(path.c_str(), RTLD_NOW | RTLD_GLOBAL)) {
++            const char *de = ::dlerror();
++            err = "NAMD_MLFF_EXTRA_LIBS: dlopen(" + path + ") failed: " +
++                  (de ? de : "unknown error");
++            return false;
++        }
++    }
++    return true;
++}
++
+ /* Number of arguments a scripted method declares, counting `self`.
+  * -1 if there is no such method. */
+ int64_t methodArity(torch::jit::Module &mod, const char *name) {
+@@ -195,8 +337,20 @@
+             ? torch::Device(torch::kCUDA, static_cast<c10::DeviceIndex>(gpu_id))
+             : torch::Device(torch::kCPU);
+ 
++        std::string libErr;
++        if (!loadExtraLibs(libErr)) {
++            setError(libErr);
++            return nullptr;
++        }
++        applyGlobalKnobs();
++        applyThreadKnobs();
+         torch::jit::Module mod = torch::jit::load(model_path, dev);
+         mod.eval();
++        if (envFlag("NAMD_MLFF_FREEZE") == 1) {
++            std::vector<std::string> keep;
++            if (mod.find_method("forward_batch").has_value()) keep.push_back("forward_batch");
++            mod = torch::jit::freeze(mod, keep);
++        }
+ 
+         bool hasBatch = false;
+         try { hasBatch = mod.find_method("forward_batch").has_value(); }
+@@ -233,6 +387,7 @@
+ }
+ 
+ void mlff_free(MlffModel *m) {
++    if (g_processExiting.load()) return;   /* see markProcessExiting */
+     delete reinterpret_cast<ModelImpl *>(m);
+ }
+ 
+@@ -257,6 +412,8 @@
+         return 1;
+     }
+     try {
++        armExitHook();
++        applyThreadKnobs();
+         M.pinThread();
+         M.ensureSerial(numQM, numPC);
+         const bool havePC = (numPC > 0 && pc_xyz && pc_q);
+@@ -365,6 +522,8 @@
+         return 1;
+     }
+     try {
++        armExitHook();
++        applyThreadKnobs();
+         M.pinThread();
+         M.ensureBatch(N_total, B);
+ 
+--- a/src/mlff_shim/build_and_test.sh
++++ b/src/mlff_shim/build_and_test.sh
+@@ -12,16 +12,18 @@
+ # analytic + real-model checks.
+ #
+ # Env overrides:
+-#   TORCH     libtorch prefix   (default /home/rat/compile_NAMD_MACE/libtorch)
+-#   CUDA      cuda prefix       (default /usr/local/cuda)
++#   TORCH     libtorch prefix   (default /home/rat/compile_NAMD_MACE/libtorch-2.11.0+cu130;
++#             the old 2.6.0+cu126 tree is still at .../libtorch)
++#   CUDA      cuda prefix whose include/ matches libtorch's CUDA major
++#             (default: the allegro env's nvidia/cu13 pip package for cu130)
+ #   OUT       output dir        (default /tmp)
+ #   STUB_ENV  conda env w/ torch (optional; enables the test run)
+ #   MODEL     extra real .pt to run through the validator (optional)
+ set -euo pipefail
+ 
+ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+-TORCH="${TORCH:-/home/rat/compile_NAMD_MACE/libtorch}"
+-CUDA="${CUDA:-/usr/local/cuda}"
++TORCH="${TORCH:-/home/rat/compile_NAMD_MACE/libtorch-2.11.0+cu130}"
++CUDA="${CUDA:-/home/rat/miniconda3/envs/allegro/lib/python3.12/site-packages/nvidia/cu13}"
+ OUT="${OUT:-/tmp}"
+ 
+ # libtorch's C++ ABI must match ours or std::string-bearing symbols won't link.
+@@ -35,9 +37,12 @@
+ g++ -shared -fPIC -O2 -std=c++17 -D_GLIBCXX_USE_CXX11_ABI=$ABI \
+   "$HERE/mlff_shim.cpp" -o "$OUT/libnamd_mlff.so" \
+   -I"$HERE" -I"$TORCH/include" -I"$TORCH/include/torch/csrc/api/include" \
++  -I"$CUDA/include" \
+   -L"$TORCH/lib" -Wl,-rpath,"$TORCH/lib" \
+   -Wl,--no-as-needed -ltorch -ltorch_cpu -ltorch_cuda -lc10 -lc10_cuda -Wl,--as-needed \
+-  -L"$CUDA/lib64" -Wl,-rpath,"$CUDA/lib64" -lcudart
++  -ldl
++# (no -lcudart: the shim makes no direct CUDA runtime calls; libtorch_cuda
++#  pulls in its own bundled cudart.)
+ 
+ echo "[2/2] building mlff_shim_test (no libtorch link)"
+ g++ -O2 -std=c++17 "$HERE/mlff_shim_test.cpp" -o "$OUT/mlff_shim_test" -I"$HERE" -ldl
+--- a/src/mlff_shim/BUILD.local.md
++++ b/src/mlff_shim/BUILD.local.md
+@@ -8,17 +8,58 @@
+     OUT=/path/to/lib bash src/mlff_shim/build_and_test.sh
+ 
+ Optional env (defaults shown):
+-- `TORCH=/home/rat/compile_NAMD_MACE/libtorch`   # libtorch prefix
+-- `CUDA=/usr/local/cuda`                          # CUDA prefix
++- `TORCH=/home/rat/compile_NAMD_MACE/libtorch-2.11.0+cu130`   # libtorch prefix
++  (2026-09: upgraded for the RTX 5080 / sm_120; the old 2.6.0+cu126 tree is
++  still at `/home/rat/compile_NAMD_MACE/libtorch` and has no sm_120 kernels)
++- `CUDA=<allegro>/lib/python3.12/site-packages/nvidia/cu13`   # only include/ is used
+ - `OUT=/tmp`                                       # where libnamd_mlff.so lands
+ 
++The installed copies live in `ML_models_NAMD/namd_benchmarks/lib/`:
++- `libnamd_mlff.so`          built with the default TORCH (C++ libtorch zip)
++- `libnamd_mlff_pytorch.so`  built with `TORCH=<allegro>/lib/python3.12/site-packages/torch`
++  (the pip wheel's libtorch; needed when a custom-op lib NEEDs libtorch_python)
++- `*.libtorch2.6.bak`        the previous 2.6 builds
++
++The libtorch 2.11 zip does NOT bundle libcufft/libcusparse/libcurand/libcusolver/
++libnvJitLink; they are symlinked (to save disk) into `libtorch-2.11.0+cu130/lib` from the allegro
++env's nvidia cu13 wheels, plus soname symlinks libcublas.so.13, libcublasLt.so.13,
++libnvrtc-builtins.so.13.0 (see `lib/README.extra_cuda_libs`).
++
++## One libtorch per process (important)
++namd3 itself NEEDs libtorch_cpu/libc10 (colvars torchann, `-DCOLVARS_TORCH`) and
++is linked `-rdynamic`, so inline torch symbols compiled into namd3 interpose the
++shim's.  namd3 and the shim MUST be built against the same libtorch.  On
++2026-09-21 `Linux-x86_64-g++/Make.config` TORCHDIR was switched to
++libtorch-2.11.0+cu130, `obj/colvarcomp_torchann.o` rebuilt and namd3 relinked
++(backups: `namd3.libtorch2.6.bak`, `Make.config.libtorch2.6.bak`,
++`obj/colvarcomp_torchann.o.libtorch2.6.bak`).  Symptom of a mismatch:
++"set_stride is not allowed on a Tensor created from .data or .detach()" in
++mlff_eval_batch.  At run time LD_LIBRARY_PATH (namd_benchmarks/env.sh,
++LIBTORCH_ROOT) picks the copy namd3 and the shim share.
++
++## Custom-op libraries: NAMD_MLFF_EXTRA_LIBS
++Colon-separated list of .so paths.  mlff_load() dlopen's each one
++`RTLD_NOW|RTLD_GLOBAL`, in order, before `torch::jit::load`, so TorchScript
++custom ops (cuEquivariance, TorchANI cuAEV, vesin-torch, OpenEquivariance, ...)
++are registered when the archive is deserialized.  Before that it promotes the
++already-loaded libtorch libraries to global scope (RTLD_NOLOAD) because NAMD
++loads the shim RTLD_LOCAL.  A failing dlopen makes mlff_load fail with
++"NAMD_MLFF_EXTRA_LIBS: dlopen(<path>) failed: <dlerror>".  List dependencies
++first (e.g. libcue_ops.so before the cuequivariance torch extension).
++
++## Exit-time teardown
++mlff_free() leaks the model once the process is exiting (atexit hook armed on
++the first eval).  With libtorch 2.11, freeing CUDA tensors from NAMD's
++atexit(cleanupMLFFThread) ran after libtorch's CUDA statics were gone and
++aborted finished runs ("Unrecognized stream ...").
++
+ Produces `$OUT/libnamd_mlff.so`. The cxx11 ABI is auto-detected from libtorch.
+ 
+ ## Build + self-test (optional)
+ Needs a conda env whose torch version is <= the libtorch version
+-(`MLIP_2026` has torch 2.6.0, matching the libtorch above):
++(`allegro` has torch 2.11.0+cu130, matching the libtorch above):
+ 
+-    STUB_ENV=MLIP_2026 \
++    STUB_ENV=allegro \
+     MODEL=/home/rat/PycharmProjects/ML_models_NAMD/models/mace_off23_wrapped_identical.pt \
+     bash src/mlff_shim/build_and_test.sh
+ 
+@@ -36,3 +77,16 @@
+ The .so is pinned to one libtorch (version / cxx11 ABI / bundled cuDNN), so
+ rebuild it whenever you change libtorch. NAMD and the shim are otherwise
+ decoupled.
++
++## Optional runtime knobs (unset = libtorch defaults; measured in
++## ML_models_NAMD/scripts/opt/infra, none is a clear numerically-neutral win)
++- `NAMD_MLFF_JIT_PROFILING=0`  legacy TorchScript executor
++- `NAMD_MLFF_JIT_OPTIMIZE=0`   graph-executor optimisation off (3-20x less JIT
++  warm-up, 0-10% slower steady state; thread-local, re-applied per eval)
++- `NAMD_MLFF_JIT_TEXPR=0|1`    NNC fuser (off is 10-25% slower)
++- `NAMD_MLFF_JIT_FUSION=DYNAMIC:20` fusion strategy
++- `NAMD_MLFF_JIT_PROFILED_RUNS=N`
++- `NAMD_MLFF_FREEZE=1`         torch::jit::freeze at load (keeps forward_batch)
++- `NAMD_MLFF_TF32=1`           TF32 matmuls (changes fp32 energies by up to kcal/mol)
++- `PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True` (read by c10; -0..12% reserved memory)
++When any NAMD_MLFF_* knob is set the shim prints "MLFF shim: runtime knobs: ...".

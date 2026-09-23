@@ -1,0 +1,96 @@
+{
+ "meta": {
+  "torch": "2.11.0+cu130",
+  "gpu": "NVIDIA GeForce RTX 5080 Laptop GPU",
+  "time": "2026-09-21 15:25:17",
+  "argv": [
+   "scripts/opt/bench_common.py",
+   "--model",
+   "base=models/opt/schnet_baseline.pt",
+   "--model",
+   "deployed=models/trpcage_schnet_qmmm.pt",
+   "--systems",
+   "30,300,900,3000,6000",
+   "--walkers",
+   "1",
+   "--iters",
+   "20",
+   "--rounds",
+   "2",
+   "--out",
+   "scripts/opt/schnet/bench_baseline_initial.json"
+  ]
+ },
+ "results": [
+  {
+   "system": "water30",
+   "n_atoms": 30,
+   "walkers": 1,
+   "model": "base",
+   "error": "The following operation failed in the TorchScript interpreter."
+  },
+  {
+   "system": "water30",
+   "n_atoms": 30,
+   "walkers": 1,
+   "model": "deployed",
+   "error": "The following operation failed in the TorchScript interpreter."
+  },
+  {
+   "system": "water300",
+   "n_atoms": 300,
+   "walkers": 1,
+   "model": "base",
+   "error": "The following operation failed in the TorchScript interpreter."
+  },
+  {
+   "system": "water300",
+   "n_atoms": 300,
+   "walkers": 1,
+   "model": "deployed",
+   "error": "The following operation failed in the TorchScript interpreter."
+  },
+  {
+   "system": "water900",
+   "n_atoms": 900,
+   "walkers": 1,
+   "model": "base",
+   "error": "The following operation failed in the TorchScript interpreter."
+  },
+  {
+   "system": "water900",
+   "n_atoms": 900,
+   "walkers": 1,
+   "model": "deployed",
+   "error": "The following operation failed in the TorchScript interpreter."
+  },
+  {
+   "system": "water3000",
+   "n_atoms": 3000,
+   "walkers": 1,
+   "model": "base",
+   "error": "The following operation failed in the TorchScript interpreter."
+  },
+  {
+   "system": "water3000",
+   "n_atoms": 3000,
+   "walkers": 1,
+   "model": "deployed",
+   "error": "The following operation failed in the TorchScript interpreter."
+  },
+  {
+   "system": "water6000",
+   "n_atoms": 6000,
+   "walkers": 1,
+   "model": "base",
+   "error": "The following operation failed in the TorchScript interpreter."
+  },
+  {
+   "system": "water6000",
+   "n_atoms": 6000,
+   "walkers": 1,
+   "model": "deployed",
+   "error": "The following operation failed in the TorchScript interpreter."
+  }
+ ]
+}

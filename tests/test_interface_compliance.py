@@ -17,7 +17,7 @@ actual MLIP weights.
 import pytest
 import torch
 from torch import nn
-from typing import Dict
+from typing import Dict, Optional, Tuple
 
 from src.constants import EV_TO_KCAL, HARTREE_TO_KCAL
 
@@ -93,11 +93,40 @@ class _MockSchNetInner(nn.Module):
         return {"energy": energy, "forces": forces}
 
 
+class _MockANICore(nn.Module):
+    """Stands in for the TorchANI model itself, the part reachable as `.ani`.
+
+    Takes the same arguments the real one does so the wrapper's periodic branch
+    compiles.  The cell enters the energy so that a strain applied to it
+    produces a non-zero gradient, which is what makes the virial testable.
+    """
+
+    def forward(
+        self,
+        species_coordinates: Tuple[torch.Tensor, torch.Tensor],
+        cell: Optional[torch.Tensor] = None,
+        pbc: Optional[torch.Tensor] = None,
+        charge: int = 0,
+        atomic: bool = False,
+        ensemble_values: bool = False,
+        _molecule_idxs: Optional[torch.Tensor] = None,
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        species, coords = species_coordinates
+        e = coords.pow(2).sum(dim=(1, 2)) * 0.001
+        if cell is not None:
+            e = e + cell.pow(2).sum() * 1e-6
+        return species, e.unsqueeze(-1)
+
+
 class _MockTorchANIInner(nn.Module):
     """Mimics a TorchANI model: (species, coords) → (species, energies).
 
     Energy depends on coordinates so that autograd can compute forces.
     """
+
+    def __init__(self):
+        super().__init__()
+        self.ani = _MockANICore()
 
     def forward(
         self,
@@ -185,6 +214,19 @@ _WRAPPER_BUILDERS = {
 }
 
 
+@pytest.fixture
+def zero_cell():
+    """The cell NAMD sends for a non-periodic system.  All wrappers must accept
+    it and report a zero virial rather than refusing or guessing."""
+    return torch.zeros((1, 3, 3), dtype=torch.float64)
+
+
+@pytest.fixture
+def zero_cells(dummy_ptr):
+    """Same, one per molecule, for the batched entry point."""
+    return torch.zeros((dummy_ptr.size(0) - 1, 3, 3), dtype=torch.float64)
+
+
 @pytest.fixture(params=_WRAPPER_BUILDERS.keys())
 def wrapper(request):
     """Parametrised fixture – yields one wrapper instance per model type."""
@@ -202,12 +244,20 @@ class TestOutputContract:
         assert hasattr(wrapper, "supports_batch")
         assert isinstance(wrapper.supports_batch, bool)
 
+    def test_supports_pbc_attribute(self, wrapper):
+        """NAMD refuses to load a model whose supports_pbc disagrees with its
+        forward() signature, so the flag has to be there and has to be a
+        bool."""
+        assert hasattr(wrapper, "supports_pbc")
+        assert isinstance(wrapper.supports_pbc, bool)
+
     def test_forward_output_shapes_and_dtypes(
         self, wrapper, single_coords, single_Z,
-        dummy_pc_coords, dummy_pc_charges,
+        dummy_pc_coords, dummy_pc_charges, zero_cell,
     ):
-        energy, forces, charges = wrapper(
+        energy, forces, charges, virial = wrapper(
             single_coords, single_Z, dummy_pc_coords, dummy_pc_charges,
+            zero_cell,
         )
 
         # energy: scalar or [1]
@@ -223,17 +273,22 @@ class TestOutputContract:
         assert charges.shape == (N,)
         assert charges.dtype == torch.float64
 
+        # virial: [3, 3], and zero because the cell we passed was zero
+        assert virial.shape == (3, 3)
+        assert virial.dtype == torch.float64
+        assert bool(torch.all(virial == 0))
+
     def test_forward_batch_output_shapes_and_dtypes(
         self, wrapper, dummy_coords, dummy_Z,
         dummy_batch, dummy_ptr,
-        dummy_pc_coords, dummy_pc_charges,
+        dummy_pc_coords, dummy_pc_charges, zero_cells,
     ):
         if not wrapper.supports_batch:
             pytest.skip("Wrapper does not support batching")
 
-        energies, forces, charges = wrapper.forward_batch(
+        energies, forces, charges, virials = wrapper.forward_batch(
             dummy_coords, dummy_Z, dummy_batch, dummy_ptr,
-            dummy_pc_coords, dummy_pc_charges,
+            dummy_pc_coords, dummy_pc_charges, zero_cells,
         )
 
         N_total = dummy_coords.size(0)
@@ -247,6 +302,10 @@ class TestOutputContract:
 
         assert charges.shape == (N_total,)
         assert charges.dtype == torch.float64
+
+        assert virials.shape == (B, 3, 3)
+        assert virials.dtype == torch.float64
+        assert bool(torch.all(virials == 0))
 
 
 class TestEdgeUtilities:

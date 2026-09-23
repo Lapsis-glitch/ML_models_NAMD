@@ -1,0 +1,50 @@
+--- a/src/ComputeQM.C	2026-07-31 23:40:35.437948323 +0200
++++ b/src/ComputeQM.C	2026-09-23 14:33:52.066593082 +0200
+@@ -704,6 +704,36 @@
+ }
+ 
+ 
++/* [fxopt-generic] Opt-in (NAMD_QM_FAST_INDEX=1) O(1) QM-atom id -> qmAtmIndx position lookup.
++ * ComputeQM::doWork() otherwise does a linear search of the global QM table for EVERY local QM
++ * atom EVERY step: O(numLocalQM x numQMAtms), i.e. ~18M comparisons/step for a 6000-atom QM
++ * region, for every QM engine (mlff, fennol, xtb, ...).  Same first-match semantics as the
++ * original loop; the map is rebuilt if the table pointer or size changes.  Default OFF so the
++ * stock behaviour is untouched unless explicitly requested. */
++#include <unordered_map>
++namespace {
++struct QMIdIndexCache {
++    const int *ptr = nullptr;
++    int n = -1;
++    std::unordered_map<int, int> map;
++};
++inline bool qmFastIndexEnabled() {
++    static const bool on = [] { const char *e = getenv("NAMD_QM_FAST_INDEX"); return e && *e && *e != '0'; }();
++    return on;
++}
++inline int qmFindIndex(const int *qmAtmIndx, int numQMAtms, int id) {
++    static thread_local QMIdIndexCache c;
++    if (c.ptr != qmAtmIndx || c.n != numQMAtms) {
++        c.map.clear();
++        c.map.reserve(static_cast<size_t>(numQMAtms) * 2);
++        for (int qi = 0; qi < numQMAtms; ++qi) c.map.emplace(qmAtmIndx[qi], qi);
++        c.ptr = qmAtmIndx; c.n = numQMAtms;
++    }
++    auto it = c.map.find(id);
++    return it == c.map.end() ? -1 : it->second;
++}
++}  // namespace
++
+ void ComputeQM::doWork()
+ {
+     CProxy_ComputeQMMgr QMProxy(CkpvAccess(BOCclass_group).computeQMMgr);
+@@ -782,6 +812,10 @@
+                 
+                 Real charge = 0;
+                 
++                if (qmFastIndexEnabled()) {
++                    const int qi = qmFindIndex(qmAtmIndx, numQMAtms, xExt[i].id);
++                    if (qi >= 0) charge = qmAtmChrg[qi];
++                } else
+                 for (int qi=0; qi<numQMAtms; qi++) {
+                     if (qmAtmIndx[qi] == xExt[i].id) {
+                         charge = qmAtmChrg[qi];

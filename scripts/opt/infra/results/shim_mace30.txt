@@ -1,0 +1,9 @@
+# model=mace_off23.pt geom=qm.pdb W=1 rounds=2 iters=60 shim=libnamd_mlff.so
+round=1 config=default RESULT load_ms=1330.8 warmup_ms=6279.5 median_ms=35.371 p10_ms=34.072 p90_ms=60.289 E0=-479930.241103 n=30 W=1
+round=1 config=legacy RESULT load_ms=1099.6 warmup_ms=3848.1 median_ms=37.657 p10_ms=36.366 p90_ms=60.548 E0=-479930.241103 n=30 W=1
+round=1 config=noopt RESULT load_ms=998.2 warmup_ms=2300.7 median_ms=41.260 p10_ms=36.801 p90_ms=58.116 E0=-479930.241103 n=30 W=1
+round=1 config=freeze RESULT load_ms=1877.9 warmup_ms=6451.4 median_ms=37.033 p10_ms=34.021 p90_ms=49.164 E0=-479930.241103 n=30 W=1
+round=2 config=default RESULT load_ms=1119.0 warmup_ms=6697.0 median_ms=46.384 p10_ms=35.680 p90_ms=59.613 E0=-479930.241103 n=30 W=1
+round=2 config=legacy RESULT load_ms=1044.2 warmup_ms=3082.3 median_ms=36.659 p10_ms=34.531 p90_ms=47.056 E0=-479930.241103 n=30 W=1
+round=2 config=noopt RESULT load_ms=1084.1 warmup_ms=2119.1 median_ms=40.060 p10_ms=36.415 p90_ms=49.952 E0=-479930.241103 n=30 W=1
+round=2 config=freeze RESULT load_ms=1622.4 warmup_ms=4412.2 median_ms=39.491 p10_ms=35.270 p90_ms=53.095 E0=-479930.241103 n=30 W=1

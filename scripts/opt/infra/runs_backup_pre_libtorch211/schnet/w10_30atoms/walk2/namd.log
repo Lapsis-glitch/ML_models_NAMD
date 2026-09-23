@@ -1,0 +1,54 @@
+Charmrun> scalable start enabled. 
+Charmrun> started all node programs in 0.315 seconds.
+Charm++> Running in non-SMP mode: 2 processes (PEs)
+Charm++> Using recursive bisection (scheme 3) for topology aware partitions
+Charm++> TORUS A SIZE 2 USING 0 1
+Charm++> TORUS B SIZE 1 USING 0
+Charm++> TORUS C SIZE 1 USING 0
+Charm++> TORUS MINIMAL MESH SIZE IS 2 BY 1 BY 1
+Redirecting stdout to files out.0.log through 1
+MLFF TIMING [caller submit batch] n=100 avg_ms=0.024
+MLFF TIMING [worker batch] n=100 avg_ms: queue_wait=0.199 collect_wait=0.106 h2d=0.000 forward=33.005 d2h=0.000 sync=0.000 split=0.052
+MLFF TIMING [caller wait batch] n=100 avg_ms=33.174
+MLFF TIMING [calcMLFF] n=100 avg_ms: pre=0.001 infer=33.199 post=0.006 send=0.002 total=36.593
+MLFF TIMING [calcMLFF post] n=100 avg_ms: setup=0.004 coulomb=0.000 pme=0.000 charge_mode=0.001 virial=0.000
+MLFF TIMING [client send] n=100 avg_ms=0.031
+MLFF TIMING [client recv] n=100 avg_ms=36.602
+MLFF TIMING [calcMLFF] n=100 avg_ms: pre=0.000 infer=36.634 post=0.003 send=0.001 total=36.640
+MLFF TIMING [calcMLFF post] n=100 avg_ms: setup=0.001 coulomb=0.000 pme=0.000 charge_mode=0.001 virial=0.000
+MLFF TIMING [caller submit batch] n=200 avg_ms=0.023
+MLFF TIMING [caller wait batch] n=200 avg_ms=20.350
+MLFF TIMING [calcMLFF] n=200 avg_ms: pre=0.001 infer=20.375 post=0.004 send=0.002 total=22.075
+MLFF TIMING [calcMLFF post] n=200 avg_ms: setup=0.003 coulomb=0.000 pme=0.000 charge_mode=0.001 virial=0.000
+MLFF TIMING [worker batch] n=200 avg_ms: queue_wait=0.186 collect_wait=0.110 h2d=0.000 forward=20.180 d2h=0.000 sync=0.000 split=0.050
+MLFF TIMING [client send] n=200 avg_ms=0.030
+MLFF TIMING [client recv] n=200 avg_ms=22.079
+MLFF TIMING [calcMLFF] n=200 avg_ms: pre=0.000 infer=22.110 post=0.003 send=0.001 total=22.116
+MLFF TIMING [calcMLFF post] n=200 avg_ms: setup=0.001 coulomb=0.000 pme=0.000 charge_mode=0.001 virial=0.000
+MLFF TIMING [caller submit batch] n=300 avg_ms=0.023
+MLFF TIMING [caller wait batch] n=300 avg_ms=15.548
+MLFF TIMING [calcMLFF] n=300 avg_ms: pre=0.001 infer=15.572 post=0.004 send=0.002 total=16.707
+MLFF TIMING [calcMLFF post] n=300 avg_ms: setup=0.002 coulomb=0.000 pme=0.000 charge_mode=0.001 virial=0.000
+MLFF TIMING [worker batch] n=300 avg_ms: queue_wait=0.180 collect_wait=0.107 h2d=0.000 forward=15.381 d2h=0.000 sync=0.000 split=0.049
+MLFF TIMING [client send] n=300 avg_ms=0.030
+MLFF TIMING [client recv] n=300 avg_ms=16.709
+MLFF TIMING [calcMLFF] n=300 avg_ms: pre=0.000 infer=16.740 post=0.003 send=0.001 total=16.745
+MLFF TIMING [calcMLFF post] n=300 avg_ms: setup=0.001 coulomb=0.000 pme=0.000 charge_mode=0.001 virial=0.000
+MLFF TIMING [caller submit batch] n=400 avg_ms=0.023
+MLFF TIMING [caller wait batch] n=400 avg_ms=13.151
+MLFF TIMING [worker batch] n=400 avg_ms: queue_wait=0.177 collect_wait=0.106 h2d=0.000 forward=12.985 d2h=0.000 sync=0.000 split=0.050
+MLFF TIMING [calcMLFF] n=400 avg_ms: pre=0.001 infer=13.175 post=0.004 send=0.002 total=14.027
+MLFF TIMING [calcMLFF post] n=400 avg_ms: setup=0.002 coulomb=0.000 pme=0.000 charge_mode=0.001 virial=0.000
+MLFF TIMING [client send] n=400 avg_ms=0.030
+MLFF TIMING [client recv] n=400 avg_ms=14.030
+MLFF TIMING [calcMLFF] n=400 avg_ms: pre=0.000 infer=14.060 post=0.003 send=0.001 total=14.065
+MLFF TIMING [calcMLFF post] n=400 avg_ms: setup=0.001 coulomb=0.000 pme=0.000 charge_mode=0.001 virial=0.000
+MLFF TIMING [caller submit batch] n=500 avg_ms=0.023
+MLFF TIMING [caller wait batch] n=500 avg_ms=11.872
+MLFF TIMING [worker batch] n=500 avg_ms: queue_wait=0.181 collect_wait=0.107 h2d=0.000 forward=11.704 d2h=0.000 sync=0.000 split=0.050
+MLFF TIMING [calcMLFF] n=500 avg_ms: pre=0.001 infer=11.896 post=0.004 send=0.002 total=12.579
+MLFF TIMING [calcMLFF post] n=500 avg_ms: setup=0.002 coulomb=0.000 pme=0.000 charge_mode=0.001 virial=0.000
+MLFF TIMING [client send] n=500 avg_ms=0.030
+MLFF TIMING [client recv] n=500 avg_ms=12.583
+MLFF TIMING [calcMLFF] n=500 avg_ms: pre=0.000 infer=12.614 post=0.003 send=0.001 total=12.619
+MLFF TIMING [calcMLFF post] n=500 avg_ms: setup=0.001 coulomb=0.000 pme=0.000 charge_mode=0.001 virial=0.000

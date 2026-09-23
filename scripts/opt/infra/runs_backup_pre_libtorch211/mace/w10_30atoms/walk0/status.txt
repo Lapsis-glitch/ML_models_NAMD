@@ -1,0 +1,10 @@
+model=mace
+backend=mlff
+n_waters=10
+n_atoms=30
+walkers=0
+steps=500
+status=ok
+exit_code=0
+wall_seconds=81
+gpu_peak_mib=2207
