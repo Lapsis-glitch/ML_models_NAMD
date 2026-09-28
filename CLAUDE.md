@@ -124,6 +124,8 @@ FeNNiX-BIO1 is JAX. `scripts/export_fennix_bio1_stablehlo.py` (`fennix` env) low
 
 ## Adding a new model
 
+Full guide with a tested template wrapper: `src/wrappers/README.md` (NAMD shim expectations, strain virial, batching, TorchScript pitfalls, tests, shim loading, optimisation). Summary:
+
 1. New wrapper in `src/wrappers/wrap_<name>.py` implementing the contract above (kcal/mol, float64, `cell` input, virial via `src/virial.py`, both `forward` and `@torch.jit.export forward_batch`).
 2. Register in `src/wrappers/__init__.py` and `src/cli.py`.
 3. Add a mock inner model + builder to `tests/test_interface_compliance.py` — the parametrised tests pick it up automatically.

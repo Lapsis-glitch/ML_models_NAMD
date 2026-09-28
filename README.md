@@ -239,6 +239,26 @@ Under `--pbc` the model uses the minimum-image convention, so every perpendicula
 
 Speed-ups on an RTX 5080 range from 1.1× (SchNet) to about 15× (MACE). They are in `scripts/opt/COMPARISON.md`, and each model's `scripts/opt/<model>/REPORT.md` has the details and parity numbers.
 
+### At a glance
+
+Every optimised build is the same four steps. Only the tools in each step change per model:
+
+```
+1. native op library  (once per machine, against NAMD's libtorch)   ->  *_native.so
+2. fast inner model   (same weights, parity-checked)                ->  models/opt/<name>_inner_fast.pt
+3. wrap               python -m src.cli ... --extra-libs "$NAMD_MLFF_EXTRA_LIBS"
+4. run                NAMD with the same NAMD_MLFF_EXTRA_LIBS exported
+```
+
+| Model | 1. native library | 2. fast inner | 3. extra `src.cli` flags |
+|---|---|---|---|
+| MACE | `mace/cueq_native/build.sh` | `mace/build_fast.py cueqf OUT --no-plain-linear --state STATE` (after `extract_state.py` in `MACE_312`) | `--extra-libs` |
+| NequIP | `nequip/oeq_native/build.sh` | `nequip/build_fast.py PKG OUT` | `--extra-libs` (`--r-max` if needed) |
+| ANI | `ani/cuaev_native/build.sh` | `ani/build_fast.py --model ani2x --cache-species --group-max-atoms 1024 OUT` | `--extra-libs --lean --elements …` |
+| SchNet | — | — (wrap the normal inner) | `--fast` |
+
+(Paths are under `scripts/opt/`.) To rebuild the benchmark models themselves, including the NAMD loadability test, run `bash scripts/opt/<model>/build.sh`. The sections below give the exact commands for your own model.
+
 ### Before you start
 
 - Everything runs in the **`allegro` env on a GPU**. The cuEquivariance, OpenEquivariance and cuAEV kernels are CUDA-only.
@@ -431,10 +451,11 @@ JAX_PLATFORMS=cpu conda run -n fennix python -m pytest tests/test_fennix_export.
 
 ## Adding a new model
 
-1. Write `src/wrappers/wrap_<name>.py` following [the interface](#the-wrapper-interface): both methods, float64 kcal/mol outputs, zero charges if the model has none, and a virial through `src/virial.py`.
-2. Register it in `src/wrappers/__init__.py` and `src/cli.py`.
-3. Add a mock inner model and builder to `tests/test_interface_compliance.py`. The parametrised tests pick it up automatically.
-4. Add an optional-dependency group in `pyproject.toml`.
+See **[`src/wrappers/README.md`](src/wrappers/README.md)**. It covers:
+- what NAMD's C++ side calls and expects;
+- a complete, tested template wrapper (forces and virial by autograd, batching, PBC);
+- the TorchScript rules that break wrappers;
+- registration, tests, loading the model through NAMD's shim, and how to make it fast.
 
 ---
 
@@ -446,7 +467,7 @@ src/
   compile_mace_off.py    pretrained MACE-OFF   -> TorchScript (step 1)
   compile_torchani.py    pretrained ANI-*      -> TorchScript (step 1)
   compile_schnetpack.py  random-weight SchNet  -> TorchScript (timing only)
-  wrappers/              one wrapper per framework (the interface)
+  wrappers/              one wrapper per framework; README.md = how to write a new one
   edges.py, nl_vesin.py  neighbour lists (FP32, PBC-aware)
   virial.py              shared virial normalisation
   constants.py           unit conversion factors
