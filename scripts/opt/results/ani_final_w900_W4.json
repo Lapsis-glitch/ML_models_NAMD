@@ -1,0 +1,73 @@
+{
+ "meta": {
+  "torch": "2.11.0+cu130",
+  "gpu": "NVIDIA GeForce RTX 5080 Laptop GPU",
+  "time": "2026-09-23 14:04:35",
+  "argv": [
+   "/home/rat/PycharmProjects/ML_models_NAMD/scripts/opt/nequip/../bench_common.py",
+   "--extra-lib",
+   "scripts/opt/ani/cuaev_native/libcuaev_native_precise.so",
+   "--model",
+   "base=models/opt/ani_baseline.pt",
+   "--model",
+   "fast=models/opt/ani_fast.pt",
+   "--model",
+   "fast_nocache=models/opt/ani_fast_nocache.pt",
+   "--systems",
+   "900",
+   "--walkers",
+   "4",
+   "--jitter",
+   "0.02",
+   "--warmup",
+   "15",
+   "--iters",
+   "30",
+   "--rounds",
+   "3",
+   "--out",
+   "scripts/opt/results/ani_final_w900_W4.json"
+  ]
+ },
+ "results": [
+  {
+   "system": "water900",
+   "n_atoms": 900,
+   "walkers": 4,
+   "model": "base",
+   "peak_alloc_mib": 250.2,
+   "dE_max_kcal": 0.0,
+   "dF_max_kcal_A": 0.0,
+   "median_ms": 16.353,
+   "p10_ms": 15.602,
+   "p90_ms": 17.352,
+   "n": 90
+  },
+  {
+   "system": "water900",
+   "n_atoms": 900,
+   "walkers": 4,
+   "model": "fast",
+   "peak_alloc_mib": 121.4,
+   "dE_max_kcal": 0.8339134659618139,
+   "dF_max_kcal_A": 0.0002150642559257676,
+   "median_ms": 4.267,
+   "p10_ms": 4.167,
+   "p90_ms": 4.554,
+   "n": 90
+  },
+  {
+   "system": "water900",
+   "n_atoms": 900,
+   "walkers": 4,
+   "model": "fast_nocache",
+   "peak_alloc_mib": 100.6,
+   "dE_max_kcal": 0.8339216746389866,
+   "dF_max_kcal_A": 0.0002150642559257676,
+   "median_ms": 4.519,
+   "p10_ms": 4.39,
+   "p90_ms": 4.639,
+   "n": 90
+  }
+ ]
+}

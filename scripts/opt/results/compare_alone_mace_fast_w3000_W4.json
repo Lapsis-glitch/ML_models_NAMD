@@ -1,0 +1,47 @@
+{
+ "meta": {
+  "torch": "2.11.0+cu130",
+  "gpu": "NVIDIA GeForce RTX 5080 Laptop GPU",
+  "time": "2026-09-23 15:26:33",
+  "argv": [
+   "/home/rat/PycharmProjects/ML_models_NAMD/scripts/opt/mace/../bench_common.py",
+   "--extra-lib",
+   "/home/rat/miniconda3/envs/allegro/lib/python3.12/site-packages/nvidia/cu13/lib/libnvrtc.so.13",
+   "--extra-lib",
+   "/home/rat/miniconda3/envs/allegro/lib/python3.12/site-packages/cuequivariance_ops/lib/libcue_ops.so",
+   "--extra-lib",
+   "scripts/opt/mace/cueq_native/libcueq_uniform1d_native.so",
+   "--model",
+   "mace_fast=models/opt/mace_fast_cueqf.pt",
+   "--systems",
+   "3000",
+   "--walkers",
+   "4",
+   "--jitter",
+   "0.02",
+   "--warmup",
+   "10",
+   "--iters",
+   "10",
+   "--rounds",
+   "3",
+   "--out",
+   "scripts/opt/results/compare_alone_mace_fast=models/opt/mace_fast_cueqf.pt_w3000_W4.json"
+  ]
+ },
+ "results": [
+  {
+   "system": "water3000",
+   "n_atoms": 3000,
+   "walkers": 4,
+   "model": "mace_fast",
+   "peak_alloc_mib": 13115.7,
+   "dE_max_kcal": 0.0,
+   "dF_max_kcal_A": 0.0,
+   "median_ms": 727.707,
+   "p10_ms": 724.731,
+   "p90_ms": 731.839,
+   "n": 30
+  }
+ ]
+}

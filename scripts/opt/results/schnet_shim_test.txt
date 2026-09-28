@@ -1,0 +1,12 @@
+== installed shim: schnet_default_new
+ALL CHECKS PASSED
+== installed shim: schnet_fast
+ALL CHECKS PASSED
+== installed shim: schnet_fast_fullfilter
+ALL CHECKS PASSED
+== patched shim, NAMD_MLFF_CUDA_GRAPH=1: schnet_fast
+[mlff_shim] CUDA graph path ON (serial non-periodic calls with <= 2048 atoms)
+single: energy=11.563997 forces[0]=(5.114883,6.620023,-0.000000) charges[0]=0.0000
+ALL CHECKS PASSED
+== patched shim, graph ON, CPU (-1): schnet_fast
+ALL CHECKS PASSED

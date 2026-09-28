@@ -1,0 +1,4 @@
+source leaprc.water.tip3p
+sys = loadpdb /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/systems/w2000_6000atoms/packed.pdb
+saveamberparm sys /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/systems/w2000_6000atoms/water.prmtop /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/systems/w2000_6000atoms/water.inpcrd
+quit

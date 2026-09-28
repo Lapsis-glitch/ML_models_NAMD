@@ -1,0 +1,68 @@
+=== N=30 W=1
+[bench] waiting for GPU lock /home/rat/PycharmProjects/ML_models_NAMD/scripts/opt/.gpu_bench.lock ...
+[bench] got lock after 0s
+
+      system  W                  model  median_ms      p10      p90  peakMiB speedup    dE_max    dF_max
+--------------------------------------------------------------------------------------------------------
+     water30  1                   base     37.495   36.534   38.828    149.5   1.00x  0.00e+00  0.00e+00
+     water30  1              fast_e3nn     38.269   37.301   39.745     94.3   0.98x  0.00e+00  5.15e-14
+     water30  1                  cueqf     11.492   10.712   12.599     28.0   3.26x  0.00e+00  5.13e-14
+     water30  1             fast_cueqf     11.603   10.802   12.631     15.2   3.23x  0.00e+00  8.53e-14
+     water30  1   fast_cueqf_f32_EXTRA     10.639    9.780   11.718      7.7   3.52x  7.50e-02  5.17e-04
+
+[bench] wrote scripts/opt/results/mace_final_w30_W1.json
+=== N=30 W=4
+[bench] waiting for GPU lock /home/rat/PycharmProjects/ML_models_NAMD/scripts/opt/.gpu_bench.lock ...
+[bench] got lock after 0s
+
+      system  W                  model  median_ms      p10      p90  peakMiB speedup    dE_max    dF_max
+--------------------------------------------------------------------------------------------------------
+     water30  4                   base    113.997  112.918  117.048    525.3   1.00x  0.00e+00  0.00e+00
+     water30  4              fast_e3nn    113.969  112.734  114.723    350.3   1.00x  0.00e+00  1.17e-13
+     water30  4                  cueqf     12.792   12.200   14.644    107.4   8.91x  5.82e-11  7.11e-14
+     water30  4             fast_cueqf     10.763   10.072   13.364     53.7  10.59x  0.00e+00  1.49e-13
+     water30  4   fast_cueqf_f32_EXTRA     10.425    9.423   13.352     27.4  10.93x  9.25e-02  6.05e-04
+
+[bench] wrote scripts/opt/results/mace_final_w30_W4.json
+=== N=300 W=1
+[bench] waiting for GPU lock /home/rat/PycharmProjects/ML_models_NAMD/scripts/opt/.gpu_bench.lock ...
+[bench] got lock after 0s
+
+      system  W                  model  median_ms      p10      p90  peakMiB speedup    dE_max    dF_max
+--------------------------------------------------------------------------------------------------------
+    water300  1                   base    300.701  295.903  303.759   1505.7   1.00x  0.00e+00  0.00e+00
+    water300  1              fast_e3nn    295.574  286.870  297.048   1347.0   1.02x  9.31e-10  1.56e-13
+    water300  1                  cueqf     28.959   27.874   30.381    376.5  10.38x  0.00e+00  1.21e-13
+    water300  1             fast_cueqf     20.837   20.175   21.994    239.2  14.43x  9.31e-10  1.85e-13
+    water300  1   fast_cueqf_f32_EXTRA     10.416    9.784   11.468    118.7  28.87x  1.30e+01  1.63e-03
+
+[bench] wrote scripts/opt/results/mace_final_w300_W1.json
+=== N=300 W=4
+[bench] waiting for GPU lock /home/rat/PycharmProjects/ML_models_NAMD/scripts/opt/.gpu_bench.lock ...
+[bench] got lock after 0s
+
+      system  W                  model  median_ms      p10      p90  peakMiB speedup    dE_max    dF_max
+--------------------------------------------------------------------------------------------------------
+    water300  4                   base   1211.968 1186.038 1220.302   5932.5   1.00x  0.00e+00  0.00e+00
+    water300  4              fast_e3nn   1193.903 1165.627 1202.093   5358.0   1.02x  1.86e-09  1.63e-13
+    water300  4                  cueqf     92.559   89.221   93.713   1502.3  13.09x  9.31e-10  1.28e-13
+    water300  4             fast_cueqf     62.301   60.649   63.484    945.5  19.45x  9.31e-10  1.85e-13
+    water300  4   fast_cueqf_f32_EXTRA     12.530   12.003   13.246    473.2  96.73x  1.35e+01  1.98e-03
+
+[bench] wrote scripts/opt/results/mace_final_w300_W4.json
+=== N=900 W=1
+[bench] waiting for GPU lock /home/rat/PycharmProjects/ML_models_NAMD/scripts/opt/.gpu_bench.lock ...
+[bench] got lock after 0s
+
+      system  W                  model  median_ms      p10      p90  peakMiB speedup    dE_max    dF_max
+--------------------------------------------------------------------------------------------------------
+    water900  1                   base    922.339  919.626  925.084   4996.5   1.00x  0.00e+00  0.00e+00
+    water900  1              fast_e3nn    890.033  875.705  907.338   4549.9   1.04x  0.00e+00  1.85e-13
+    water900  1                  cueqf     77.417   76.444   78.566   1256.6  11.91x  0.00e+00  1.14e-13
+    water900  1             fast_cueqf     53.730   52.967   54.394    824.4  17.17x  0.00e+00  2.56e-13
+    water900  1   fast_cueqf_f32_EXTRA     11.795   11.217   12.611    414.4  78.20x  3.85e+01  2.66e-03
+
+[bench] wrote scripts/opt/results/mace_final_w900_W1.json
+=== N=900 W=4
+[bench] waiting for GPU lock /home/rat/PycharmProjects/ML_models_NAMD/scripts/opt/.gpu_bench.lock ...
+[bench] got lock after 0s

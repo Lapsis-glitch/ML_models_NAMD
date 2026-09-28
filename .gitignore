@@ -44,3 +44,24 @@ Thumbs.db
 /results/
 /checkpoints/
 
+
+# ---- large / generated artifacts (not tracked; regenerate with the build scripts) ----
+# optimised model artifacts, bundle, local toolchain
+models/opt/
+models/archive_pre_pbc_2026-07-31/
+scripts/opt/l40s_bundle/
+scripts/opt/ani/toolchain/
+# NAMD run outputs and per-size FeNNiX StableHLO exports
+runs/
+runs_old/
+namd_benchmarks/models/
+namd_benchmarks/enzyme/models/
+*.stablehlo.mlir
+# compiled libraries / binaries and backups
+*.so
+*.o
+*.bak
+scripts/opt/infra/shim_bench
+scripts/opt/fennix/bench/bench_pjrt
+scripts/opt/fennix/prof/
+**/lib/mlff_shim_test

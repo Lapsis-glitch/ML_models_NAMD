@@ -1,0 +1,12 @@
+model=mm
+backend=none
+system=pbc_mono
+n_atoms=39609
+net_charge=0
+walkers=0
+steps=1000
+smoke_mm=1
+status=ok
+exit_code=0
+wall_seconds=444
+gpu_peak_mib=NA

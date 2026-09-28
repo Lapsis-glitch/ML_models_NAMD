@@ -1,0 +1,382 @@
+Charm++: standalone mode (not using charmrun)
+Charm++> Running in non-SMP mode: 1 processes (PEs)
+Charm++> Using recursive bisection (scheme 3) for topology aware partitions
+Converse/Charm++ Commit ID: v80000
+Charm++> scheduler running in netpoll mode.
+CharmLB> Load balancer assumes all CPUs are same.
+Charm++> Running on 1 hosts (1 sockets x 8 cores x 2 PUs = 16-way SMP)
+Charm++> cpu topology info is gathered in 0.000 seconds.
+CharmLB> Load balancing instrumentation for communication is off.
+Info: NAMD 3.1alpha4pre for Linux-x86_64-netlrts
+Info: 
+Info: Please visit http://www.ks.uiuc.edu/Research/namd/
+Info: for updates, documentation, and support information.
+Info: 
+Info: Please cite Phillips et al., J. Chem. Phys. 153:044130 (2020) doi:10.1063/5.0014475
+Info: in all publications reporting results obtained with NAMD.
+Info: 
+Info: Based on Charm++/Converse 80000 for netlrts-linux-x86_64
+Info: Built Tue Jun 2 11:05:04 CEST 2026 by rat on Cerb
+Info: 1 NAMD  3.1alpha4pre  Linux-x86_64-netlrts  1    Cerb  rat
+Info: Running on 1 processors, 1 nodes, 1 physical nodes.
+Info: CPU topology information available.
+Info: Charm++/Converse parallel runtime startup completed at 0.0039449 s
+Info: 469.102 MB of memory in use based on /proc/self/stat
+Info: Configuration file is probe.conf
+Info: Working in the current directory /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/diagnostics/p1run
+TCL: Suspending until startup complete.
+Warning: Option "1-4scaling" has been deprecated. Instead use "oneFourScaling".
+Info: SIMULATION PARAMETERS:
+Info: TIMESTEP               0.5
+Info: NUMBER OF STEPS        0
+Info: STEPS PER CYCLE        1
+Info: LOAD BALANCER  Centralized
+Info: LOAD BALANCING STRATEGY  New Load Balancers -- DEFAULT
+Info: LDB PERIOD             200 steps
+Info: FIRST LDB TIMESTEP     5
+Info: LAST LDB TIMESTEP     -1
+Info: LDB BACKGROUND SCALING 1
+Info: HOM BACKGROUND SCALING 1
+Info: MIN ATOMS PER PATCH    40
+Info: EMPTY PATCH LOAD       40 ATOMS
+Info: INITIAL TEMPERATURE    0
+Info: CENTER OF MASS MOVING INITIALLY? NO
+Info: DIELECTRIC             1
+Info: EXCLUDE                SCALED ONE-FOUR
+Info: 1-4 ELECTROSTATICS SCALED BY 0.833333
+Info: MODIFIED 1-4 VDW PARAMETERS WILL BE USED
+Info: DCD FILENAME           pos.dcd
+Info: DCD FREQUENCY          1
+Info: DCD FIRST STEP         1
+Info: NO EXTENDED SYSTEM TRAJECTORY OUTPUT
+Info: NO VELOCITY DCD OUTPUT
+Info: FORCE DCD FILENAME     force.dcd
+Info: FORCE DCD FREQUENCY    1
+Info: FORCE DCD FIRST STEP   1
+Info: OUTPUT FILENAME        probe
+Info: NO RESTART FILE
+Info: NAMD will save positions and velocities to probe.crash.csv when  atoms are moving too fast.
+Info: CUTOFF                 9.5
+Info: PAIRLIST DISTANCE      11.5
+Info: PAIRLIST SHRINK RATE   0.01
+Info: PAIRLIST GROW RATE     0.01
+Info: PAIRLIST TRIGGER       0.3
+Info: PAIRLISTS PER CYCLE    2
+Info: PAIRLISTS ENABLED
+Info: MARGIN                 0
+Info: HYDROGEN GROUP CUTOFF  2.5
+Info: PATCH DIMENSION        14
+Info: OUTPUT ENERGY PRECISION 4
+Info: CROSSTERM ENERGY INCLUDED IN DIHEDRAL
+Info: TIMING OUTPUT STEPS    1
+Info: QM FORCES ACTIVE
+Info: QM PDB PARAMETER FILE: /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/mono_shell5/qm.pdb
+Info: QM SOFTWARE: fennol
+Info: QM ATOM CHARGES FROM QM SOFTWARE: NONE
+Info: QM EXECUTABLE PATH: /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/models/fennix_enzyme/mono_shell5/manifest.json
+Info: QM COLUMN: beta
+Info: QM WILL DETECT BONDS BETWEEN QM AND MM ATOMS.
+Info: QM BOND COLUMN: occ
+Info: QM-MM BOND SCHEME: Charge Shift.
+Info: QM BASE DIRECTORY: /tmp/namd_enzyme_qmmm
+Info: QM FORCES WILL REPLACE ALL NAMD FORCES!
+Info: QM POINT CHARGES WILL BE SELECTED EVERY 1 STEPS.
+Info: QM executions per node: 1
+Info: USING VERLET I (r-RESPA) MTS SCHEME.
+Info: C1 SPLITTING OF LONG RANGE ELECTROSTATICS
+Info: PLACING ATOMS IN PATCHES BY HYDROGEN GROUPS
+Info: RANDOM NUMBER SEED     1780660581
+Info: USE HYDROGEN BONDS?    NO
+Info: Using AMBER format force field!
+Info: AMBER PARM FILE        /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/mono_shell5/system.prmtop
+Info: COORDINATE PDB         /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/mono_shell5/system.pdb
+Info: Exclusions will be read from PARM file!
+Info: SCNB (VDW SCALING)     2
+Info: USING ARITHMETIC MEAN TO COMBINE L-J SIGMA PARAMETERS
+Info: === Start reading AMBER parm7 format file /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/mono_shell5/system.prmtop ===
+Info: Complete reading ATOM_NAME with 4525 fields.
+Info: Complete reading CHARGE with 4525 fields.
+Info: Complete reading ATOMIC_NUMBER with 4525 fields.
+Info: Complete reading MASS with 4525 fields.
+Info: Complete reading ATOM_TYPE_INDEX with 4525 fields.
+Info: Complete reading NUMBER_EXCLUDED_ATOMS with 4525 fields.
+Info: Complete reading NONBONDED_PARM_INDEX with 256 fields.
+Info: Complete reading RESIDUE_LABEL with 635 fields.
+Info: Complete reading RESIDUE_POINTER with 635 fields.
+Info: Complete reading BOND_FORCE_CONSTANT with 60 fields.
+Info: Complete reading BOND_EQUIL_VALUE with 60 fields.
+Info: Complete reading ANGLE_FORCE_CONSTANT with 133 fields.
+Info: Complete reading ANGLE_EQUIL_VALUE with 133 fields.
+Info: Complete reading DIHEDRAL_FORCE_CONSTANT with 175 fields.
+Info: Complete reading DIHEDRAL_PERIODICITY with 175 fields.
+Info: Complete reading DIHEDRAL_PHASE with 175 fields.
+Info: Complete reading SCEE_SCALE_FACTOR with 175 fields.
+Info: Complete reading SCNB_SCALE_FACTOR with 175 fields.
+Info: Complete reading LENNARD_JONES_ACOEF with 136 fields.
+Info: Complete reading LENNARD_JONES_BCOEF with 136 fields.
+Info: Complete reading BONDS_INC_HYDROGEN with 8658 fields.
+Info: Complete reading BONDS_WITHOUT_HYDROGEN with 4962 fields.
+Info: Complete reading ANGLES_INC_HYDROGEN with 15024 fields.
+Info: Complete reading ANGLES_WITHOUT_HYDROGEN with 8928 fields.
+Info: Complete reading DIHEDRALS_INC_HYDROGEN with 37290 fields.
+Info: Complete reading DIHEDRALS_WITHOUT_HYDROGEN with 35780 fields.
+Info: Complete reading EXCLUDED_ATOMS_LIST with 19711 fields.
+Info: Complete reading HBOND_ACOEF with 0 fields.
+Info: Complete reading HBOND_BCOEF with 0 fields.
+Info: Complete reading AMBER_ATOM_TYPE with 4525 fields.
+Info: Complete reading TREE_CHAIN_CLASSIFICATION with 4525 fields.
+Info: Complete reading RADIUS_SET with 1 fields.
+Info: Complete reading RADII with 4525 fields.
+Info: Complete reading SCREEN with 4525 fields.
+Info: === Finish reading AMBER parm7 format file. ===
+Warning: Found 412 H-H bonds.
+Info: SUMMARY OF PARAMETERS:
+Info: 60 BONDS
+Info: 133 ANGLES
+Info: 175 DIHEDRAL
+Info: 0 IMPROPER
+Info: 0 CROSSTERM
+Info: 0 VDW
+Info: 136 VDW_PAIRS
+Info: 0 NBTHOLE_PAIRS
+Info: Reading pdb file /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/mono_shell5/system.pdb
+Info: TIME FOR READING PDB FILE: 0.00349099
+Info: 
+Info: Using the following PDB file for QM parameters: /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/mono_shell5/qm.pdb
+Info: Number of QM atoms (excluding Dummy atoms): 4525
+Info: Storing QM-MM bonds.
+Warning: We found 0 QM-MM bonds.
+Info: Applying user defined multiplicity 1 to QM group ID 1
+Info: 1) Group ID: 1 ; Group size: 4525 atoms ; Total PSF charge: 0
+Info: Found user defined charge 0 for QM group ID 1. Will ignore PSF charge.
+Info: ****************************
+Info: STRUCTURE SUMMARY:
+Info: 4525 ATOMS
+Info: 4540 BONDS
+Info: 5988 ANGLES
+Info: 14614 DIHEDRALS
+Info: 0 IMPROPERS
+Info: 0 CROSSTERMS
+Info: 19130 EXCLUSIONS
+Info: 13572 DEGREES OF FREEDOM
+Info: 2051 HYDROGEN GROUPS
+Info: 4 ATOMS IN LARGEST HYDROGEN GROUP
+Info: 2051 MIGRATION GROUPS
+Info: 4 ATOMS IN LARGEST MIGRATION GROUP
+Info: TOTAL MASS = 30883.5 amu
+Info: TOTAL CHARGE = -6.56699e-06 e
+Info: *****************************
+Info: 
+Info: Entering startup at 0.0399486 s, 22.9444 MB of memory in use
+Info: Startup phase 0 took 5.269e-05 s, 22.9444 MB of memory in use
+Info: The QM region will remove 4540 bonds, 5988 angles, 14614 dihedrals, 0 impropers and 0 crossterms.
+Info: ADDED 0 IMPLICIT EXCLUSIONS
+Info: Startup phase 1 took 0.00116764 s, 22.9444 MB of memory in use
+Info: NONBONDED TABLE R-SQUARED SPACING: 0.0625
+Info: NONBONDED TABLE SIZE: 705 POINTS
+Info: INCONSISTENCY IN FAST TABLE ENERGY VS FORCE: 0.000290475 AT 0.251946
+Info: ABSOLUTE IMPRECISION IN VDWA TABLE FORCE: 1.76705e-28 AT 9.48354
+Info: INCONSISTENCY IN VDWA TABLE ENERGY VS FORCE: 0.0040507 AT 0.251946
+Info: ABSOLUTE IMPRECISION IN VDWB TABLE FORCE: 1.32349e-22 AT 9.48354
+Info: INCONSISTENCY IN VDWB TABLE ENERGY VS FORCE: 0.00150189 AT 0.251946
+Info: Startup phase 2 took 0.000287516 s, 22.9444 MB of memory in use
+Info: Startup phase 3 took 2.7843e-05 s, 22.9444 MB of memory in use
+Info: Startup phase 4 took 2.1771e-05 s, 22.9444 MB of memory in use
+Info: Startup phase 5 took 1.7153e-05 s, 22.9444 MB of memory in use
+Info: ORIGINAL ATOMS MINMAX IS -27.415 -21.646 -29.411  27.125 21.078 29.995
+Info: ADJUSTED ATOMS MINMAX IS -19.5056 -13.4867 -20.8292  20.1806 13.7408 19.2432
+Info: PATCH GRID IS 3 BY 2 BY 3
+Info: PATCH GRID IS 1-AWAY BY 1-AWAY BY 1-AWAY
+Info: REMOVING COM VELOCITY 0 0 0
+Info: LARGEST PATCH (13) HAS 409 ATOMS
+Info: TORUS A SIZE 1 USING 0
+Info: TORUS B SIZE 1 USING 0
+Info: TORUS C SIZE 1 USING 0
+Info: TORUS MINIMAL MESH SIZE IS 1 BY 1 BY 1
+Info: Placed 100% of base nodes on same physical node as patch
+Info: Startup phase 6 took 0.00199439 s, 22.9444 MB of memory in use
+Info: Startup phase 7 took 4.5246e-05 s, 22.9444 MB of memory in use
+Info: Startup phase 8 took 1.9046e-05 s, 22.9444 MB of memory in use
+Info: Startup phase 9 took 1.7804e-05 s, 22.9444 MB of memory in use
+Info: Startup phase 10 took 1.6982e-05 s, 22.9444 MB of memory in use
+Info: Startup phase 11 took 1.7403e-05 s, 22.9444 MB of memory in use
+LDB: Central LB being created...
+Info: Startup phase 12 took 3.17e-05 s, 22.9444 MB of memory in use
+Info: Startup phase 13 took 1.8135e-05 s, 22.9444 MB of memory in use
+Info: Startup phase 14 took 1.7333e-05 s, 22.9444 MB of memory in use
+Info: Startup phase 15 took 1.7072e-05 s, 22.9444 MB of memory in use
+Info: CREATING 204 COMPUTE OBJECTS
+Info: Startup phase 16 took 0.000616432 s, 22.9444 MB of memory in use
+Info: Startup phase 17 took 3.9795e-05 s, 22.9444 MB of memory in use
+Info: Startup phase 18 took 8.4932e-05 s, 22.9444 MB of memory in use
+Info: Finished startup at 0.0444595 s, 22.9444 MB of memory in use
+
+TCL: Running for 6 steps
+Info: List of ranks running QM simulations: 0.
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+I0605 13:56:22.123796 1196097 service.cc:158] XLA service 0x5c511e76c060 initialized for platform CUDA (this does not guarantee that XLA will be used). Devices:
+I0605 13:56:22.123906 1196097 service.cc:166]   StreamExecutor device (0): NVIDIA GeForce RTX 3070 Laptop GPU, Compute Capability 8.6
+I0605 13:56:22.124784 1196097 se_gpu_pjrt_client.cc:1339] Using BFC allocator.
+I0605 13:56:22.124952 1196097 gpu_helpers.cc:139] XLA backend will use up to 1288411596 bytes on device 0 for BFCAllocator.
+I0605 13:56:22.125057 1196097 gpu_helpers.cc:177] XLA backend will use up to 7300998707 bytes on device 0 for CollectiveBFCAllocator.
+I0605 13:56:22.137557 1196097 cuda_dnn.cc:463] Loaded cuDNN version 91400
+I0605 13:56:26.251041 1196097 dot_search_space.cc:229] All configs were filtered out because none of them sufficiently match the hints. Maybe the hints set does not contain a good representative set of valid configs? Working around this by using the full hints set instead.
+I0605 13:56:26.251150 1196097 dot_search_space.cc:229] All configs were filtered out because none of them sufficiently match the hints. Maybe the hints set does not contain a good representative set of valid configs? Working around this by using the full hints set instead.
+I0605 13:56:26.251180 1196097 dot_search_space.cc:229] All configs were filtered out because none of them sufficiently match the hints. Maybe the hints set does not contain a good representative set of valid configs? Working around this by using the full hints set instead.
+I0605 13:56:26.251469 1196097 dot_search_space.cc:229] All configs were filtered out because none of them sufficiently match the hints. Maybe the hints set does not contain a good representative set of valid configs? Working around this by using the full hints set instead.
+I0605 13:56:26.251504 1196097 dot_search_space.cc:229] All configs were filtered out because none of them sufficiently match the hints. Maybe the hints set does not contain a good representative set of valid configs? Working around this by using the full hints set instead.
+I0605 13:56:26.251536 1196097 dot_search_space.cc:229] All configs were filtered out because none of them sufficiently match the hints. Maybe the hints set does not contain a good representative set of valid configs? Working around this by using the full hints set instead.
+I0605 13:56:26.252032 1196097 dot_search_space.cc:229] All configs were filtered out because none of them sufficiently match the hints. Maybe the hints set does not contain a good representative set of valid configs? Working around this by using the full hints set instead.
+I0605 13:56:29.620937 1196119 subprocess_compilation.cc:347] ptxas warning : Registers are spilled to local memory in function 'gemm_fusion_dot_289', 460 bytes spill stores, 444 bytes spill loads
+
+I0605 13:56:31.757066 1196109 subprocess_compilation.cc:347] ptxas warning : Registers are spilled to local memory in function 'gemm_fusion_dot_122', 8 bytes spill stores, 8 bytes spill loads
+
+I0605 13:56:33.248048 1196111 subprocess_compilation.cc:347] ptxas warning : Registers are spilled to local memory in function 'gemm_fusion_dot_80', 580 bytes spill stores, 580 bytes spill loads
+
+I0605 13:56:35.796399 1196120 subprocess_compilation.cc:347] ptxas warning : Registers are spilled to local memory in function 'gemm_fusion_dot_125', 4 bytes spill stores, 4 bytes spill loads
+
+QMENERGY:       0         1.0000    -25835.1824
+
+ETITLE:      TS           BOND          ANGLE          DIHED          IMPRP               ELECT            VDW       BOUNDARY           MISC        KINETIC               TOTAL           TEMP      POTENTIAL         TOTAL3        TEMPAVG
+
+QMETITLE:      TS           QMID         ENERGY
+
+ENERGY:       0         0.0000         0.0000         0.0000         0.0000              0.0000         0.0000         0.0000    -25835.1824         0.0000         -25835.1824         0.0000    -25835.1824    -25832.3661         0.0000
+
+LDB: ============= START OF LOAD BALANCING ============== 32.0852
+LDB: ============== END OF LOAD BALANCING =============== 32.0853
+LDB: =============== DONE WITH MIGRATION ================ 32.0853
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:       1         1.0000    -25835.7623
+
+TIMING: 1  CPU: 121.504, 0.027859/step  Wall: 32.0801, 0.039157/step, 5.43847e-05 hours remaining, 22.944366 MB of memory in use.
+PERFORMANCE: 1  averaging 1.10325 ns/day, 0.039157 sec/step with standard deviation 0
+ENERGY:       1         0.0000         0.0000         0.0000         0.0000              0.0000         0.0000         0.0000    -25835.7623        33.6381         -25802.1242         2.4945    -25835.7623    -25799.2378         2.4945
+
+OPENING COORDINATE DCD FILE
+WRITING COORDINATES TO DCD FILE pos.dcd AT STEP 1
+The last position output (seq=1) takes 0.000 seconds, 22.944 MB of memory in use
+OPENING FORCE DCD FILE
+WRITING FORCES TO DCD FILE AT STEP 1
+The last force output (seq=1) takes 0.000 seconds, 22.944 MB of memory in use
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:       2         1.0000    -25832.6487
+
+TIMING: 2  CPU: 121.533, 0.029034/step  Wall: 32.1183, 0.0382055/step, 4.24505e-05 hours remaining, 22.944366 MB of memory in use.
+PERFORMANCE: 2  averaging 1.11682 ns/day, 0.0386812 sec/step with standard deviation 0.000672833
+ENERGY:       2         0.0000         0.0000         0.0000         0.0000              0.0000         0.0000         0.0000    -25832.6487       133.4534         -25699.1954         9.8964    -25832.6487    -25696.1599         9.8964
+
+WRITING COORDINATES TO DCD FILE pos.dcd AT STEP 2
+The last position output (seq=2) takes 0.000 seconds, 22.944 MB of memory in use
+WRITING FORCES TO DCD FILE AT STEP 2
+The last force output (seq=2) takes 0.000 seconds, 22.944 MB of memory in use
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:       3         1.0000    -25813.8038
+
+TIMING: 3  CPU: 121.562, 0.028471/step  Wall: 32.158, 0.0397179/step, 3.30983e-05 hours remaining, 22.944366 MB of memory in use.
+PERFORMANCE: 3  averaging 1.10693 ns/day, 0.0390268 sec/step with standard deviation 0.000764589
+ENERGY:       3         0.0000         0.0000         0.0000         0.0000              0.0000         0.0000         0.0000    -25813.8038       296.8539         -25516.9498        22.0135    -25813.8038    -25513.8114        22.0135
+
+WRITING COORDINATES TO DCD FILE pos.dcd AT STEP 3
+The last position output (seq=3) takes 0.000 seconds, 22.944 MB of memory in use
+WRITING FORCES TO DCD FILE AT STEP 3
+The last force output (seq=3) takes 0.000 seconds, 22.944 MB of memory in use
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:       4         1.0000    -25762.2800
+
+TIMING: 4  CPU: 121.591, 0.029699/step  Wall: 32.1969, 0.0389432/step, 2.16351e-05 hours remaining, 22.944366 MB of memory in use.
+PERFORMANCE: 4  averaging 1.10752 ns/day, 0.0390059 sec/step with standard deviation 0.000625682
+ENERGY:       4         0.0000         0.0000         0.0000         0.0000              0.0000         0.0000         0.0000    -25762.2800       521.5114         -25240.7686        38.6732    -25762.2800    -25237.7441        38.6732
+
+LDB: ============= START OF LOAD BALANCING ============== 32.2413
+WRITING COORDINATES TO DCD FILE pos.dcd AT STEP 4
+The last position output (seq=4) takes 0.000 seconds, 22.944 MB of memory in use
+WRITING FORCES TO DCD FILE AT STEP 4
+The last force output (seq=4) takes 0.000 seconds, 22.944 MB of memory in use
+LDB: ============== END OF LOAD BALANCING =============== 32.2416
+LDB: =============== DONE WITH MIGRATION ================ 32.2416
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:       5         1.0000    -25651.2965
+
+Info: Initial time: 1 CPUs 0.0388846 s/step 0.900107 days/ns 22.9444 MB memory
+TIMING: 5  CPU: 121.619, 0.027596/step  Wall: 32.2358, 0.0388929/step, 1.08036e-05 hours remaining, 22.944366 MB of memory in use.
+PERFORMANCE: 5  averaging 1.10817 ns/day, 0.0389833 sec/step with standard deviation 0.000544207
+ENERGY:       5         0.0000         0.0000         0.0000         0.0000              0.0000         0.0000         0.0000    -25651.2965       808.1890         -24843.1075        59.9321    -25651.2965    -24840.6349        59.9321
+
+LDB: ============= START OF LOAD BALANCING ============== 32.2801
+WRITING COORDINATES TO DCD FILE pos.dcd AT STEP 5
+The last position output (seq=5) takes 0.000 seconds, 22.944 MB of memory in use
+WRITING FORCES TO DCD FILE AT STEP 5
+The last force output (seq=5) takes 0.000 seconds, 22.944 MB of memory in use
+LDB: ============== END OF LOAD BALANCING =============== 32.2803
+LDB: =============== DONE WITH MIGRATION ================ 32.2803
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:       6         1.0000    -25449.0527
+
+TIMING: 6  CPU: 121.649, 0.030182/step  Wall: 32.2763, 0.0404254/step, 0 hours remaining, 22.944366 MB of memory in use.
+PERFORMANCE: 6  averaging 1.10138 ns/day, 0.0392237 sec/step with standard deviation 0.000763879
+ENERGY:       6         0.0000         0.0000         0.0000         0.0000              0.0000         0.0000         0.0000    -25449.0527      1150.3061         -24298.7466        85.3021    -25449.0527    -24297.3982        85.3021
+
+WRITING COORDINATES TO DCD FILE pos.dcd AT STEP 6
+The last position output (seq=6) takes 0.000 seconds, 22.944 MB of memory in use
+WRITING FORCES TO DCD FILE AT STEP 6
+WRITING EXTENDED SYSTEM TO OUTPUT FILE AT STEP 6
+WRITING COORDINATES TO OUTPUT FILE AT STEP 6
+CLOSING COORDINATE DCD FILE pos.dcd
+The last position output (seq=-2) takes 0.006 seconds, 22.944 MB of memory in use
+WRITING VELOCITIES TO OUTPUT FILE AT STEP 6
+CLOSING FORCE DCD FILE
+The last velocity output (seq=-2) takes 0.007 seconds, 22.944 MB of memory in use
+====================================================
+
+WallClock: 32.331356  CPUTime: 121.700569  Memory: 22.944366 MB
+[Partition 0][Node 0] End of program

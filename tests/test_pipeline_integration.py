@@ -20,8 +20,11 @@ from pathlib import Path
 import numpy as np
 import pytest
 import torch
+
+# NAMD sends an all-zero cell for a non-periodic system.
+_ZERO_CELL = torch.zeros((1, 3, 3), dtype=torch.float64)
 from torch import nn
-from typing import Dict
+from typing import Dict, Optional, Tuple
 
 
 # ===================================================================
@@ -232,7 +235,8 @@ class TestSchNetPackPipeline:
         pc_c = torch.zeros((0, 3), dtype=torch.float64)
         pc_q = torch.zeros(0, dtype=torch.float64)
 
-        energy, forces, charges = wrapper(coords, Z, pc_c, pc_q)
+        energy, forces, charges, virial = wrapper(
+            coords, Z, pc_c, pc_q, _ZERO_CELL)
         assert energy.dtype == torch.float64
         assert forces.shape == (3, 3)
         assert charges.shape == (3,)
@@ -274,7 +278,8 @@ class TestTorchANIPipeline:
         pc_c = torch.zeros((0, 3), dtype=torch.float64)
         pc_q = torch.zeros(0, dtype=torch.float64)
 
-        energy, forces, charges = wrapper(coords, Z, pc_c, pc_q)
+        energy, forces, charges, virial = wrapper(
+            coords, Z, pc_c, pc_q, _ZERO_CELL)
         assert energy.dtype == torch.float64
         assert forces.shape == (3, 3)
         assert charges.shape == (3,)
@@ -337,7 +342,33 @@ class _MockSchNetInner(nn.Module):
         }
 
 
+class _MockANICore(nn.Module):
+    """The part a real export keeps reachable as `.ani`, which is where the
+    periodic path passes the cell.  The cell enters the energy so a strain on
+    it has a non-zero gradient."""
+
+    def forward(
+        self,
+        species_coordinates: Tuple[torch.Tensor, torch.Tensor],
+        cell: Optional[torch.Tensor] = None,
+        pbc: Optional[torch.Tensor] = None,
+        charge: int = 0,
+        atomic: bool = False,
+        ensemble_values: bool = False,
+        _molecule_idxs: Optional[torch.Tensor] = None,
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        species, coords = species_coordinates
+        e = coords.pow(2).sum(dim=(1, 2)) * 0.001
+        if cell is not None:
+            e = e + cell.pow(2).sum() * 1e-6
+        return species, e.unsqueeze(-1)
+
+
 class _MockTorchANIInner(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.ani = _MockANICore()
+
     def forward(self, species: torch.Tensor, coordinates: torch.Tensor):
         B = species.size(0)
         energies = coordinates.pow(2).sum(dim=(1, 2)).unsqueeze(-1) * 0.001
@@ -373,7 +404,8 @@ class TestWrapperExportRoundTrip:
         pc = torch.zeros((0, 3), dtype=torch.float64)
         pq = torch.zeros(0, dtype=torch.float64)
 
-        energy, forces, charges = reloaded(coords, Z, pc, pq)
+        energy, forces, charges, virial = reloaded(
+            coords, Z, pc, pq, _ZERO_CELL)
         assert energy.dtype == torch.float64
         assert forces.shape == (3, 3)
         assert charges.shape == (3,)
@@ -394,7 +426,8 @@ class TestWrapperExportRoundTrip:
         pc = torch.zeros((0, 3), dtype=torch.float64)
         pq = torch.zeros(0, dtype=torch.float64)
 
-        energy, forces, charges = reloaded(coords, Z, pc, pq)
+        energy, forces, charges, virial = reloaded(
+            coords, Z, pc, pq, _ZERO_CELL)
         assert energy.dtype == torch.float64
         assert forces.shape == (3, 3)
         assert charges.shape == (3,)
@@ -417,7 +450,8 @@ class TestWrapperExportRoundTrip:
         pc = torch.zeros((0, 3), dtype=torch.float64)
         pq = torch.zeros(0, dtype=torch.float64)
 
-        energy, forces, charges = reloaded(coords, Z, pc, pq)
+        energy, forces, charges, virial = reloaded(
+            coords, Z, pc, pq, _ZERO_CELL)
         assert energy.dtype == torch.float64
         assert forces.shape == (3, 3)
         assert charges.shape == (3,)
@@ -444,7 +478,8 @@ class TestWrapperExportRoundTrip:
         pc = torch.zeros((0, 3), dtype=torch.float64)
         pq = torch.zeros(0, dtype=torch.float64)
 
-        energy, forces, charges = reloaded(coords, Z, pc, pq)
+        energy, forces, charges, virial = reloaded(
+            coords, Z, pc, pq, _ZERO_CELL)
         assert energy.dtype == torch.float64
         assert forces.shape == (3, 3)
         assert charges.shape == (3,)

@@ -1,0 +1,10 @@
+model=schnet
+backend=mlff
+n_waters=10
+n_atoms=30
+walkers=0
+steps=500
+status=ok
+exit_code=0
+wall_seconds=7
+gpu_peak_mib=4094

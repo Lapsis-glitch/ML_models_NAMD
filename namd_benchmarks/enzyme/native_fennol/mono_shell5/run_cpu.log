@@ -1,0 +1,42 @@
+ERROR:2026-06-05 12:01:28,781:jax._src.xla_bridge:487: Jax plugin configuration error: Exception when calling jax_plugins.xla_cuda12.initialize()
+Traceback (most recent call last):
+  File "/home/rat/miniconda3/envs/fennix/lib/python3.11/site-packages/jax/_src/xla_bridge.py", line 485, in discover_pjrt_plugins
+    plugin_module.initialize()
+  File "/home/rat/miniconda3/envs/fennix/lib/python3.11/site-packages/jax_plugins/xla_cuda12/__init__.py", line 328, in initialize
+    _check_cuda_versions(raise_on_first_error=True)
+  File "/home/rat/miniconda3/envs/fennix/lib/python3.11/site-packages/jax_plugins/xla_cuda12/__init__.py", line 285, in _check_cuda_versions
+    local_device_count = cuda_versions.cuda_device_count()
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: jaxlib/cuda/versions_helpers.cc:113: operation cuInit(0) failed: CUDA_ERROR_NO_DEVICE
+# random_seed: 1941136798
+# model_file: /home/rat/PycharmProjects/ML_models_NAMD/models/fennix-bio1S.fnx
+# nblist_skin: 2.00 A, nblist_stride: 80 steps, nblist_warmup: 0 steps
+# Computing initial energy and forces
+# Energy unit:  kcal/mol
+# Printing Energy per atom
+# Initial potential energy: -5.708718299865723; kinetic energy: 0.8959118127822876
+# forces min/max/rms: 0.00014982226 77.796684 9.925318
+####################################################################################
+# Running 40 steps of LGV MD simulation on cpu
+#     Step   Time[ps]       Etot       Epot       Ekin    Temp[K]
+         2      0.001    -4.7780     -5.6423     0.8642     289.93
+         4      0.002    -4.7753     -5.5223     0.7469     250.58
+         6      0.003    -4.7999     -5.4811     0.6812     228.51
+         8      0.004    -4.8028     -5.5041     0.7013     235.29
+        10      0.005    -4.7845     -5.4928     0.7083     237.62
+        12      0.006    -4.7727     -5.4261     0.6534     219.20
+        14      0.007    -4.7813     -5.3833     0.6020     201.96
+        16      0.008    -4.7939     -5.4185     0.6246     209.55
+        18      0.009    -4.7913     -5.4880     0.6966     233.70
+        20      0.010    -4.7800     -5.5315     0.7515     252.12
+        22      0.011    -4.7716     -5.5500     0.7783     261.11
+        24      0.012    -4.7656     -5.5582     0.7926     265.89
+        26      0.013    -4.7573     -5.5469     0.7896     264.89
+        28      0.014    -4.7535     -5.5241     0.7707     258.54
+        30      0.015    -4.7537     -5.5161     0.7624     255.76
+        32      0.016    -4.7567     -5.5339     0.7772     260.72
+        34      0.017    -4.7470     -5.5435     0.7966     267.23
+        36      0.018    -4.7344     -5.5138     0.7794     261.48
+        38      0.019    -4.7368     -5.4830     0.7462     250.34
+        40      0.020    -4.7517     -5.5092     0.7575     254.11
+# Run done in 40 s

@@ -1,0 +1,4 @@
+model,backend,n_atoms,n_waters,walkers,status,s_per_step,ns_per_day,first_interval_s_per_step,n_intervals,mlff_infer_ms,mlff_forward_ms_batch,wall_seconds,gpu_peak_mib,gpu_mem_over_baseline_mib,exit_code
+mace,mlff,30,10,0,ok,0.1479,0.5842,0.1799,5,142.98,142.88,81,2207,451,0
+mace,mlff,30,10,1,ok,0.1362,0.6344,0.1833,5,141.90,141.80,75,2179,423,0
+mace,mlff,30,10,2,ok,0.2809,0.3075,0.3588,5,300.07,283.75,152,2506,750,0

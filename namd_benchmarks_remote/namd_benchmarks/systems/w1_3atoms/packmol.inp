@@ -1,0 +1,9 @@
+tolerance 2.0
+filetype pdb
+seed 12345
+output /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/systems/w1_3atoms/packed.pdb
+
+structure /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/systems/water_template.pdb
+  number 1
+  inside box 0. 0. 0. 5.106 5.106 5.106
+end structure

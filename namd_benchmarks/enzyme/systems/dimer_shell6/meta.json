@@ -1,0 +1,13 @@
+{
+  "name": "dimer_shell6",
+  "pdb_id": "1X1Z",
+  "chains": "AB",
+  "shell_A": 6.0,
+  "n_atoms": 9791,
+  "net_charge": 0,
+  "disulfides": 0,
+  "water_model": "TIP3P",
+  "ff": "ff14SB",
+  "periodic": false,
+  "all_qm": true
+}

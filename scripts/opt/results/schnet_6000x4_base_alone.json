@@ -1,0 +1,41 @@
+{
+ "meta": {
+  "torch": "2.11.0+cu130",
+  "gpu": "NVIDIA GeForce RTX 5080 Laptop GPU",
+  "time": "2026-09-21 23:22:27",
+  "argv": [
+   "scripts/opt/bench_common.py",
+   "--model",
+   "base=models/opt/schnet_baseline.pt",
+   "--systems",
+   "6000",
+   "--walkers",
+   "4",
+   "--jitter",
+   "0.02",
+   "--iters",
+   "15",
+   "--rounds",
+   "2",
+   "--warmup",
+   "8",
+   "--out",
+   "scripts/opt/results/schnet_6000x4_base_alone.json"
+  ]
+ },
+ "results": [
+  {
+   "system": "water6000",
+   "n_atoms": 6000,
+   "walkers": 4,
+   "model": "base",
+   "peak_alloc_mib": 15400.3,
+   "dE_max_kcal": 0.0,
+   "dF_max_kcal_A": 0.0,
+   "median_ms": 421.519,
+   "p10_ms": 417.594,
+   "p90_ms": 430.175,
+   "n": 30
+  }
+ ]
+}

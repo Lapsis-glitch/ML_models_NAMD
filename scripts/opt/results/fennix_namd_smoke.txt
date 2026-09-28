@@ -1,0 +1,18 @@
+stock                        w100  step_ms=0.00627528  fennix=  E0=-1213.6881 E300=-1897.7014 gpu=819
+patched                      w100  step_ms=0.002385  fennix=2.100  E0=-1213.6395 E300=-1896.0932 gpu=819
+patched+nopc+qmidx           w100  step_ms=0.00190684  fennix=1.757  E0=-1213.6921 E300=-1897.6185 gpu=809
+all+fp32_extra               w100  step_ms=0.00365988  fennix=3.452  E0=-1213.1075 E300=-1908.5836 gpu=817
+stock                       w1000  step_ms=0.0128968  fennix=  E0=-12002.2015 E300=-19993.6203 gpu=995
+patched                     w1000  step_ms=0.00995447  fennix=4.415  E0=-12002.2606 E300=-19973.8478 gpu=995
+patched+nopc+qmidx          w1000  step_ms=0.0040973  fennix=3.124  E0=-12002.2282 E300=-19979.8667 gpu=995
+all+fp32_extra              w1000  step_ms=0.00604492  fennix=4.988  E0=-11997.7394 E300=-19973.4607 gpu=993
+stock                       w2000  step_ms=0.0373304  fennix=  E0=-23431.9353 E300=-40343.0788 gpu=1493
+patched                     w2000  step_ms=0.02558  fennix=6.221  E0=-23431.9452 E300=-40351.7524 gpu=1493
+patched+nopc+qmidx          w2000  step_ms=0.00750691  fennix=5.349  E0=-23431.9551 E300=-40353.0812 gpu=1493
+all+fp32_extra              w2000  step_ms=0.00993862  fennix=7.366  E0=-23423.7811 E300=-40250.4785 gpu=1619
+p_legacy w100: FENNIX_TIMING: calls 300  avg ms: pre 0.006  infer 5.489  post 0.010  total 5.505
+p_legacy w1000: FENNIX_TIMING: calls 300  avg ms: pre 0.019  infer 5.911  post 0.044  total 5.974
+p_legacy w2000: FENNIX_TIMING: calls 300  avg ms: pre 0.021  infer 8.980  post 0.105  total 9.106
+p_fast w100: FENNIX_TIMING: calls 300  avg ms: pre 0.006  infer 1.766  post 0.011  total 1.784
+p_fast w1000: FENNIX_TIMING: calls 300  avg ms: pre 0.019  infer 3.880  post 0.042  total 3.940
+p_fast w2000: FENNIX_TIMING: calls 300  avg ms: pre 0.024  infer 6.797  post 0.112  total 6.933

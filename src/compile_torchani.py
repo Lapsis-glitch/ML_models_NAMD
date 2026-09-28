@@ -12,7 +12,7 @@ After this, wrap for NAMD with::
 
     python -m src.cli --model-type torchani \
         --compiled models/compiled_ani2x.pt \
-        --elements 1,6,7,8,16,17 \
+        --elements 1,6,7,8,16,9,17 \
         --out models/trpcage_ani2x_qmmm.pt
 """
 
@@ -27,7 +27,7 @@ from .training.train_torchani import _TorchANIExportWrapper
 _VARIANTS = {
     "ani1x":   ("ANI1x",   [1, 6, 7, 8]),
     "ani1ccx": ("ANI1ccx", [1, 6, 7, 8]),
-    "ani2x":   ("ANI2x",   [1, 6, 7, 8, 16, 17]),
+    "ani2x":   ("ANI2x",   [1, 6, 7, 8, 16, 9, 17]),  # H C N O S F Cl
 }
 
 

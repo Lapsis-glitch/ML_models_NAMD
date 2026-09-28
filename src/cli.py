@@ -8,9 +8,17 @@ Usage examples::
     python -m src.cli --model-type allegro --compiled model.pth --out mlff.pt
     python -m src.cli --model-type schnet  --compiled model.pt --r-max 5.0 --out mlff.pt
     python -m src.cli --model-type torchani --compiled model.pt --out mlff.pt --elements 1,6,7,8
+
+Optimised inner models (scripts/opt/) use custom ops; pass the same native
+libraries NAMD will load via NAMD_MLFF_EXTRA_LIBS::
+
+    python -m src.cli --model-type mace --compiled mace_inner_fast.pt \
+        --extra-libs "$NAMD_MLFF_EXTRA_LIBS" --out mlff.pt
 """
 
 import argparse
+
+import torch
 
 
 from .export import export_wrapped
@@ -36,6 +44,10 @@ def main(argv=None):
                         help="Output TorchScript file (default: mlff_model.pt)")
     parser.add_argument("--device", default="cpu",
                         help="Device to load onto (default: cpu)")
+    parser.add_argument("--extra-libs", default="",
+                        help="Colon-separated native op libraries to load before "
+                             "the model (same format as NAMD_MLFF_EXTRA_LIBS); "
+                             "needed for optimised inner models")
 
     # SchNetPack-specific (also used as fallback for new NequIP-framework
     # models that don't expose r_max as a module attribute, e.g. NequIP-OAM-L).
@@ -47,11 +59,29 @@ def main(argv=None):
                         help="[schnet] Output dict key for energy")
     parser.add_argument("--forces-key", default="forces",
                         help="[schnet] Output dict key for forces")
+    parser.add_argument("--fast", action="store_true",
+                        help="[schnet] Opt-in fast energy route for "
+                             "non-periodic inputs (optimised build)")
+    parser.add_argument("--graph-max-atoms", type=int, default=2048,
+                        help="[schnet --fast] Largest system a graph-capable "
+                             "shim should capture")
+    parser.add_argument("--no-half-filter", action="store_true",
+                        help="[schnet --fast] Run the filter network per "
+                             "directed edge (stock layout)")
+    parser.add_argument("--half-min-atoms", type=int, default=1500,
+                        help="[schnet --fast] Total atoms from which the "
+                             "half-list filter is used")
+    parser.add_argument("--nl-cell-min-pairs", type=int, default=16_000_000,
+                        help="[schnet --fast] B*n^2 above which the cell-list "
+                             "neighbour list is used")
 
     # TorchANI-specific
-    parser.add_argument("--elements", default="1,6,7,8,16,17",
+    parser.add_argument("--elements", default="1,6,7,8,16,9,17",
                         help="[torchani] Comma-separated atomic numbers "
                              "in species order (default: ANI-2x)")
+    parser.add_argument("--lean", action="store_true",
+                        help="[torchani] Opt-in low-overhead path, "
+                             "bit-identical outputs (optimised build)")
 
     # X-MACE-specific
     parser.add_argument("--state", type=int, default=0,
@@ -59,6 +89,9 @@ def main(argv=None):
                              "(default: 0 = ground state)")
 
     args = parser.parse_args(argv)
+
+    for lib in filter(None, args.extra_libs.split(":")):
+        torch.ops.load_library(lib)
 
     model_type = args.model_type
 
@@ -83,6 +116,11 @@ def main(argv=None):
             device=args.device,
             energy_key=args.energy_key,
             forces_key=args.forces_key,
+            fast=args.fast,
+            graph_max_atoms=args.graph_max_atoms,
+            nl_cell_min_pairs=args.nl_cell_min_pairs,
+            half_filter=not args.no_half_filter,
+            half_min_atoms=args.half_min_atoms,
         ).eval()
 
     elif model_type == "torchani":
@@ -92,6 +130,7 @@ def main(argv=None):
             model_path=args.compiled,
             device=args.device,
             element_list=elem_list,
+            lean=args.lean,
         ).eval()
 
     elif model_type == "xmace":

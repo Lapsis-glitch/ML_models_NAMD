@@ -1,0 +1,44 @@
+{
+ "meta": {
+  "torch": "2.11.0+cu130",
+  "gpu": "NVIDIA GeForce RTX 5080 Laptop GPU",
+  "time": "2026-09-23 12:46:53",
+  "argv": [
+   "/home/rat/PycharmProjects/ML_models_NAMD/scripts/opt/nequip/../bench_common.py",
+   "--extra-lib",
+   "scripts/opt/nequip/oeq_native/liboeq_native.so",
+   "--model",
+   "oeq_tf32=models/opt/nequip_oeq.pt",
+   "--systems",
+   "300",
+   "--walkers",
+   "1",
+   "--jitter",
+   "0.02",
+   "--warmup",
+   "6",
+   "--iters",
+   "12",
+   "--rounds",
+   "2",
+   "--tf32",
+   "--out",
+   "scripts/opt/results/nequip_tf32extra_w300_tf32.json"
+  ]
+ },
+ "results": [
+  {
+   "system": "water300",
+   "n_atoms": 300,
+   "walkers": 1,
+   "model": "oeq_tf32",
+   "peak_alloc_mib": 479.3,
+   "dE_max_kcal": 0.0,
+   "dF_max_kcal_A": 0.0,
+   "median_ms": 26.038,
+   "p10_ms": 25.147,
+   "p90_ms": 26.942,
+   "n": 24
+  }
+ ]
+}

@@ -1,0 +1,30 @@
+Charmrun> scalable start enabled. 
+Charmrun> started all node programs in 0.271 seconds.
+Charm++> Running in non-SMP mode: 1 processes (PEs)
+Charm++> Using recursive bisection (scheme 3) for topology aware partitions
+Redirecting stdout to files out.0.log through 0
+MLFF TIMING [caller submit batch] n=100 avg_ms=0.024
+MLFF TIMING [worker batch] n=100 avg_ms: queue_wait=0.205 collect_wait=0.000 h2d=0.000 forward=33.718 d2h=0.000 sync=0.000 split=0.027
+MLFF TIMING [caller wait batch] n=100 avg_ms=33.781
+MLFF TIMING [calcMLFF] n=100 avg_ms: pre=0.001 infer=33.806 post=0.006 send=0.002 total=37.253
+MLFF TIMING [calcMLFF post] n=100 avg_ms: setup=0.004 coulomb=0.000 pme=0.000 charge_mode=0.001 virial=0.000
+MLFF TIMING [caller submit batch] n=200 avg_ms=0.024
+MLFF TIMING [worker batch] n=200 avg_ms: queue_wait=0.190 collect_wait=0.000 h2d=0.000 forward=19.688 d2h=0.000 sync=0.000 split=0.027
+MLFF TIMING [caller wait batch] n=200 avg_ms=19.749
+MLFF TIMING [calcMLFF] n=200 avg_ms: pre=0.001 infer=19.774 post=0.005 send=0.002 total=21.500
+MLFF TIMING [calcMLFF post] n=200 avg_ms: setup=0.003 coulomb=0.000 pme=0.000 charge_mode=0.001 virial=0.000
+MLFF TIMING [caller submit batch] n=300 avg_ms=0.023
+MLFF TIMING [worker batch] n=300 avg_ms: queue_wait=0.191 collect_wait=0.000 h2d=0.000 forward=14.974 d2h=0.000 sync=0.000 split=0.027
+MLFF TIMING [caller wait batch] n=300 avg_ms=15.035
+MLFF TIMING [calcMLFF] n=300 avg_ms: pre=0.001 infer=15.060 post=0.004 send=0.002 total=16.212
+MLFF TIMING [calcMLFF post] n=300 avg_ms: setup=0.002 coulomb=0.000 pme=0.000 charge_mode=0.001 virial=0.000
+MLFF TIMING [caller submit batch] n=400 avg_ms=0.023
+MLFF TIMING [worker batch] n=400 avg_ms: queue_wait=0.192 collect_wait=0.000 h2d=0.000 forward=12.665 d2h=0.000 sync=0.000 split=0.027
+MLFF TIMING [caller wait batch] n=400 avg_ms=12.727
+MLFF TIMING [calcMLFF] n=400 avg_ms: pre=0.001 infer=12.751 post=0.004 send=0.002 total=13.617
+MLFF TIMING [calcMLFF post] n=400 avg_ms: setup=0.002 coulomb=0.000 pme=0.000 charge_mode=0.001 virial=0.000
+MLFF TIMING [caller submit batch] n=500 avg_ms=0.024
+MLFF TIMING [worker batch] n=500 avg_ms: queue_wait=0.204 collect_wait=0.000 h2d=0.000 forward=11.483 d2h=0.000 sync=0.000 split=0.028
+MLFF TIMING [caller wait batch] n=500 avg_ms=11.547
+MLFF TIMING [calcMLFF] n=500 avg_ms: pre=0.001 infer=11.572 post=0.004 send=0.002 total=12.267
+MLFF TIMING [calcMLFF post] n=500 avg_ms: setup=0.002 coulomb=0.000 pme=0.000 charge_mode=0.001 virial=0.000

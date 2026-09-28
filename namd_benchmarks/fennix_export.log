@@ -1,0 +1,160 @@
+=== exporting FeNNol artifact for w10 (30 atoms) ===
+Specializing export to 30 atoms from PDB /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/systems/w10_30atoms/qm.pdb
+Writing artifacts to /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/models/fennix/w10
+Walker count: 1
+Using total charge 0 (default_zero)
+Loading FeNNol model: /home/rat/PycharmProjects/ML_models_NAMD/models/fennix-bio1S.fnx
+Loaded: cutoff=7.5 energy_unit=ev energy_terms=['nn_energies_mean', 'ff_energy']
+Evaluating Python/JAX reference and lowered executable...
+reference energy eV: [-5.801473]
+jit energy eV: [-5.8032484]
+energy abs diff eV: 0.0017752647
+force max abs diff eV/A: 0.0025557727
+Lowering to StableHLO...
+Wrote StableHLO: /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/models/fennix/w10/fennix_bio1_eval.stablehlo.mlir
+Wrote manifest:  /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/models/fennix/w10/manifest.json
+Wrote compile options: /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/models/fennix/w10/compile_options.pb
+Wrote runtime reference: /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/models/fennix/w10/reference_runtime.txt
+Wrote reference: /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/models/fennix/w10/reference.npz
+
+ok: /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/models/fennix/w10/manifest.json
+=== exporting FeNNol artifact for w20 (60 atoms) ===
+Specializing export to 60 atoms from PDB /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/systems/w20_60atoms/qm.pdb
+Writing artifacts to /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/models/fennix/w20
+Walker count: 1
+Using total charge 0 (default_zero)
+Loading FeNNol model: /home/rat/PycharmProjects/ML_models_NAMD/models/fennix-bio1S.fnx
+Loaded: cutoff=7.5 energy_unit=ev energy_terms=['nn_energies_mean', 'ff_energy']
+Evaluating Python/JAX reference and lowered executable...
+reference energy eV: [-11.999215]
+jit energy eV: [-11.998124]
+energy abs diff eV: 0.0010910034
+force max abs diff eV/A: 0.002761364
+Lowering to StableHLO...
+Wrote StableHLO: /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/models/fennix/w20/fennix_bio1_eval.stablehlo.mlir
+Wrote manifest:  /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/models/fennix/w20/manifest.json
+Wrote compile options: /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/models/fennix/w20/compile_options.pb
+Wrote runtime reference: /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/models/fennix/w20/reference_runtime.txt
+Wrote reference: /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/models/fennix/w20/reference.npz
+
+ok: /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/models/fennix/w20/manifest.json
+=== exporting FeNNol artifact for w60 (180 atoms) ===
+Specializing export to 180 atoms from PDB /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/systems/w60_180atoms/qm.pdb
+Writing artifacts to /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/models/fennix/w60
+Walker count: 1
+Using total charge 0 (default_zero)
+Loading FeNNol model: /home/rat/PycharmProjects/ML_models_NAMD/models/fennix-bio1S.fnx
+Loaded: cutoff=7.5 energy_unit=ev energy_terms=['nn_energies_mean', 'ff_energy']
+Evaluating Python/JAX reference and lowered executable...
+reference energy eV: [-32.54858]
+jit energy eV: [-32.53793]
+energy abs diff eV: 0.010650635
+force max abs diff eV/A: 0.004186988
+Lowering to StableHLO...
+Wrote StableHLO: /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/models/fennix/w60/fennix_bio1_eval.stablehlo.mlir
+Wrote manifest:  /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/models/fennix/w60/manifest.json
+Wrote compile options: /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/models/fennix/w60/compile_options.pb
+Wrote runtime reference: /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/models/fennix/w60/reference_runtime.txt
+Wrote reference: /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/models/fennix/w60/reference.npz
+
+ok: /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/models/fennix/w60/manifest.json
+=== exporting FeNNol artifact for w100 (300 atoms) ===
+Specializing export to 300 atoms from PDB /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/systems/w100_300atoms/qm.pdb
+Writing artifacts to /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/models/fennix/w100
+Walker count: 1
+Using total charge 0 (default_zero)
+Loading FeNNol model: /home/rat/PycharmProjects/ML_models_NAMD/models/fennix-bio1S.fnx
+Loaded: cutoff=7.5 energy_unit=ev energy_terms=['nn_energies_mean', 'ff_energy']
+Evaluating Python/JAX reference and lowered executable...
+reference energy eV: [-52.623043]
+jit energy eV: [-52.613556]
+energy abs diff eV: 0.009487152
+force max abs diff eV/A: 0.0035036802
+Lowering to StableHLO...
+Wrote StableHLO: /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/models/fennix/w100/fennix_bio1_eval.stablehlo.mlir
+Wrote manifest:  /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/models/fennix/w100/manifest.json
+Wrote compile options: /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/models/fennix/w100/compile_options.pb
+Wrote runtime reference: /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/models/fennix/w100/reference_runtime.txt
+Wrote reference: /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/models/fennix/w100/reference.npz
+
+ok: /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/models/fennix/w100/manifest.json
+=== exporting FeNNol artifact for w300 (900 atoms) ===
+Specializing export to 900 atoms from PDB /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/systems/w300_900atoms/qm.pdb
+Writing artifacts to /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/models/fennix/w300
+Walker count: 1
+Using total charge 0 (default_zero)
+Loading FeNNol model: /home/rat/PycharmProjects/ML_models_NAMD/models/fennix-bio1S.fnx
+Loaded: cutoff=7.5 energy_unit=ev energy_terms=['nn_energies_mean', 'ff_energy']
+Evaluating Python/JAX reference and lowered executable...
+reference energy eV: [-164.91248]
+jit energy eV: [-164.8633]
+energy abs diff eV: 0.049179077
+force max abs diff eV/A: 0.004767537
+Lowering to StableHLO...
+Wrote StableHLO: /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/models/fennix/w300/fennix_bio1_eval.stablehlo.mlir
+Wrote manifest:  /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/models/fennix/w300/manifest.json
+Wrote compile options: /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/models/fennix/w300/compile_options.pb
+Wrote runtime reference: /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/models/fennix/w300/reference_runtime.txt
+Wrote reference: /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/models/fennix/w300/reference.npz
+
+ok: /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/models/fennix/w300/manifest.json
+=== exporting FeNNol artifact for w600 (1800 atoms) ===
+Specializing export to 1800 atoms from PDB /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/systems/w600_1800atoms/qm.pdb
+Writing artifacts to /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/models/fennix/w600
+Walker count: 1
+Using total charge 0 (default_zero)
+Loading FeNNol model: /home/rat/PycharmProjects/ML_models_NAMD/models/fennix-bio1S.fnx
+Loaded: cutoff=7.5 energy_unit=ev energy_terms=['nn_energies_mean', 'ff_energy']
+Evaluating Python/JAX reference and lowered executable...
+reference energy eV: [-312.91046]
+jit energy eV: [-312.7742]
+energy abs diff eV: 0.13626099
+force max abs diff eV/A: 0.0044145584
+Lowering to StableHLO...
+Wrote StableHLO: /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/models/fennix/w600/fennix_bio1_eval.stablehlo.mlir
+Wrote manifest:  /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/models/fennix/w600/manifest.json
+Wrote compile options: /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/models/fennix/w600/compile_options.pb
+Wrote runtime reference: /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/models/fennix/w600/reference_runtime.txt
+Wrote reference: /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/models/fennix/w600/reference.npz
+
+ok: /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/models/fennix/w600/manifest.json
+=== exporting FeNNol artifact for w1000 (3000 atoms) ===
+Specializing export to 3000 atoms from PDB /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/systems/w1000_3000atoms/qm.pdb
+Writing artifacts to /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/models/fennix/w1000
+Walker count: 1
+Using total charge 0 (default_zero)
+Loading FeNNol model: /home/rat/PycharmProjects/ML_models_NAMD/models/fennix-bio1S.fnx
+Loaded: cutoff=7.5 energy_unit=ev energy_terms=['nn_energies_mean', 'ff_energy']
+Evaluating Python/JAX reference and lowered executable...
+reference energy eV: [-520.43744]
+jit energy eV: [-520.296]
+energy abs diff eV: 0.14141846
+force max abs diff eV/A: 0.0047611
+Lowering to StableHLO...
+Wrote StableHLO: /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/models/fennix/w1000/fennix_bio1_eval.stablehlo.mlir
+Wrote manifest:  /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/models/fennix/w1000/manifest.json
+Wrote compile options: /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/models/fennix/w1000/compile_options.pb
+Wrote runtime reference: /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/models/fennix/w1000/reference_runtime.txt
+Wrote reference: /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/models/fennix/w1000/reference.npz
+
+ok: /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/models/fennix/w1000/manifest.json
+=== exporting FeNNol artifact for w2000 (6000 atoms) ===
+Specializing export to 6000 atoms from PDB /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/systems/w2000_6000atoms/qm.pdb
+Writing artifacts to /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/models/fennix/w2000
+Walker count: 1
+Using total charge 0 (default_zero)
+Loading FeNNol model: /home/rat/PycharmProjects/ML_models_NAMD/models/fennix-bio1S.fnx
+Loaded: cutoff=7.5 energy_unit=ev energy_terms=['nn_energies_mean', 'ff_energy']
+Evaluating Python/JAX reference and lowered executable...
+reference energy eV: [-1016.2228]
+jit energy eV: [-1015.7686]
+energy abs diff eV: 0.4541626
+force max abs diff eV/A: 0.0062373877
+Lowering to StableHLO...
+Wrote StableHLO: /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/models/fennix/w2000/fennix_bio1_eval.stablehlo.mlir
+Wrote manifest:  /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/models/fennix/w2000/manifest.json
+Wrote compile options: /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/models/fennix/w2000/compile_options.pb
+Wrote runtime reference: /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/models/fennix/w2000/reference_runtime.txt
+Wrote reference: /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/models/fennix/w2000/reference.npz
+
+ok: /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/models/fennix/w2000/manifest.json

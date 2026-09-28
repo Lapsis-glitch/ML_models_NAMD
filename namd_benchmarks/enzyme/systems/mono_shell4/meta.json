@@ -1,0 +1,13 @@
+{
+  "name": "mono_shell4",
+  "pdb_id": "1X1Z",
+  "chains": "A",
+  "shell_A": 4.0,
+  "n_atoms": 3637,
+  "net_charge": 0,
+  "disulfides": 0,
+  "water_model": "TIP3P",
+  "ff": "ff14SB",
+  "periodic": false,
+  "all_qm": true
+}

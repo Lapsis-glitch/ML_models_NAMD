@@ -1,0 +1,941 @@
+Charm++: standalone mode (not using charmrun)
+Charm++> Running in non-SMP mode: 1 processes (PEs)
+Charm++> Using recursive bisection (scheme 3) for topology aware partitions
+Converse/Charm++ Commit ID: v80000
+Charm++> scheduler running in netpoll mode.
+CharmLB> Load balancer assumes all CPUs are same.
+Charm++> Running on 1 hosts (1 sockets x 8 cores x 2 PUs = 16-way SMP)
+Charm++> cpu topology info is gathered in 0.000 seconds.
+CharmLB> Load balancing instrumentation for communication is off.
+Info: NAMD 3.1alpha4pre for Linux-x86_64-netlrts
+Info: 
+Info: Please visit http://www.ks.uiuc.edu/Research/namd/
+Info: for updates, documentation, and support information.
+Info: 
+Info: Please cite Phillips et al., J. Chem. Phys. 153:044130 (2020) doi:10.1063/5.0014475
+Info: in all publications reporting results obtained with NAMD.
+Info: 
+Info: Based on Charm++/Converse 80000 for netlrts-linux-x86_64
+Info: Built Tue Jun 2 11:05:04 CEST 2026 by rat on Cerb
+Info: 1 NAMD  3.1alpha4pre  Linux-x86_64-netlrts  1    Cerb  rat
+Info: Running on 1 processors, 1 nodes, 1 physical nodes.
+Info: CPU topology information available.
+Info: Charm++/Converse parallel runtime startup completed at 0.00601714 s
+Info: 469.102 MB of memory in use based on /proc/self/stat
+Info: Configuration file is enzyme_off.conf
+Info: Working in the current directory /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/diagnostics/qmreplace_off
+TCL: Suspending until startup complete.
+Warning: Option "1-4scaling" has been deprecated. Instead use "oneFourScaling".
+Info: SIMULATION PARAMETERS:
+Info: TIMESTEP               0.25
+Info: NUMBER OF STEPS        0
+Info: STEPS PER CYCLE        5
+Info: LOAD BALANCER  Centralized
+Info: LOAD BALANCING STRATEGY  New Load Balancers -- DEFAULT
+Info: LDB PERIOD             1000 steps
+Info: FIRST LDB TIMESTEP     25
+Info: LAST LDB TIMESTEP     -1
+Info: LDB BACKGROUND SCALING 1
+Info: HOM BACKGROUND SCALING 1
+Info: MIN ATOMS PER PATCH    40
+Info: EMPTY PATCH LOAD       40 ATOMS
+Info: INITIAL TEMPERATURE    300
+Info: CENTER OF MASS MOVING INITIALLY? NO
+Info: DIELECTRIC             1
+Info: EXCLUDE                SCALED ONE-FOUR
+Info: 1-4 ELECTROSTATICS SCALED BY 0.833333
+Info: MODIFIED 1-4 VDW PARAMETERS WILL BE USED
+Info: DCD FILENAME           bench_off.dcd
+Info: DCD FREQUENCY          1000000
+Info: DCD FIRST STEP         1000000
+Info: NO EXTENDED SYSTEM TRAJECTORY OUTPUT
+Info: NO VELOCITY DCD OUTPUT
+Info: NO FORCE DCD OUTPUT
+Info: OUTPUT FILENAME        bench_off
+Info: RESTART FILENAME       bench_off.restart
+Info: RESTART FREQUENCY      1000000
+Info: NAMD will save positions and velocities to bench_off.crash.csv when  atoms are moving too fast.
+Info: SWITCHING ACTIVE
+Info: SWITCHING ON           10
+Info: SWITCHING OFF          12
+Info: PAIRLIST DISTANCE      14
+Info: PAIRLIST SHRINK RATE   0.01
+Info: PAIRLIST GROW RATE     0.01
+Info: PAIRLIST TRIGGER       0.3
+Info: PAIRLISTS PER CYCLE    2
+Info: PAIRLISTS ENABLED
+Info: MARGIN                 0
+Info: HYDROGEN GROUP CUTOFF  2.5
+Info: PATCH DIMENSION        16.5
+Info: ENERGY OUTPUT STEPS    5
+Info: ENERGY EVALUATION STEPS    5
+Info: OUTPUT ENERGY PRECISION 4
+Info: CROSSTERM ENERGY INCLUDED IN DIHEDRAL
+Info: TIMING OUTPUT STEPS    5
+Info: QM FORCES ACTIVE
+Info: QM PDB PARAMETER FILE: /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/mono_shell5/qm.pdb
+Info: QM SOFTWARE: fennol
+Info: QM ATOM CHARGES FROM QM SOFTWARE: NONE
+Info: QM EXECUTABLE PATH: /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/models/fennix_enzyme/mono_shell5/manifest.json
+Info: QM COLUMN: beta
+Info: QM WILL DETECT BONDS BETWEEN QM AND MM ATOMS.
+Info: QM BOND COLUMN: occ
+Info: QM-MM BOND SCHEME: Charge Shift.
+Info: QM BASE DIRECTORY: /tmp/namd_enzyme_qmmm
+Info: QM POINT CHARGES WILL BE SELECTED EVERY 1 STEPS.
+Info: QM executions per node: 1
+Info: LANGEVIN DYNAMICS ACTIVE
+Info: LANGEVIN TEMPERATURE   300
+Info: LANGEVIN USING BBK INTEGRATOR
+Info: LANGEVIN DAMPING COEFFICIENT IS 5 INVERSE PS
+Info: LANGEVIN DYNAMICS APPLIED TO HYDROGENS
+Info: USING VERLET I (r-RESPA) MTS SCHEME.
+Info: C1 SPLITTING OF LONG RANGE ELECTROSTATICS
+Info: PLACING ATOMS IN PATCHES BY HYDROGEN GROUPS
+Info: RIGID BONDS TO HYDROGEN : ALL
+Info:         ERROR TOLERANCE : 1e-08
+Info:          MAX ITERATIONS : 100
+Info: RIGID WATER USING SETTLE ALGORITHM
+Info: RANDOM NUMBER SEED     1780664014
+Info: USE HYDROGEN BONDS?    NO
+Info: Using AMBER format force field!
+Info: AMBER PARM FILE        /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/mono_shell5/system.prmtop
+Info: COORDINATE PDB         /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/mono_shell5/system.pdb
+Info: Exclusions will be read from PARM file!
+Info: SCNB (VDW SCALING)     2
+Info: USING ARITHMETIC MEAN TO COMBINE L-J SIGMA PARAMETERS
+Info: === Start reading AMBER parm7 format file /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/mono_shell5/system.prmtop ===
+Info: Complete reading ATOM_NAME with 4525 fields.
+Info: Complete reading CHARGE with 4525 fields.
+Info: Complete reading ATOMIC_NUMBER with 4525 fields.
+Info: Complete reading MASS with 4525 fields.
+Info: Complete reading ATOM_TYPE_INDEX with 4525 fields.
+Info: Complete reading NUMBER_EXCLUDED_ATOMS with 4525 fields.
+Info: Complete reading NONBONDED_PARM_INDEX with 256 fields.
+Info: Complete reading RESIDUE_LABEL with 635 fields.
+Info: Complete reading RESIDUE_POINTER with 635 fields.
+Info: Complete reading BOND_FORCE_CONSTANT with 60 fields.
+Info: Complete reading BOND_EQUIL_VALUE with 60 fields.
+Info: Complete reading ANGLE_FORCE_CONSTANT with 133 fields.
+Info: Complete reading ANGLE_EQUIL_VALUE with 133 fields.
+Info: Complete reading DIHEDRAL_FORCE_CONSTANT with 175 fields.
+Info: Complete reading DIHEDRAL_PERIODICITY with 175 fields.
+Info: Complete reading DIHEDRAL_PHASE with 175 fields.
+Info: Complete reading SCEE_SCALE_FACTOR with 175 fields.
+Info: Complete reading SCNB_SCALE_FACTOR with 175 fields.
+Info: Complete reading LENNARD_JONES_ACOEF with 136 fields.
+Info: Complete reading LENNARD_JONES_BCOEF with 136 fields.
+Info: Complete reading BONDS_INC_HYDROGEN with 8658 fields.
+Info: Complete reading BONDS_WITHOUT_HYDROGEN with 4962 fields.
+Info: Complete reading ANGLES_INC_HYDROGEN with 15024 fields.
+Info: Complete reading ANGLES_WITHOUT_HYDROGEN with 8928 fields.
+Info: Complete reading DIHEDRALS_INC_HYDROGEN with 37290 fields.
+Info: Complete reading DIHEDRALS_WITHOUT_HYDROGEN with 35780 fields.
+Info: Complete reading EXCLUDED_ATOMS_LIST with 19711 fields.
+Info: Complete reading HBOND_ACOEF with 0 fields.
+Info: Complete reading HBOND_BCOEF with 0 fields.
+Info: Complete reading AMBER_ATOM_TYPE with 4525 fields.
+Info: Complete reading TREE_CHAIN_CLASSIFICATION with 4525 fields.
+Info: Complete reading RADIUS_SET with 1 fields.
+Info: Complete reading RADII with 4525 fields.
+Info: Complete reading SCREEN with 4525 fields.
+Info: === Finish reading AMBER parm7 format file. ===
+Warning: Found 412 H-H bonds.
+Info: No lone pairs detected in waters
+Info: SUMMARY OF PARAMETERS:
+Info: 60 BONDS
+Info: 133 ANGLES
+Info: 175 DIHEDRAL
+Info: 0 IMPROPER
+Info: 0 CROSSTERM
+Info: 0 VDW
+Info: 136 VDW_PAIRS
+Info: 0 NBTHOLE_PAIRS
+Info: Reading pdb file /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/mono_shell5/system.pdb
+Info: TIME FOR READING PDB FILE: 0.00613516
+Info: 
+Info: Using the following PDB file for QM parameters: /home/rat/PycharmProjects/ML_models_NAMD/namd_benchmarks/enzyme/systems/mono_shell5/qm.pdb
+Info: Number of QM atoms (excluding Dummy atoms): 4525
+Info: Storing QM-MM bonds.
+Warning: We found 0 QM-MM bonds.
+Info: Applying user defined multiplicity 1 to QM group ID 1
+Info: 1) Group ID: 1 ; Group size: 4525 atoms ; Total PSF charge: 0
+Info: Found user defined charge 0 for QM group ID 1. Will ignore PSF charge.
+Info: ****************************
+Info: STRUCTURE SUMMARY:
+Info: 4525 ATOMS
+Info: 4540 BONDS
+Info: 5988 ANGLES
+Info: 14614 DIHEDRALS
+Info: 0 IMPROPERS
+Info: 0 CROSSTERMS
+Info: 19130 EXCLUSIONS
+Info: 2886 RIGID BONDS
+Info: 10689 DEGREES OF FREEDOM
+Info: 2051 HYDROGEN GROUPS
+Info: 4 ATOMS IN LARGEST HYDROGEN GROUP
+Info: 2051 MIGRATION GROUPS
+Info: 4 ATOMS IN LARGEST MIGRATION GROUP
+Info: TOTAL MASS = 30883.5 amu
+Info: TOTAL CHARGE = -6.56699e-06 e
+Info: *****************************
+Info: 
+Info: Entering startup at 0.0735235 s, 23.2717 MB of memory in use
+Info: Startup phase 0 took 0.000120629 s, 23.2717 MB of memory in use
+Info: The QM region will remove 4540 bonds, 5988 angles, 14614 dihedrals, 0 impropers and 0 crossterms.
+Info: ADDED 0 IMPLICIT EXCLUSIONS
+Info: Startup phase 1 took 0.00185464 s, 23.2717 MB of memory in use
+Info: NONBONDED TABLE R-SQUARED SPACING: 0.0625
+Info: NONBONDED TABLE SIZE: 769 POINTS
+Info: ABSOLUTE IMPRECISION IN FAST TABLE ENERGY: 1.69407e-21 AT 11.9974
+Info: RELATIVE IMPRECISION IN FAST TABLE ENERGY: 1.13046e-16 AT 11.9974
+Info: INCONSISTENCY IN FAST TABLE ENERGY VS FORCE: 0.000290274 AT 0.251946
+Info: INCONSISTENCY IN VDWA TABLE ENERGY VS FORCE: 0.0040507 AT 0.251946
+Info: INCONSISTENCY IN VDWB TABLE ENERGY VS FORCE: 0.00150189 AT 0.251946
+Info: Startup phase 2 took 0.000284721 s, 23.2717 MB of memory in use
+Info: Startup phase 3 took 4.3372e-05 s, 23.2717 MB of memory in use
+Info: Startup phase 4 took 3.4786e-05 s, 23.2717 MB of memory in use
+Info: Startup phase 5 took 2.6621e-05 s, 23.2717 MB of memory in use
+Info: ORIGINAL ATOMS MINMAX IS -27.415 -21.646 -29.411  27.125 21.078 29.995
+Info: ADJUSTED ATOMS MINMAX IS -19.5056 -13.4867 -20.8292  20.1806 13.7408 19.2432
+Info: PATCH GRID IS 3 BY 2 BY 3
+Info: PATCH GRID IS 1-AWAY BY 1-AWAY BY 1-AWAY
+Info: REMOVING COM VELOCITY 0.0435454 0.0257758 0.104644
+Info: LARGEST PATCH (13) HAS 444 ATOMS
+Info: TORUS A SIZE 1 USING 0
+Info: TORUS B SIZE 1 USING 0
+Info: TORUS C SIZE 1 USING 0
+Info: TORUS MINIMAL MESH SIZE IS 1 BY 1 BY 1
+Info: Placed 100% of base nodes on same physical node as patch
+Info: Startup phase 6 took 0.00257578 s, 23.2717 MB of memory in use
+Info: Startup phase 7 took 6.1336e-05 s, 23.2717 MB of memory in use
+Info: Startup phase 8 took 3.2933e-05 s, 23.2717 MB of memory in use
+Info: Startup phase 9 took 2.642e-05 s, 23.2717 MB of memory in use
+Info: Startup phase 10 took 3.8153e-05 s, 23.2717 MB of memory in use
+Info: Startup phase 11 took 4.0236e-05 s, 23.2717 MB of memory in use
+LDB: Central LB being created...
+Info: Startup phase 12 took 4.6058e-05 s, 23.2717 MB of memory in use
+Info: Startup phase 13 took 2.6019e-05 s, 23.2717 MB of memory in use
+Info: Startup phase 14 took 1.7734e-05 s, 23.2717 MB of memory in use
+Info: Startup phase 15 took 2.9566e-05 s, 23.2717 MB of memory in use
+Info: CREATING 204 COMPUTE OBJECTS
+Info: Startup phase 16 took 0.000732642 s, 23.2717 MB of memory in use
+Info: Startup phase 17 took 6.6517e-05 s, 23.2717 MB of memory in use
+Info: Startup phase 18 took 0.000102665 s, 23.2717 MB of memory in use
+Info: Finished startup at 0.0796843 s, 23.2717 MB of memory in use
+
+TCL: Running for 60 steps
+Info: List of ranks running QM simulations: 0.
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+I0605 14:53:35.254557 1207833 service.cc:158] XLA service 0x58af98324e50 initialized for platform CUDA (this does not guarantee that XLA will be used). Devices:
+I0605 14:53:35.254702 1207833 service.cc:166]   StreamExecutor device (0): NVIDIA GeForce RTX 3070 Laptop GPU, Compute Capability 8.6
+I0605 14:53:35.261758 1207833 se_gpu_pjrt_client.cc:1339] Using BFC allocator.
+I0605 14:53:35.262072 1207833 gpu_helpers.cc:139] XLA backend will use up to 1288411596 bytes on device 0 for BFCAllocator.
+I0605 14:53:35.262550 1207833 gpu_helpers.cc:177] XLA backend will use up to 7300998707 bytes on device 0 for CollectiveBFCAllocator.
+I0605 14:53:35.288109 1207833 cuda_dnn.cc:463] Loaded cuDNN version 91400
+I0605 14:53:42.094462 1207833 dot_search_space.cc:229] All configs were filtered out because none of them sufficiently match the hints. Maybe the hints set does not contain a good representative set of valid configs? Working around this by using the full hints set instead.
+I0605 14:53:42.094641 1207833 dot_search_space.cc:229] All configs were filtered out because none of them sufficiently match the hints. Maybe the hints set does not contain a good representative set of valid configs? Working around this by using the full hints set instead.
+I0605 14:53:42.094700 1207833 dot_search_space.cc:229] All configs were filtered out because none of them sufficiently match the hints. Maybe the hints set does not contain a good representative set of valid configs? Working around this by using the full hints set instead.
+I0605 14:53:42.095196 1207833 dot_search_space.cc:229] All configs were filtered out because none of them sufficiently match the hints. Maybe the hints set does not contain a good representative set of valid configs? Working around this by using the full hints set instead.
+I0605 14:53:42.095265 1207833 dot_search_space.cc:229] All configs were filtered out because none of them sufficiently match the hints. Maybe the hints set does not contain a good representative set of valid configs? Working around this by using the full hints set instead.
+I0605 14:53:42.095327 1207833 dot_search_space.cc:229] All configs were filtered out because none of them sufficiently match the hints. Maybe the hints set does not contain a good representative set of valid configs? Working around this by using the full hints set instead.
+I0605 14:53:42.096106 1207833 dot_search_space.cc:229] All configs were filtered out because none of them sufficiently match the hints. Maybe the hints set does not contain a good representative set of valid configs? Working around this by using the full hints set instead.
+I0605 14:53:45.790597 1207865 subprocess_compilation.cc:347] ptxas warning : Registers are spilled to local memory in function 'gemm_fusion_dot_289', 460 bytes spill stores, 444 bytes spill loads
+
+I0605 14:53:47.902895 1207855 subprocess_compilation.cc:347] ptxas warning : Registers are spilled to local memory in function 'gemm_fusion_dot_122', 8 bytes spill stores, 8 bytes spill loads
+
+I0605 14:53:50.116950 1207857 subprocess_compilation.cc:347] ptxas warning : Registers are spilled to local memory in function 'gemm_fusion_dot_80', 580 bytes spill stores, 580 bytes spill loads
+
+I0605 14:53:53.452538 1207865 subprocess_compilation.cc:347] ptxas warning : Registers are spilled to local memory in function 'gemm_fusion_dot_125', 4 bytes spill stores, 4 bytes spill loads
+
+QMENERGY:       0         1.0000    -25837.3135
+
+ETITLE:      TS           BOND          ANGLE          DIHED          IMPRP               ELECT            VDW       BOUNDARY           MISC        KINETIC               TOTAL           TEMP      POTENTIAL         TOTAL3        TEMPAVG
+
+QMETITLE:      TS           QMID         ENERGY
+
+ENERGY:       0         0.0000         0.0000         0.0000         0.0000              0.0000         0.0000         0.0000    -25837.3135      3182.3745         -22654.9390       299.6433    -25837.3135    -22654.7459       299.6433
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:       1         1.0000    -25834.0507
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:       2         1.0000    -25824.1750
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:       3         1.0000    -25808.9053
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:       4         1.0000    -25787.1748
+
+LDB: ============= START OF LOAD BALANCING ============== 54.0265
+LDB: ============== END OF LOAD BALANCING =============== 54.0266
+LDB: =============== DONE WITH MIGRATION ================ 54.0266
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:       5         1.0000    -25759.9688
+
+TIMING: 5  CPU: 137.712, 0.0463036/step  Wall: 54.0235, 0.0643814/step, 0.000983604 hours remaining, 23.271664 MB of memory in use.
+PERFORMANCE: 5  averaging 0.335501 ns/day, 0.0643814 sec/step with standard deviation 0
+ENERGY:       5         0.0000         0.0000         0.0000         0.0000              0.0000         0.0000         0.0000    -25759.9688      3109.3019         -22650.6669       292.7630    -25759.9688    -22650.8334       296.7651
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:       6         1.0000    -25727.6165
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:       7         1.0000    -25689.7690
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:       8         1.0000    -25648.9796
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:       9         1.0000    -25603.7957
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      10         1.0000    -25556.0105
+
+TIMING: 10  CPU: 137.98, 0.05361/step  Wall: 54.3905, 0.0733985/step, 0.00101942 hours remaining, 23.271664 MB of memory in use.
+PERFORMANCE: 10  averaging 0.313544 ns/day, 0.0688899 sec/step with standard deviation 0.00637607
+ENERGY:      10         0.0000         0.0000         0.0000         0.0000              0.0000         0.0000         0.0000    -25556.0105      2907.9429         -22648.0676       273.8036    -25556.0105    -22648.2741       282.2451
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      11         1.0000    -25506.0717
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      12         1.0000    -25455.0153
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      13         1.0000    -25402.4330
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      14         1.0000    -25350.4166
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      15         1.0000    -25298.9660
+
+TIMING: 15  CPU: 138.224, 0.048797/step  Wall: 54.7327, 0.0684292/step, 0.000855365 hours remaining, 23.271664 MB of memory in use.
+PERFORMANCE: 15  averaging 0.314244 ns/day, 0.0687363 sec/step with standard deviation 0.0045164
+ENERGY:      15         0.0000         0.0000         0.0000         0.0000              0.0000         0.0000         0.0000    -25298.9660      2661.1160         -22637.8500       250.5631    -25298.9660    -22634.6881       259.6208
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      16         1.0000    -25248.8499
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      17         1.0000    -25201.5518
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      18         1.0000    -25157.2377
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      19         1.0000    -25115.7952
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      20         1.0000    -25078.8007
+
+TIMING: 20  CPU: 138.466, 0.048346/step  Wall: 55.0599, 0.0654344/step, 0.000727049 hours remaining, 23.271664 MB of memory in use.
+PERFORMANCE: 20  averaging 0.318064 ns/day, 0.0679109 sec/step with standard deviation 0.00404033
+ENERGY:      20         0.0000         0.0000         0.0000         0.0000              0.0000         0.0000         0.0000    -25078.8007      2449.4342         -22629.3665       230.6317    -25078.8007    -22628.1017       237.8743
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      21         1.0000    -25046.8200
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      22         1.0000    -25019.5239
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      23         1.0000    -24997.6273
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      24         1.0000    -24982.2113
+
+LDB: ============= START OF LOAD BALANCING ============== 55.406
+LDB: ============== END OF LOAD BALANCING =============== 55.4061
+LDB: =============== DONE WITH MIGRATION ================ 55.4061
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      25         1.0000    -24971.4628
+
+Info: Initial time: 1 CPUs 0.0677247 s/step 3.1354 days/ns 23.2717 MB memory
+TIMING: 25  CPU: 138.734, 0.0535542/step  Wall: 55.3951, 0.0670434/step, 0.000651811 hours remaining, 23.271664 MB of memory in use.
+PERFORMANCE: 25  averaging 0.318879 ns/day, 0.0677374 sec/step with standard deviation 0.00352047
+ENERGY:      25         0.0000         0.0000         0.0000         0.0000              0.0000         0.0000         0.0000    -24971.4628      2359.9313         -22611.5315       222.2044    -24971.4628    -22611.6486       224.6683
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      26         1.0000    -24967.8594
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      27         1.0000    -24969.5372
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      28         1.0000    -24977.2790
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      29         1.0000    -24991.3635
+
+LDB: ============= START OF LOAD BALANCING ============== 55.7204
+LDB: ============== END OF LOAD BALANCING =============== 55.7205
+LDB: =============== DONE WITH MIGRATION ================ 55.7205
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      30         1.0000    -25009.7354
+
+TIMING: 30  CPU: 138.965, 0.0462608/step  Wall: 55.712, 0.0633775/step, 0.000528146 hours remaining, 23.271664 MB of memory in use.
+PERFORMANCE: 30  averaging 0.322336 ns/day, 0.0670107 sec/step with standard deviation 0.00361706
+ENERGY:      30         0.0000         0.0000         0.0000         0.0000              0.0000         0.0000         0.0000    -25009.7354      2404.7816         -22604.9539       226.4274    -25009.7354    -22606.6625       223.7320
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      31         1.0000    -25033.0171
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      32         1.0000    -25061.1466
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      33         1.0000    -25092.3362
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      34         1.0000    -25127.3995
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      35         1.0000    -25164.4024
+
+TIMING: 35  CPU: 139.211, 0.0491446/step  Wall: 56.0498, 0.067571/step, 0.000469243 hours remaining, 23.271664 MB of memory in use.
+PERFORMANCE: 35  averaging 0.321952 ns/day, 0.0670908 sec/step with standard deviation 0.00330869
+ENERGY:      35         0.0000         0.0000         0.0000         0.0000              0.0000         0.0000         0.0000    -25164.4024      2566.4534         -22597.9490       241.6499    -25164.4024    -22598.5759       234.8969
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      36         1.0000    -25204.0517
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      37         1.0000    -25245.2859
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      38         1.0000    -25286.6608
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      39         1.0000    -25329.2548
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      40         1.0000    -25370.8521
+
+TIMING: 40  CPU: 139.455, 0.048968/step  Wall: 56.3806, 0.0661613/step, 0.000367563 hours remaining, 23.271664 MB of memory in use.
+PERFORMANCE: 40  averaging 0.32251 ns/day, 0.0669746 sec/step with standard deviation 0.00308083
+ENERGY:      40         0.0000         0.0000         0.0000         0.0000              0.0000         0.0000         0.0000    -25370.8521      2784.2478         -22586.6044       262.1568    -25370.8521    -22585.1414       253.6008
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      41         1.0000    -25411.1489
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      42         1.0000    -25450.1844
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      43         1.0000    -25486.4273
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      44         1.0000    -25519.1089
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      45         1.0000    -25549.2428
+
+TIMING: 45  CPU: 139.69, 0.0469274/step  Wall: 56.7041, 0.0646923/step, 0.000269551 hours remaining, 23.271664 MB of memory in use.
+PERFORMANCE: 45  averaging 0.323736 ns/day, 0.066721 sec/step with standard deviation 0.00298057
+ENERGY:      45         0.0000         0.0000         0.0000         0.0000              0.0000         0.0000         0.0000    -25549.2428      2971.4575         -22577.7852       279.7840    -25549.2428    -22577.8333       273.3334
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      46         1.0000    -25576.2574
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      47         1.0000    -25599.3899
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      48         1.0000    -25617.9505
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      49         1.0000    -25633.6508
+
+LDB: ============= START OF LOAD BALANCING ============== 57.0395
+LDB: ============== END OF LOAD BALANCING =============== 57.0396
+LDB: =============== DONE WITH MIGRATION ================ 57.0397
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      50         1.0000    -25645.6239
+
+Info: Initial time: 1 CPUs 0.0655183 s/step 3.03325 days/ns 23.2717 MB memory
+TIMING: 50  CPU: 139.917, 0.0453552/step  Wall: 57.0335, 0.0658899/step, 0.000183027 hours remaining, 23.271664 MB of memory in use.
+PERFORMANCE: 50  averaging 0.32414 ns/day, 0.0666379 sec/step with standard deviation 0.00282237
+ETITLE:      TS           BOND          ANGLE          DIHED          IMPRP               ELECT            VDW       BOUNDARY           MISC        KINETIC               TOTAL           TEMP      POTENTIAL         TOTAL3        TEMPAVG
+
+QMETITLE:      TS           QMID         ENERGY
+
+ENERGY:      50         0.0000         0.0000         0.0000         0.0000              0.0000         0.0000         0.0000    -25645.6239      3059.2915         -22586.3324       288.0542    -25645.6239    -22585.4690       285.1520
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      51         1.0000    -25653.3460
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      52         1.0000    -25657.6054
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      53         1.0000    -25660.2657
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      54         1.0000    -25658.8694
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      55         1.0000    -25654.8099
+
+TIMING: 55  CPU: 140.19, 0.0546118/step  Wall: 57.3984, 0.072964/step, 0.000101339 hours remaining, 23.271664 MB of memory in use.
+PERFORMANCE: 55  averaging 0.321366 ns/day, 0.067213 sec/step with standard deviation 0.00328745
+ENERGY:      55         0.0000         0.0000         0.0000         0.0000              0.0000         0.0000         0.0000    -25654.8099      3068.9726         -22585.8372       288.9657    -25654.8099    -22588.1684       289.2674
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      56         1.0000    -25648.4700
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      57         1.0000    -25639.5684
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      58         1.0000    -25629.5913
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      59         1.0000    -25617.2016
+
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+MLFF: Unknown element symbol: 'NA' (cleaned from 'NA')
+QMENERGY:      60         1.0000    -25604.0913
+
+TIMING: 60  CPU: 140.409, 0.0437392/step  Wall: 57.7159, 0.0635147/step, 0 hours remaining, 23.271664 MB of memory in use.
+PERFORMANCE: 60  averaging 0.322847 ns/day, 0.0669048 sec/step with standard deviation 0.00331129
+ENERGY:      60         0.0000         0.0000         0.0000         0.0000              0.0000         0.0000         0.0000    -25604.0913      3034.0824         -22570.0089       285.6806    -25604.0913    -22569.1415       287.1480
+
+WRITING EXTENDED SYSTEM TO OUTPUT FILE AT STEP 60
+WRITING COORDINATES TO OUTPUT FILE AT STEP 60
+COORDINATE DCD FILE bench_off.dcd WAS NOT CREATED
+The last position output (seq=-2) takes 0.006 seconds, 23.272 MB of memory in use
+WRITING VELOCITIES TO OUTPUT FILE AT STEP 60
+The last velocity output (seq=-2) takes 0.007 seconds, 23.272 MB of memory in use
+====================================================
+
+WallClock: 57.805351  CPUTime: 140.497360  Memory: 23.271664 MB
+[Partition 0][Node 0] End of program

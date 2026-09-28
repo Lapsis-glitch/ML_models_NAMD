@@ -1,0 +1,54 @@
+{
+ "meta": {
+  "torch": "2.11.0+cu130",
+  "gpu": "NVIDIA GeForce RTX 5080 Laptop GPU",
+  "time": "2026-09-23 11:58:35",
+  "argv": [
+   "/home/rat/PycharmProjects/ML_models_NAMD/scripts/opt/mace/../bench_common.py",
+   "--extra-lib",
+   "/home/rat/miniconda3/envs/allegro/lib/python3.12/site-packages/cuequivariance_ops/lib/libcue_ops.so",
+   "--extra-lib",
+   "scripts/opt/mace/cueq_native/libcueq_uniform1d_native.so",
+   "--model",
+   "fast_cueqf=models/opt/mace_fast_cueqf.pt",
+   "--model",
+   "fast_cueqf_f32_EXTRA=models/opt/mace_fast_cueqf_f32.pt",
+   "--systems",
+   "6000",
+   "--walkers",
+   "4",
+   "--jitter",
+   "0.02",
+   "--warmup",
+   "4",
+   "--iters",
+   "6",
+   "--rounds",
+   "2",
+   "--out",
+   "scripts/opt/results/mace_final_w6000_W4_expseg.json"
+  ]
+ },
+ "results": [
+  {
+   "system": "water6000",
+   "n_atoms": 6000,
+   "walkers": 4,
+   "model": "fast_cueqf",
+   "error": "The following operation failed in the TorchScript interpreter."
+  },
+  {
+   "system": "water6000",
+   "n_atoms": 6000,
+   "walkers": 4,
+   "model": "fast_cueqf_f32_EXTRA",
+   "peak_alloc_mib": 13814.6,
+   "dE_max_kcal": 0.0,
+   "dF_max_kcal_A": 0.0,
+   "median_ms": 759.177,
+   "p10_ms": 695.836,
+   "p90_ms": 800.792,
+   "n": 12
+  }
+ ]
+}

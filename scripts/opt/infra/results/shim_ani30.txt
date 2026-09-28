@@ -1,0 +1,19 @@
+# model=ani2x.pt geom=qm.pdb W=1 rounds=3 iters=150 shim=libnamd_mlff.so
+round=1 config=default RESULT load_ms=951.8 warmup_ms=4405.8 median_ms=29.166 p10_ms=20.037 p90_ms=54.568 E0=-479334.777937 n=30 W=1
+round=1 config=legacy RESULT load_ms=810.0 warmup_ms=3061.6 median_ms=27.155 p10_ms=18.136 p90_ms=56.529 E0=-479334.777937 n=30 W=1
+round=1 config=noopt RESULT load_ms=443.9 warmup_ms=1575.4 median_ms=27.916 p10_ms=19.169 p90_ms=30.724 E0=-479334.777937 n=30 W=1
+round=1 config=dyn20 RESULT load_ms=415.2 warmup_ms=2164.9 median_ms=16.460 p10_ms=14.961 p90_ms=18.682 E0=-479334.777937 n=30 W=1
+round=1 config=freeze RESULT load_ms=4964.9 warmup_ms=12011.4 median_ms=26.392 p10_ms=17.929 p90_ms=38.481 E0=-479334.777937 n=30 W=1
+round=1 config=tf32 RESULT load_ms=554.3 warmup_ms=2910.7 median_ms=27.592 p10_ms=16.496 p90_ms=31.121 E0=-479334.777937 n=30 W=1
+round=2 config=default RESULT load_ms=424.6 warmup_ms=2561.0 median_ms=15.878 p10_ms=14.875 p90_ms=17.765 E0=-479334.777937 n=30 W=1
+round=2 config=legacy RESULT load_ms=399.5 warmup_ms=1608.6 median_ms=16.185 p10_ms=14.872 p90_ms=17.967 E0=-479334.777937 n=30 W=1
+round=2 config=noopt RESULT load_ms=403.2 warmup_ms=1028.9 median_ms=16.633 p10_ms=15.395 p90_ms=18.044 E0=-479334.777937 n=30 W=1
+round=2 config=dyn20 RESULT load_ms=410.6 warmup_ms=1933.1 median_ms=16.564 p10_ms=15.144 p90_ms=18.499 E0=-479334.777937 n=30 W=1
+round=2 config=freeze RESULT load_ms=5096.1 warmup_ms=12950.0 median_ms=16.956 p10_ms=15.575 p90_ms=22.758 E0=-479334.777937 n=30 W=1
+round=2 config=tf32 RESULT load_ms=424.0 warmup_ms=3095.9 median_ms=40.290 p10_ms=31.238 p90_ms=54.757 E0=-479334.777937 n=30 W=1
+round=3 config=default RESULT load_ms=430.4 warmup_ms=3052.4 median_ms=39.848 p10_ms=32.470 p90_ms=55.038 E0=-479334.777937 n=30 W=1
+round=3 config=legacy RESULT load_ms=495.9 warmup_ms=2574.4 median_ms=33.252 p10_ms=16.092 p90_ms=54.654 E0=-479334.777937 n=30 W=1
+round=3 config=noopt RESULT load_ms=412.6 warmup_ms=1141.8 median_ms=17.074 p10_ms=15.924 p90_ms=19.454 E0=-479334.777937 n=30 W=1
+round=3 config=dyn20 RESULT load_ms=826.6 warmup_ms=4762.7 median_ms=48.943 p10_ms=22.957 p90_ms=102.389 E0=-479334.777937 n=30 W=1
+round=3 config=freeze RESULT load_ms=7999.6 warmup_ms=17918.0 median_ms=22.249 p10_ms=16.710 p90_ms=42.150 E0=-479334.777937 n=30 W=1
+round=3 config=tf32 RESULT load_ms=876.2 warmup_ms=4718.7 median_ms=27.664 p10_ms=17.629 p90_ms=53.412 E0=-479334.777937 n=30 W=1

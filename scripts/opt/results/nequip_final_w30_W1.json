@@ -1,0 +1,88 @@
+{
+ "meta": {
+  "torch": "2.11.0+cu130",
+  "gpu": "NVIDIA GeForce RTX 5080 Laptop GPU",
+  "time": "2026-09-23 13:03:34",
+  "argv": [
+   "/home/rat/PycharmProjects/ML_models_NAMD/scripts/opt/nequip/../bench_common.py",
+   "--extra-lib",
+   "scripts/opt/nequip/oeq_native/liboeq_native.so",
+   "--model",
+   "base=models/opt/nequip_baseline.pt",
+   "--model",
+   "recomp=models/opt/nequip_recompiled_cuda.pt",
+   "--model",
+   "oeq=models/opt/nequip_oeq.pt",
+   "--model",
+   "fast_oeq=models/opt/nequip_fast_oeq.pt",
+   "--systems",
+   "30",
+   "--walkers",
+   "1",
+   "--jitter",
+   "0.02",
+   "--warmup",
+   "15",
+   "--iters",
+   "30",
+   "--rounds",
+   "3",
+   "--out",
+   "scripts/opt/results/nequip_final_w30_W1.json"
+  ]
+ },
+ "results": [
+  {
+   "system": "water30",
+   "n_atoms": 30,
+   "walkers": 1,
+   "model": "base",
+   "peak_alloc_mib": 122.0,
+   "dE_max_kcal": 0.0,
+   "dF_max_kcal_A": 0.0,
+   "median_ms": 44.43,
+   "p10_ms": 40.92,
+   "p90_ms": 46.099,
+   "n": 90
+  },
+  {
+   "system": "water30",
+   "n_atoms": 30,
+   "walkers": 1,
+   "model": "recomp",
+   "peak_alloc_mib": 105.8,
+   "dE_max_kcal": 4.295452799851773e-05,
+   "dF_max_kcal_A": 5.4984331136154196e-05,
+   "median_ms": 45.41,
+   "p10_ms": 41.787,
+   "p90_ms": 46.893,
+   "n": 90
+  },
+  {
+   "system": "water30",
+   "n_atoms": 30,
+   "walkers": 1,
+   "model": "oeq",
+   "peak_alloc_mib": 50.6,
+   "dE_max_kcal": 0.0001959970204552519,
+   "dF_max_kcal_A": 8.660032153073871e-05,
+   "median_ms": 20.487,
+   "p10_ms": 18.403,
+   "p90_ms": 21.639,
+   "n": 90
+  },
+  {
+   "system": "water30",
+   "n_atoms": 30,
+   "walkers": 1,
+   "model": "fast_oeq",
+   "peak_alloc_mib": 32.9,
+   "dE_max_kcal": 0.0002562176246101444,
+   "dF_max_kcal_A": 7.972728013960761e-05,
+   "median_ms": 19.403,
+   "p10_ms": 18.337,
+   "p90_ms": 21.064,
+   "n": 90
+  }
+ ]
+}

@@ -1,0 +1,32 @@
+REMARK  FINAL COORDINATES WRITTEN BY NAMD AT TIMESTEP 500
+HETATM    1  O   WAT     1       1.810   6.203   4.442  0.00  0.00           O 
+HETATM    2  H1  WAT     1       2.014   5.937   5.339  0.00  0.00           H 
+HETATM    3  H2  WAT     1       1.488   7.101   4.527  0.00  0.00           H 
+HETATM    4  O   WAT     2       6.620   1.115   5.276  0.00  0.00           O 
+HETATM    5  H1  WAT     2       6.059   0.459   5.689  0.00  0.00           H 
+HETATM    6  H2  WAT     2       6.510   0.968   4.337  0.00  0.00           H 
+HETATM    7  O   WAT     3       7.643   4.527   7.107  0.00  0.00           O 
+HETATM    8  H1  WAT     3       7.067   3.767   7.035  0.00  0.00           H 
+HETATM    9  H2  WAT     3       7.630   4.750   8.038  0.00  0.00           H 
+HETATM   10  O   WAT     4       7.246  -2.646   8.987  0.00  0.00           O 
+HETATM   11  H1  WAT     4       7.445  -1.725   8.817  0.00  0.00           H 
+HETATM   12  H2  WAT     4       7.153  -3.035   8.118  0.00  0.00           H 
+HETATM   13  O   WAT     5       3.157   4.469   7.239  0.00  0.00           O 
+HETATM   14  H1  WAT     5       3.478   5.371   7.267  0.00  0.00           H 
+HETATM   15  H2  WAT     5       3.830   3.962   7.694  0.00  0.00           H 
+HETATM   16  O   WAT     6      -0.115   6.582   1.269  0.00  0.00           O 
+HETATM   17  H1  WAT     6       0.656   6.054   1.063  0.00  0.00           H 
+HETATM   18  H2  WAT     6       0.101   7.457   0.945  0.00  0.00           H 
+HETATM   19  O   WAT     7       4.205   7.660   1.570  0.00  0.00           O 
+HETATM   20  H1  WAT     7       3.599   8.399   1.524  0.00  0.00           H 
+HETATM   21  H2  WAT     7       4.127   7.341   2.469  0.00  0.00           H 
+HETATM   22  O   WAT     8       2.604   2.277   4.942  0.00  0.00           O 
+HETATM   23  H1  WAT     8       3.158   2.662   4.264  0.00  0.00           H 
+HETATM   24  H2  WAT     8       1.773   2.747   4.867  0.00  0.00           H 
+HETATM   25  O   WAT     9       4.774   4.548   3.411  0.00  0.00           O 
+HETATM   26  H1  WAT     9       4.674   3.727   2.930  0.00  0.00           H 
+HETATM   27  H2  WAT     9       5.148   4.289   4.253  0.00  0.00           H 
+HETATM   28  O   WAT    10       5.475   7.553   5.452  0.00  0.00           O 
+HETATM   29  H1  WAT    10       4.894   7.124   6.080  0.00  0.00           H 
+HETATM   30  H2  WAT    10       4.885   8.032   4.869  0.00  0.00           H 
+END

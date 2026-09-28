@@ -1,0 +1,132 @@
+{
+ "meta": {
+  "torch": "2.11.0+cu130",
+  "gpu": "NVIDIA GeForce RTX 5080 Laptop GPU",
+  "time": "2026-09-21 23:19:55",
+  "argv": [
+   "scripts/opt/bench_common.py",
+   "--model",
+   "base=models/opt/schnet_baseline.pt",
+   "--model",
+   "default_new=models/opt/schnet_default_new.pt",
+   "--model",
+   "fast_fullfilter=models/opt/schnet_fast_fullfilter.pt",
+   "--model",
+   "fast=models/opt/schnet_fast.pt",
+   "--systems",
+   "6000",
+   "--walkers",
+   "1,4",
+   "--jitter",
+   "0.02",
+   "--out",
+   "scripts/opt/results/schnet_final_jitter_w6000.json"
+  ]
+ },
+ "results": [
+  {
+   "system": "water6000",
+   "n_atoms": 6000,
+   "walkers": 1,
+   "model": "base",
+   "peak_alloc_mib": 2348.2,
+   "dE_max_kcal": 0.0,
+   "dF_max_kcal_A": 0.0,
+   "median_ms": 23.603,
+   "p10_ms": 23.262,
+   "p90_ms": 24.047,
+   "n": 90
+  },
+  {
+   "system": "water6000",
+   "n_atoms": 6000,
+   "walkers": 1,
+   "model": "default_new",
+   "peak_alloc_mib": 2330.9,
+   "dE_max_kcal": 0.042227966307109455,
+   "dF_max_kcal_A": 1.9244515897298697e-05,
+   "median_ms": 23.491,
+   "p10_ms": 23.16,
+   "p90_ms": 23.905,
+   "n": 90
+  },
+  {
+   "system": "water6000",
+   "n_atoms": 6000,
+   "walkers": 1,
+   "model": "fast_fullfilter",
+   "peak_alloc_mib": 2327.3,
+   "dE_max_kcal": 0.019706384278833866,
+   "dF_max_kcal_A": 2.1993732453040593e-05,
+   "median_ms": 21.381,
+   "p10_ms": 20.936,
+   "p90_ms": 21.999,
+   "n": 90
+  },
+  {
+   "system": "water6000",
+   "n_atoms": 6000,
+   "walkers": 1,
+   "model": "fast",
+   "peak_alloc_mib": 1578.3,
+   "dE_max_kcal": 0.03378237304787035,
+   "dF_max_kcal_A": 2.474294900878249e-05,
+   "median_ms": 15.859,
+   "p10_ms": 15.395,
+   "p90_ms": 16.326,
+   "n": 90
+  },
+  {
+   "system": "water6000",
+   "n_atoms": 6000,
+   "walkers": 4,
+   "model": "base",
+   "peak_alloc_mib": 15383.0,
+   "dE_max_kcal": 0.0,
+   "dF_max_kcal_A": 0.0,
+   "median_ms": 553.554,
+   "p10_ms": 545.781,
+   "p90_ms": 642.976,
+   "n": 90
+  },
+  {
+   "system": "water6000",
+   "n_atoms": 6000,
+   "walkers": 4,
+   "model": "default_new",
+   "peak_alloc_mib": 9311.5,
+   "dE_max_kcal": 0.06193435058594332,
+   "dF_max_kcal_A": 2.6117557287541615e-05,
+   "median_ms": 377.292,
+   "p10_ms": 374.471,
+   "p90_ms": 381.642,
+   "n": 90
+  },
+  {
+   "system": "water6000",
+   "n_atoms": 6000,
+   "walkers": 4,
+   "model": "fast_fullfilter",
+   "peak_alloc_mib": 9289.0,
+   "dE_max_kcal": 0.0675647460957407,
+   "dF_max_kcal_A": 2.336834073091154e-05,
+   "median_ms": 270.767,
+   "p10_ms": 268.707,
+   "p90_ms": 275.271,
+   "n": 90
+  },
+  {
+   "system": "water6000",
+   "n_atoms": 6000,
+   "walkers": 4,
+   "model": "fast",
+   "peak_alloc_mib": 6326.1,
+   "dE_max_kcal": 0.064749548342661,
+   "dF_max_kcal_A": 2.8179469705236215e-05,
+   "median_ms": 57.669,
+   "p10_ms": 57.004,
+   "p90_ms": 58.221,
+   "n": 90
+  }
+ ]
+}
