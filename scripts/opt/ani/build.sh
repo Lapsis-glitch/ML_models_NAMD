@@ -7,8 +7,9 @@
 #       nvidia-cuda-cccl==13.0.85 nvidia-cuda-crt==13.0.88 nvidia-nvvm==13.0.88   -- allegro itself untouched)
 set -euo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"; cd "$REPO"
-SP=/home/rat/miniconda3/envs/allegro/lib/python3.12/site-packages
-PY=/home/rat/miniconda3/envs/allegro/bin/python
+# Override for another machine: PY (allegro python), SP (its site-packages), TORCH (libtorch).
+PY=${PY:-/home/rat/miniconda3/envs/allegro/bin/python}
+SP=${SP:-$("${PY:-/home/rat/miniconda3/envs/allegro/bin/python}" -c 'import site; print(site.getsitepackages()[0])')}
 export LD_LIBRARY_PATH=$SP/nvidia/cu13/lib:${LD_LIBRARY_PATH:-}
 export TORCHANI_NO_WARN_EXTENSIONS=1 PYTORCH_CUDA_ALLOC_CONF=${PYTORCH_CUDA_ALLOC_CONF:-expandable_segments:True}
 A=scripts/opt/ani; M=models/opt

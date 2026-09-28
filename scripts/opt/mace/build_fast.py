@@ -1,6 +1,6 @@
 """Build + verify a scripted FastMACE inner (see fast_mace.py).
 
-usage: python scripts/opt/mace/build_fast.py {e3nn|cueq|cueqf} OUT [--dtype float64|float32]
+usage: python scripts/opt/mace/build_fast.py {e3nn|cueq|cueqf} OUT [--dtype float64|float32] [--state STATE]
            [--no-half] [--no-species-skip] [--no-plain-linear] [--cache-species] [--check N]
 
 Checks (GPU): eager FastMACE vs the stock rebuilt model, then the scripted
@@ -27,23 +27,28 @@ ap.add_argument("--no-species-skip", action="store_true")
 ap.add_argument("--no-plain-linear", action="store_true")
 ap.add_argument("--cache-species", action="store_true")
 ap.add_argument("--check", type=int, default=300)
+ap.add_argument("--state", default=STATE)
 a = ap.parse_args()
 dt = getattr(torch, a.dtype)
 dev = "cuda"
 
 if a.kind == "e3nn":
-    m = rebuild(STATE, dt, device=dev)
+    m = rebuild(a.state, dt, device=dev)
 else:
     import cuequivariance_torch  # noqa: F401
     from cueq_fusion import make_scriptable
-    m = rebuild(STATE, dt, cueq=True, device=dev, conv_fusion=(a.kind == "cueqf"))
+    m = rebuild(a.state, dt, cueq=True, device=dev, conv_fusion=(a.kind == "cueqf"))
     make_scriptable(m)
 fm = FastMACE(m, half_radial=not a.no_half, species_skip=not a.no_species_skip,
               plain_linear=not a.no_plain_linear, cache_species=a.cache_species).eval()
 
 
 def data_for(n, jit_seed=0):
-    xyz, Z = water_system(n)
+    xyz, _ = water_system(n)
+    # water geometry, but cycle Z through every element of the model so the check exercises all of
+    # them (unknown Z would get an all-zero one-hot on both sides and pass trivially)
+    zs = m.atomic_numbers.cpu()
+    Z = zs[torch.arange(n) % zs.numel()]
     g = torch.Generator().manual_seed(jit_seed)
     xyz = (xyz + 0.02 * torch.randn(xyz.shape, generator=g, dtype=xyz.dtype)).to(dev)
     Z = Z.to(dev)
@@ -64,12 +69,14 @@ def cmp(tag, f, ref_fn, n):
     o = f(dict(d), compute_force=True)
     dE = (o["energy"] - r["energy"]).abs().max().item()
     dF = (o["forces"] - r["forces"]).abs().max().item()
+    Fmax = r["forces"].abs().max().item()
     print(f"[{tag}] N={n} E={r['energy'].item():.8f} eV  dE={dE:.2e} eV  dF={dF:.2e} eV/A  "
-          f"|F|max={r['forces'].abs().max().item():.2f}")
-    return dE, dF
+          f"|F|max={Fmax:.2f}")
+    # relative to the force scale: cycling heavy elements onto water spacing gives huge forces
+    return dE, dF / max(1.0, Fmax)
 
 
-tol_F = 1e-10 if dt == torch.float64 else 2e-4
+tol_F = 1e-10 if dt == torch.float64 else 2e-4  # on dF / max(1, |F|max)
 dE, dF = cmp("eager", fm, m, a.check)
 assert dF < tol_F, "eager FastMACE differs from stock model"
 s = torch.jit.script(ej.compile(fm))

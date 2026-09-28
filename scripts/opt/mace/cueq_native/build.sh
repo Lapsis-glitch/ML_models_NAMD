@@ -3,7 +3,7 @@
 # Links only libtorch (the C++ zip used by NAMD's default shim) + libcue_ops.so -- no Python, no libtorch_python.
 set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SP=/home/rat/miniconda3/envs/allegro/lib/python3.12/site-packages
+SP=${SP:-$("${PY:-/home/rat/miniconda3/envs/allegro/bin/python}" -c 'import site; print(site.getsitepackages()[0])')}
 TORCH="${TORCH:-/home/rat/compile_NAMD_MACE/libtorch-2.11.0+cu130}"
 CUDA="${CUDA:-$SP/nvidia/cu13}"
 CUEOPS="$SP/cuequivariance_ops"

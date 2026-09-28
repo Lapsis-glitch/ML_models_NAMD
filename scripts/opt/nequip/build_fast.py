@@ -35,13 +35,15 @@ with conditional_torchscript_mode(True):
     print("species-sc kron-structure rel err per layer:", {k: f"{v:.1e}" for k, v in rep.items()})
 
     tn = [str(s) for s in model.type_names] if hasattr(model, "type_names") else None
+    n_types = len(model.metadata["type_names"].split())
+    r_max = float(model.metadata.get("r_max", 6.0))
     def data_for(n):
         xyz, Z = bc.water_system(n)
         pos = (xyz.to(dev) + 0.02 * torch.randn(xyz.shape, dtype=xyz.dtype, device=dev)).float()
-        ei = build_edges(pos, 6.0)[0]; E = ei.size(1); N = pos.size(0)
-        from src.constants import SYMBOL_TO_Z
-        z2t = {SYMBOL_TO_Z[s]: i for i, s in enumerate(model.metadata["type_names"].split())}
-        at = torch.tensor([z2t[int(z)] for z in Z], device=dev)
+        ei = build_edges(pos, r_max)[0]; E = ei.size(1); N = pos.size(0)
+        # water geometry, but cycle the atom types through every species of the model so the check
+        # exercises all of them (a water-only check says nothing for a model without H/O)
+        at = torch.arange(N, device=dev) % n_types
         return {"pos": pos, "edge_index": ei, "atom_types": at, "edge_cell_shift": torch.zeros(E, 3, dtype=torch.float32, device=dev),
                 "cell": torch.zeros(1, 3, 3, dtype=torch.float32, device=dev), "batch": torch.zeros(N, dtype=torch.long, device=dev),
                 "num_atoms": torch.tensor([N], device=dev)}
@@ -50,7 +52,10 @@ with conditional_torchscript_mode(True):
         o0 = ref(dict(d)); o1 = model(dict(d))
         de = (o0["total_energy"] - o1["total_energy"]).abs().max().item() * 23.0605
         df = (o0["forces"] - o1["forces"]).abs().max().item() * 23.0605
-        print(f"eager parity N={n}: |dE| {de:.2e} kcal/mol  max|dF| {df:.2e} kcal/mol/A")
+        fmax = o0["forces"].abs().max().item() * 23.0605
+        print(f"eager parity N={n}: |dE| {de:.2e} kcal/mol  max|dF| {df:.2e} kcal/mol/A  |F|max {fmax:.1f}")
+        # fp32 model: relative to the force scale (cycled species on water spacing -> large forces)
+        assert df / max(1.0, fmax) < 1e-4, "FastNequIP differs from the stock OEQ model"
     del ref
     md = model.metadata.copy()
     md.update(get_latest_global_state(only_metadata_related=True))

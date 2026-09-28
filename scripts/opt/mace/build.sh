@@ -16,8 +16,9 @@
 set -euo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 cd "$REPO"
-SP=/home/rat/miniconda3/envs/allegro/lib/python3.12/site-packages
-PY=/home/rat/miniconda3/envs/allegro/bin/python
+# Override for another machine: PY (allegro python), SP (its site-packages), MACE_PY (MACE_312 python), TORCH (libtorch).
+PY=${PY:-/home/rat/miniconda3/envs/allegro/bin/python}
+SP=${SP:-$("${PY:-/home/rat/miniconda3/envs/allegro/bin/python}" -c 'import site; print(site.getsitepackages()[0])')}
 # REQUIRED even at build time: without cu13 nvrtc on the path cuEq silently falls back to its naive path.
 export LD_LIBRARY_PATH=$SP/nvidia/cu13/lib:${LD_LIBRARY_PATH:-}
 LOCK="flock $REPO/scripts/opt/.gpu_bench.lock"
@@ -26,7 +27,7 @@ M=models/opt
 # 0. version-neutral weights dump (once, in the MACE_312 env; e3nn 0.4.4 pickles can't be read under e3nn 0.6)
 if [ ! -f $M/mace_off23_medium_state.pt ]; then
   MACE_OFF_MODEL="${MACE_OFF_MODEL:-$HOME/.cache/mace/MACE-OFF23_medium.model}"
-  TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD=1 /home/rat/miniconda3/envs/MACE_312/bin/python \
+  TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD=1 "${MACE_PY:-/home/rat/miniconda3/envs/MACE_312/bin/python}" \
     scripts/opt/mace/extract_state.py "$MACE_OFF_MODEL" $M/mace_off23_medium_state.pt
 fi
 

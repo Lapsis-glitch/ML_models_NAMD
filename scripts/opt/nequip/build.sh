@@ -12,8 +12,9 @@
 #   4. parity (fresh process, no openequivariance import) + mlff_shim_test on the default NAMD shim
 set -euo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"; cd "$REPO"
-SP=/home/rat/miniconda3/envs/allegro/lib/python3.12/site-packages
-PY=/home/rat/miniconda3/envs/allegro/bin/python
+# Override for another machine: PY (allegro python), SP (its site-packages), TORCH (libtorch), PKG (model package).
+PY=${PY:-/home/rat/miniconda3/envs/allegro/bin/python}
+SP=${SP:-$("${PY:-/home/rat/miniconda3/envs/allegro/bin/python}" -c 'import site; print(site.getsitepackages()[0])')}
 export LD_LIBRARY_PATH=$SP/nvidia/cu13/lib:${LD_LIBRARY_PATH:-}
 LOCK=scripts/opt/.gpu_bench.lock
 NL=scripts/opt/nequip/oeq_native/liboeq_native.so
