@@ -94,3 +94,8 @@ Next (per plan): pytest, final combined bench of all optimised artifacts, cross-
 - NAMD patch set for the user: scripts/opt/namd_patches/ (01 shim EXTRA_LIBS+knobs, 02 fennix backend, 03 ComputeQM fast index + README).
 - L40S bundle (NAMD sweep only, optimised models, MAX_ATOMS knob) being built in scripts/opt/l40s_bundle/.
 - L40S bundle DONE: scripts/opt/l40s_bundle/namd_ml_bench_2026-09-23.zip (273 MB), smoke-validated all 5 models.
+
+## 2026-09-28: optimised builds generalised (commit 5b82b36)
+- src/cli.py now has the SchNet fast flags (--fast etc.), TorchANI --lean and --extra-libs (resolves the "src/cli.py lacks new schnet flags" item above).
+- mace/build_fast.py --state (any MACE), ani/build_fast.py --model ani1x|ani1ccx|ani2x, parity checks cycle all species; build scripts read PY/SP/TORCH/MACE_PY from env.
+- Rebuilt MACE-OFF23, NequIP-OAM-L, ANI-2x, SchNet via the new path: identical to models/opt artifacts. Recipe documented in README "Guide: optimised builds".

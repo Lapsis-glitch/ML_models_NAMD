@@ -226,7 +226,7 @@ Under `--pbc` the model uses the minimum-image convention, so every perpendicula
 
 ## Guide: optimised builds
 
-`python -m src.cli` on its own always produces the **reference** model. The optimised models are built with the tools in `scripts/opt/<model>/`. They keep the same weights and the same maths, but swap in faster GPU kernels and remove overhead. The recipes below use **the same settings as the benchmark artifacts in `models/opt/`**. Rebuilding MACE-OFF23, NequIP-OAM-L, ANI-2x and SchNet this way reproduces those artifacts exactly (ΔE = ΔF = 0). Each build checks parity against the stock model before saving, and the check cycles through every element the model knows, so it tests your model's actual species rather than only H and O.
+`python -m src.cli` on its own always produces the **reference** model. The optimised models are built with the tools in `scripts/opt/<model>/`. They keep the same weights and the same maths, but swap in faster GPU kernels and remove overhead. The recipes below use **the same settings as the benchmark artifacts in `models/opt/`**. Rebuilding MACE-OFF23, NequIP-OAM-L, ANI-2x and SchNet this way reproduces those artifacts exactly (ΔE = ΔF = 0). The MACE and NequIP builds assert parity with the stock model before saving. Their checks cycle through every element the model knows, so they test your model's actual species rather than only H and O. ANI is checked with the comparison step at the end of this guide.
 
 | Model | What the optimised build changes | Works for | Extra requirement in NAMD |
 |---|---|---|---|
@@ -317,7 +317,7 @@ python -m src.cli --model-type torchani --compiled models/opt/ani_inner_fast.pt 
 ```
 
 - For ANI-1x or ANI-1ccx, use `--model ani1x` / `--model ani1ccx` and `--elements 1,6,7,8`.
-- `build_fast.py` has no parity check of its own, so compare the result with the reference using the check below. Expect ΔE of about 1e-3 kcal/mol: the fast path sums the energy in fp64, while stock torchani sums in fp32.
+- `build_fast.py` has no parity check of its own, so compare the result with the reference using the check below. Expect ΔE of 1e-3 to 1e-2 kcal/mol: the fast path sums the energy in fp64, while stock torchani sums in fp32.
 
 ### SchNet
 
@@ -367,7 +367,7 @@ print("dE =", abs(e1 - e0), "kcal/mol   max dF =", (f1 - f0).abs().max().item(),
 
 Expected differences from the reference:
 - fp64 MACE: exact (ΔE = 0, ΔF ≈ 1e-13);
-- ANI: about 1e-3 kcal/mol, from the fp64 summation;
+- ANI: 1e-3 to 1e-2 kcal/mol, from the fp64 summation;
 - fp32 and TF32 variants: 1e-4 to 1e-2.
 
 The per-model `REPORT.md` files have the full parity tables.
