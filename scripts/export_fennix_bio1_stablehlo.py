@@ -9,13 +9,40 @@ shim that consumes the exported artifact.
 The export currently specializes to a fixed atom list and fixed atom count.
 That matches a first NAMD-source prototype where the ML region composition is
 fixed for the run.
+
+The artifact follows the same contract as the TorchScript wrappers
+(src/wrappers/), so NAMD treats both backends the same way:
+
+    non-periodic:  f(coordinates[N,3])
+                   -> (energy[1], forces[N,3], charges[N], overflow[1])
+    --pbc:         f(coordinates[N,3], cells[1,3,3])
+                   -> (energy[1], forces[N,3], charges[N], virial[3,3], overflow[1])
+
+- energy/forces/virial are eV and eV/A; NAMD applies `ev_to_kcal`.
+- charges are the model's per-atom `--charges-key` output when it has one,
+  otherwise zeros, exactly like the TorchScript wrappers.
+- cells rows are the lattice vectors (a, b, c) in Angstrom, the same layout
+  as NAMD's MLFFCellData and the TorchScript cell argument.
+- virial is already in NAMD's convention, sum_i f_i (x) r_i (strain form under
+  PBC), so NAMD only converts units.
+- overflow is 1.0 when a fixed-capacity neighbour list (or another FeNNol
+  preprocessing buffer) ran out of room this step.  The results are then
+  wrong, so NAMD stops.  --nblist-margin sets the headroom.
+
+Output order is recorded by name in manifest.json's output_signature, and NAMD
+reads the outputs by name.  A periodic artifact cannot be evaluated without a
+cell: the cell enters the graph structurally.  PBC uses the minimum-image
+convention, so every perpendicular box width must stay >= 2 * cutoff.
 """
 
 from __future__ import annotations
 
 import argparse
+from collections.abc import Mapping
+import contextlib
 import importlib
 import json
+import math
 from pathlib import Path
 import sys
 
@@ -149,6 +176,189 @@ def load_pdb_system(pdb_path: Path) -> tuple[np.ndarray, np.ndarray, list[str], 
     return np.asarray(z_list, dtype=np.int32), coords_arr, symbols, inferred_total_charge, explicit_charge_count
 
 
+def load_pdb_cryst1(pdb_path: Path) -> np.ndarray | None:
+    """Return the CRYST1 cell as a [3,3] row-vector matrix, or None if absent.
+
+    Uses the standard PDB orientation: a along x, b in the xy plane.
+    """
+    for line in Path(pdb_path).expanduser().resolve().read_text().splitlines():
+        if not line.startswith("CRYST1"):
+            continue
+        try:
+            a, b, c = (float(line[6:15]), float(line[15:24]), float(line[24:33]))
+            alpha, beta, gamma = (float(line[33:40]), float(line[40:47]), float(line[47:54]))
+        except ValueError as exc:
+            raise ValueError(f"Malformed CRYST1 record in {pdb_path}: {line!r}") from exc
+        ca, cb, cg = (math.cos(math.radians(v)) for v in (alpha, beta, gamma))
+        sg = math.sin(math.radians(gamma))
+        cx = c * cb
+        cy = c * (ca - cb * cg) / sg
+        cz = math.sqrt(max(c * c - cx * cx - cy * cy, 0.0))
+        return np.asarray(
+            [[a, 0.0, 0.0], [b * cg, b * sg, 0.0], [cx, cy, cz]], dtype=np.float32
+        )
+    return None
+
+
+def parse_cell(text: str) -> np.ndarray:
+    """Parse --cell: 3 numbers (orthorhombic edges) or 9 (rows a, b, c)."""
+    values = [float(x) for x in text.replace(",", " ").split()]
+    if len(values) == 3:
+        return np.diag(np.asarray(values, dtype=np.float32))
+    if len(values) == 9:
+        return np.asarray(values, dtype=np.float32).reshape(3, 3)
+    raise ValueError(f"--cell needs 3 or 9 numbers, got {len(values)}")
+
+
+def cell_min_perp_width(cell: np.ndarray) -> float:
+    """Smallest distance between opposite cell faces (MLFFCell.h equivalent)."""
+    cell = np.asarray(cell, dtype=np.float64)
+    volume = abs(float(np.linalg.det(cell)))
+    widths = []
+    for i in range(3):
+        area = np.linalg.norm(np.cross(cell[(i + 1) % 3], cell[(i + 2) % 3]))
+        if not area > 0.0:
+            return 0.0
+        widths.append(volume / area)
+    return float(min(widths))
+
+
+def scale_nblist_capacity(state, factor: float):
+    """Enlarge every fixed neighbour-list capacity (`npairs`) in a FeNNol
+    preprocessing state by `factor`.
+
+    The warm-up preprocess sizes the pair buffers from one structure (plus
+    FeNNol's 5%).  During MD the pair count fluctuates, and a full periodic box
+    fluctuates more than a cluster, so the exported graph needs headroom.
+    Extra slots are masked, so the numbers do not change.  Container types are
+    preserved because FeNNol passes the state as a static (hashable) jit arg.
+    """
+    if factor <= 1.0:
+        return state
+
+    def walk(node):
+        if isinstance(node, Mapping):
+            out = {}
+            for key, value in node.items():
+                if key == "npairs" and isinstance(value, (int, np.integer)):
+                    out[key] = int(math.ceil(int(value) * factor)) + 1
+                else:
+                    out[key] = walk(value)
+            return out if type(node) is dict else type(node)(out)
+        if isinstance(node, tuple):
+            return tuple(walk(v) for v in node)
+        if isinstance(node, list):
+            return [walk(v) for v in node]
+        return node
+
+    return walk(state)
+
+
+def collect_overflow(jnp, pre) -> "jnp.ndarray":
+    """OR together every overflow flag FeNNol's preprocessing produced.
+
+    Graph generators and filters flag it inside their graph dict; other
+    buffers (e.g. the block indexer) use a top-level `*_overflow` key.
+    Returned as float32 [1] so the PJRT consumer reads every output as F32.
+    """
+    flag = jnp.zeros((), dtype=bool)
+    for key, value in pre.items():
+        if isinstance(value, Mapping) and "overflow" in value:
+            flag = flag | jnp.asarray(value["overflow"], dtype=bool)
+        elif isinstance(key, str) and key.endswith("overflow"):
+            flag = flag | jnp.any(jnp.asarray(value, dtype=bool))
+    return jnp.reshape(flag.astype(jnp.float32), (1,))
+
+
+def build_eval_fn(jnp, model, state, species, total_charge: int, *,
+                  periodic: bool, charges_key: str | None, info: dict):
+    """Return the pure function that gets lowered to StableHLO.
+
+    Output tuple, in manifest order:
+      non-periodic: (energy, forces, charges, overflow)
+      periodic:     (energy, forces, charges, virial, overflow)
+
+    `info["charges_source"]` is set while tracing, to "model:<key>" or "zeros".
+    """
+    n_atoms = int(species.shape[0])
+    natoms = jnp.array([n_atoms], dtype=jnp.int32)
+    batch_index = jnp.zeros(n_atoms, dtype=jnp.int32)
+    total_charge_jnp = jnp.array([total_charge], dtype=jnp.int32)
+
+    def base_raw(coordinates):
+        return {
+            "species": species,
+            "coordinates": coordinates,
+            "natoms": natoms,
+            "batch_index": batch_index,
+            "total_charge": total_charge_jnp,
+        }
+
+    def charges_from(out, dtype):
+        # Same rule as the TorchScript wrappers: the model's charges if it
+        # predicts them, zeros otherwise.
+        q = None
+        if charges_key and isinstance(out, Mapping):
+            q = out.get(charges_key)
+        if q is None:
+            info["charges_source"] = "zeros"
+            return jnp.zeros((n_atoms,), dtype=dtype)
+        if int(np.prod(q.shape)) != n_atoms:
+            raise ValueError(
+                f"model output {charges_key!r} has shape {tuple(q.shape)}; "
+                f"expected one charge per atom ({n_atoms})"
+            )
+        info["charges_source"] = f"model:{charges_key}"
+        return jnp.reshape(q, (n_atoms,)).astype(dtype)
+
+    if not periodic:
+        def eval_ev(coordinates):
+            pre = model.preprocessing.process(state, base_raw(coordinates))
+            energy_ev, forces_ev_a, out = model._energy_and_forces(model.variables, pre)
+            return (energy_ev, forces_ev_a, charges_from(out, forces_ev_a.dtype),
+                    collect_overflow(jnp, pre))
+        return eval_ev
+
+    jax = importlib.import_module("jax")
+
+    def inv3(m):
+        # Analytic inverse of [..., 3, 3] row-vector cells.  jnp.linalg.inv
+        # lowers to LAPACK/cuSOLVER custom_calls, which tie the StableHLO to
+        # the export platform; this stays plain HLO.
+        a, b, c = m[..., 0, :], m[..., 1, :], m[..., 2, :]
+        bc, ca, ab = jnp.cross(b, c), jnp.cross(c, a), jnp.cross(a, b)
+        det = jnp.sum(a * bc, axis=-1)
+        return jnp.stack([bc, ca, ab], axis=-1) / det[..., None, None]
+
+    def eval_ev_pbc(coordinates, cells):
+        raw = base_raw(coordinates)
+        raw["cells"] = cells
+        raw["reciprocal_cells"] = inv3(cells)
+        raw["flags"] = {"minimum_image": None}
+        pre = model.preprocessing.process(state, raw)
+
+        # Strain coordinates and cell together, as FeNNol's own
+        # energy_and_forces_and_virial does (fennix.py), but with inv3.
+        # dE/dS[j][k] = -sum_i r_ij f_ik; NAMD accumulates sum_i f_i (x) r_i,
+        # so W = -(dE/dS)^T (strain form under PBC).
+        def etot(x, scaling):
+            cells_s = jnp.matmul(cells, scaling)
+            inputs = {**pre, "coordinates": jnp.matmul(x, scaling),
+                      "cells": cells_s, "reciprocal_cells": inv3(cells_s)}
+            energy, out = model._total_energy(model.variables, inputs)
+            return energy.sum(), out
+
+        (dedx, deds), out = jax.grad(etot, argnums=(0, 1), has_aux=True)(
+            pre["coordinates"], jnp.eye(3, dtype=coordinates.dtype)
+        )
+        forces_ev_a = -dedx
+        virial_ev = -jnp.transpose(deds)
+        return (out["total_energy"], forces_ev_a, charges_from(out, forces_ev_a.dtype),
+                virial_ev, collect_overflow(jnp, pre))
+
+    return eval_ev_pbc
+
+
 def default_coords(n_atoms: int) -> np.ndarray:
     """Return deterministic non-overlapping test coordinates in Angstrom."""
     if n_atoms == 3:
@@ -250,10 +460,41 @@ def main(argv: list[str] | None = None) -> None:
         default=None,
         help="Optional .npy array of reference coordinates with shape [n_walkers, n_atoms, 3]. Overrides deterministic default walker coordinates.",
     )
+    parser.add_argument(
+        "--pbc",
+        action="store_true",
+        help="Export a periodic artifact that takes the live cell as a second input and returns the strain virial. Minimum image only: every perpendicular box width must be >= 2 * cutoff.",
+    )
+    parser.add_argument(
+        "--cell",
+        default=None,
+        help="Reference cell for --pbc: 3 numbers (orthorhombic edges) or 9 (rows a, b, c), Angstrom. Defaults to the PDB CRYST1 record.",
+    )
+    parser.add_argument(
+        "--charges-key",
+        default="charges",
+        help="Model output exported as per-atom charges. If the model has no such output the artifact returns zeros, like the TorchScript wrappers. Default: charges.",
+    )
+    parser.add_argument(
+        "--nblist-margin",
+        type=float,
+        default=1.25,
+        help="Headroom factor on the fixed neighbour-list capacities sized from the reference structure. Default: 1.25.",
+    )
+    parser.add_argument(
+        "--matmul-precision",
+        choices=["default", "high", "highest"],
+        default=None,
+        help="JAX matmul precision baked into the graph. On NVIDIA GPUs 'default' means TF32, which rounds the cell/coordinate products in the periodic image vectors to ~1e-2 A, so --pbc defaults to 'highest'; non-periodic exports keep 'default'.",
+    )
     args = parser.parse_args(argv)
 
     if args.pdb is not None and args.z_list is not None:
         raise SystemExit("Use either --pdb or --z-list, not both.")
+    if args.cell is not None and not args.pbc:
+        raise SystemExit("--cell only applies with --pbc.")
+    if args.nblist_margin < 1.0:
+        raise SystemExit("--nblist-margin must be >= 1.0")
 
     try:
         jax = importlib.import_module("jax")
@@ -315,6 +556,19 @@ def main(argv: list[str] | None = None) -> None:
     if n_walkers < 1:
         raise SystemExit("--n-walkers must be at least 1")
 
+    cell = None
+    if args.pbc:
+        if n_walkers != 1:
+            raise SystemExit("--pbc supports a single walker only (NAMD passes one cell per call).")
+        if args.cell is not None:
+            cell = parse_cell(args.cell)
+        elif args.pdb is not None:
+            cell = load_pdb_cryst1(pdb_path)
+        if cell is None:
+            raise SystemExit("--pbc needs a reference cell: pass --cell, or a --pdb with a CRYST1 record.")
+        if not abs(float(np.linalg.det(cell.astype(np.float64)))) > 0.0:
+            raise SystemExit(f"--pbc reference cell is degenerate: {cell.tolist()}")
+
     resolved_out_dir = (
         Path(args.out_dir).expanduser().resolve()
         if args.out_dir is not None
@@ -334,6 +588,8 @@ def main(argv: list[str] | None = None) -> None:
     print(f"Writing artifacts to {out_dir}")
     print(f"Walker count: {n_walkers}")
     print(f"Using total charge {total_charge} ({total_charge_source})")
+    if cell is not None:
+        print(f"Periodic (minimum image), reference cell rows: {cell.tolist()}")
 
     print(f"Loading FeNNol model: {model_path}")
     model = FENNIX.load(str(model_path))
@@ -344,6 +600,17 @@ def main(argv: list[str] | None = None) -> None:
         f"energy_terms={model.energy_terms}",
     )
 
+    cutoff = float(model.cutoff)
+    min_width = None
+    if cell is not None:
+        min_width = cell_min_perp_width(cell)
+        if min_width < 2.0 * cutoff:
+            raise SystemExit(
+                f"Reference cell is {min_width:.3f} A across at its thinnest, under "
+                f"2 * cutoff = {2.0 * cutoff:.3f} A.  Minimum image would drop "
+                "interactions; use a larger box."
+            )
+
     single_raw_np = {
         "species": Z,
         "coordinates": coords,
@@ -351,33 +618,45 @@ def main(argv: list[str] | None = None) -> None:
         "batch_index": np.zeros(n_atoms, dtype=np.int32),
         "total_charge": np.array([total_charge], dtype=np.int32),
     }
+    if cell is not None:
+        single_raw_np["cells"] = cell[None, :, :]
+        single_raw_np["flags"] = {"minimum_image": None}
 
     # Warm/init preprocessing once.  The JAX process path then uses the fixed
     # neighbor-list capacities in this state, avoiding Python-side checks.
+    # For --pbc the warm-up sees the real periodic structure, so the pair
+    # buffers are sized for fully coordinated atoms, then get the margin.
     _ = model.preprocess(**single_raw_np)
-    state = model.preproc_state
+    state = scale_nblist_capacity(model.preproc_state, args.nblist_margin)
 
-    species = jnp.asarray(Z)
-    natoms = jnp.array([n_atoms], dtype=jnp.int32)
-    batch_index = jnp.zeros(n_atoms, dtype=jnp.int32)
-    total_charge_jnp = jnp.array([total_charge], dtype=jnp.int32)
+    matmul_precision = args.matmul_precision or ("highest" if cell is not None else "default")
+    print(f"Matmul precision: {matmul_precision}")
+    precision_ctx = (
+        contextlib.nullcontext() if matmul_precision == "default"
+        else jax.default_matmul_precision(matmul_precision)
+    )
+    precision_ctx.__enter__()
 
-    def eval_ev(coordinates):
-        raw = {
-            "species": species,
-            "coordinates": coordinates,
-            "natoms": natoms,
-            "batch_index": batch_index,
-            "total_charge": total_charge_jnp,
-        }
-        pre = model.preprocessing.process(state, raw)
-        energy_ev, forces_ev_a, _ = model._energy_and_forces(model.variables, pre)
-        return energy_ev, forces_ev_a
+    trace_info: dict = {}
+    eval_ev = build_eval_fn(
+        jnp, model, state, jnp.asarray(Z), total_charge,
+        periodic=cell is not None, charges_key=args.charges_key, info=trace_info,
+    )
+    output_names = ["energy", "forces", "charges"]
+    if cell is not None:
+        output_names.append("virial")
+    output_names.append("overflow")
 
+    virial_ref_np = None
     if n_walkers == 1:
         jit_eval = jax.jit(eval_ev)
-        energy_ref, forces_ref, _ = model.energy_and_forces(**single_raw_np)
-        energy_jit, forces_jit = jit_eval(jnp.asarray(export_coords))
+        if cell is not None:
+            energy_ref, forces_ref, vir_ref, _ = model.energy_and_forces_and_virial(**single_raw_np)
+            virial_ref_np = -np.asarray(vir_ref, dtype=np.float32).reshape(3, 3).T
+            jit_args = (jnp.asarray(export_coords), jnp.asarray(cell[None, :, :]))
+        else:
+            energy_ref, forces_ref, _ = model.energy_and_forces(**single_raw_np)
+            jit_args = (jnp.asarray(export_coords),)
     else:
         jit_eval = jax.jit(jax.vmap(eval_ev, in_axes=0, out_axes=0))
         ref_energies = []
@@ -394,23 +673,38 @@ def main(argv: list[str] | None = None) -> None:
             ref_forces.append(np.asarray(forces_ref_i))
         energy_ref = np.stack(ref_energies, axis=0)
         forces_ref = np.stack(ref_forces, axis=0)
-        energy_jit, forces_jit = jit_eval(jnp.asarray(export_coords))
+        jit_args = (jnp.asarray(export_coords),)
 
     print("Evaluating Python/JAX reference and lowered executable...")
+    outputs_jit = {name: np.asarray(v) for name, v in zip(output_names, jit_eval(*jit_args))}
+    charges_source = trace_info.get("charges_source", "zeros")
 
     energy_ref_np = np.asarray(energy_ref)
     forces_ref_np = np.asarray(forces_ref)
-    energy_jit_np = np.asarray(energy_jit)
-    forces_jit_np = np.asarray(forces_jit)
+    energy_jit_np = outputs_jit["energy"]
+    forces_jit_np = outputs_jit["forces"]
+
+    if np.any(outputs_jit["overflow"] != 0):
+        raise SystemExit(
+            "The exported graph overflowed a preprocessing buffer on the reference "
+            "structure itself; this is an exporter bug, not a margin problem."
+        )
 
     print("reference energy eV:", energy_ref_np)
     print("jit energy eV:", energy_jit_np)
     print("energy abs diff eV:", np.max(np.abs(energy_jit_np - energy_ref_np)))
     print("force max abs diff eV/A:", np.max(np.abs(forces_jit_np - forces_ref_np)))
+    virial_diff = None
+    if virial_ref_np is not None:
+        virial_diff = float(np.max(np.abs(outputs_jit["virial"] - virial_ref_np)))
+        print("virial (NAMD convention) eV:", outputs_jit["virial"].tolist())
+        print("virial max abs diff eV:", virial_diff)
+    print(f"charges output: {charges_source}")
 
     print("Lowering to StableHLO...")
-    lowered = jit_eval.lower(jnp.asarray(export_coords))
+    lowered = jit_eval.lower(*jit_args)
     stablehlo_text = str(lowered.compiler_ir(dialect="stablehlo"))
+    precision_ctx.__exit__(None, None, None)
     stablehlo_path = out_dir / "fennix_bio1_eval.stablehlo.mlir"
     stablehlo_path.write_text(stablehlo_text)
 
@@ -430,6 +724,11 @@ def main(argv: list[str] | None = None) -> None:
     compile_options = compiler.get_compile_options(1, 1)
     compile_options_path.write_bytes(compile_options.SerializeAsString())
 
+    extra_npz = {"charges_jit_e": outputs_jit["charges"]}
+    if cell is not None:
+        extra_npz["cell"] = cell
+        extra_npz["virial_jit_ev"] = outputs_jit["virial"]
+        extra_npz["virial_ref_ev"] = virial_ref_np
     np.savez(
         out_dir / "reference.npz",
         Z=Z,
@@ -442,24 +741,41 @@ def main(argv: list[str] | None = None) -> None:
         forces_jit_ev_a=forces_jit_np,
         energy_jit_kcal=energy_jit_np.astype(np.float64) * EV_TO_KCAL,
         forces_jit_kcal_a=forces_jit_np.astype(np.float64) * EV_TO_KCAL,
+        **extra_npz,
     )
 
+    runtime_ref_lines = [
+        f"input_dims={','.join(str(int(x)) for x in export_coords.shape)}",
+        f"coordinates={','.join(f'{float(x):.9g}' for x in export_coords.reshape(-1))}",
+        f"energy_ref_ev={','.join(f'{float(x):.9g}' for x in energy_ref_np.reshape(-1))}",
+        f"forces_ref_ev_a={','.join(f'{float(x):.9g}' for x in forces_ref_np.reshape(-1))}",
+        f"energy_jit_ev={','.join(f'{float(x):.9g}' for x in energy_jit_np.reshape(-1))}",
+        f"forces_jit_ev_a={','.join(f'{float(x):.9g}' for x in forces_jit_np.reshape(-1))}",
+        f"tol_energy_ev={float(np.max(np.abs(energy_jit_np - energy_ref_np))):.9g}",
+        f"tol_forces_ev_a={float(np.max(np.abs(forces_jit_np - forces_ref_np))):.9g}",
+    ]
+    if cell is not None:
+        runtime_ref_lines.append(f"cells={','.join(f'{float(x):.9g}' for x in cell.reshape(-1))}")
     runtime_ref_path = out_dir / "reference_runtime.txt"
-    runtime_ref_path.write_text(
-        "\n".join(
-            [
-                f"input_dims={','.join(str(int(x)) for x in export_coords.shape)}",
-                f"coordinates={','.join(f'{float(x):.9g}' for x in export_coords.reshape(-1))}",
-                f"energy_ref_ev={','.join(f'{float(x):.9g}' for x in energy_ref_np.reshape(-1))}",
-                f"forces_ref_ev_a={','.join(f'{float(x):.9g}' for x in forces_ref_np.reshape(-1))}",
-                f"energy_jit_ev={','.join(f'{float(x):.9g}' for x in energy_jit_np.reshape(-1))}",
-                f"forces_jit_ev_a={','.join(f'{float(x):.9g}' for x in forces_jit_np.reshape(-1))}",
-                f"tol_energy_ev={float(np.max(np.abs(energy_jit_np - energy_ref_np))):.9g}",
-                f"tol_forces_ev_a={float(np.max(np.abs(forces_jit_np - forces_ref_np))):.9g}",
-            ]
+    runtime_ref_path.write_text("\n".join(runtime_ref_lines) + "\n")
+
+    output_meta = {
+        "energy": {"dtype": "float32", "units": "eV"},
+        "forces": {"dtype": "float32", "units": "eV/Angstrom"},
+        "charges": {"dtype": "float32", "units": "e", "source": charges_source},
+        "virial": {"dtype": "float32", "units": "eV",
+                   "convention": "sum_i f_i (x) r_i, strain form under PBC"},
+        "overflow": {"dtype": "float32", "units": "flag",
+                     "meaning": "nonzero = a fixed-capacity preprocessing buffer overflowed; results invalid"},
+    }
+    input_signature = [
+        {"name": "coordinates", "shape": list(export_coords.shape), "dtype": "float32", "units": "Angstrom"}
+    ]
+    if cell is not None:
+        input_signature.append(
+            {"name": "cells", "shape": [1, 3, 3], "dtype": "float32", "units": "Angstrom",
+             "layout": "rows are lattice vectors a, b, c"}
         )
-        + "\n"
-    )
 
     manifest = {
         "model_path": str(model_path),
@@ -473,19 +789,24 @@ def main(argv: list[str] | None = None) -> None:
             **input_source,
             "walker_coords_npy": str(walker_coords_path) if walker_coords_path is not None else None,
         },
-        "input_signature": [
-            {"name": "coordinates", "shape": list(export_coords.shape), "dtype": "float32", "units": "Angstrom"}
-        ],
+        # Flat name lists: the NAMD consumer binds PJRT arguments and results
+        # by these names, in this order.
+        "input_names": [entry["name"] for entry in input_signature],
+        "output_names": output_names,
+        "input_signature": input_signature,
         "output_signature": [
-            {"name": "energy", "shape": list(energy_jit_np.shape), "dtype": "float32", "units": "eV"},
-            {"name": "forces", "shape": list(forces_jit_np.shape), "dtype": "float32", "units": "eV/Angstrom"},
+            {"name": name, "shape": list(outputs_jit[name].shape), **output_meta[name]}
+            for name in output_names
         ],
+        "periodic": cell is not None,
         "conversion": {"ev_to_kcal": EV_TO_KCAL},
         "fennol": {
-            "cutoff": float(model.cutoff),
+            "cutoff": cutoff,
             "energy_unit": str(model.energy_unit),
             "energy_terms": list(model.energy_terms),
         },
+        "nblist_margin": float(args.nblist_margin),
+        "matmul_precision": matmul_precision,
         "jax": {
             "jax_version": jax.__version__,
             "devices": [str(d) for d in jax.devices()],
@@ -503,6 +824,12 @@ def main(argv: list[str] | None = None) -> None:
         },
         "runtime_note": "This artifact is specialized to fixed atom identity/count and fixed walker count. Runtime Python is not required by the intended PJRT C++ consumer.",
     }
+    if cell is not None:
+        manifest["pbc_mode"] = "minimum_image"
+        manifest["pbc_cutoff"] = cutoff
+        manifest["pbc_reference_cell"] = [float(x) for x in cell.reshape(-1)]
+        manifest["pbc_reference_min_width"] = min_width
+        manifest["validation"]["virial_max_abs_diff_ev"] = virial_diff
     (out_dir / "manifest.json").write_text(json.dumps(manifest, indent=2))
 
     print(f"Wrote StableHLO: {stablehlo_path}")

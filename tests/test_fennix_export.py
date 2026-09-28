@@ -159,18 +159,27 @@ def _fake_import_module_factory():
         def __init__(self, fn):
             self._fn = fn
 
-        def __call__(self, coords):
-            return self._fn(coords)
+        def __call__(self, *args):
+            return self._fn(*args)
 
-        def lower(self, coords):
+        def lower(self, *args):
             return FakeLowered()
 
     class FakeJnp:
         int32 = np.int32
+        float32 = np.float32
 
         @staticmethod
-        def asarray(x):
-            return np.asarray(x)
+        def asarray(x, dtype=None):
+            return np.asarray(x, dtype=dtype)
+
+        @staticmethod
+        def reshape(x, shape):
+            return np.reshape(x, shape)
+
+        @staticmethod
+        def any(x):
+            return np.any(x)
 
         @staticmethod
         def array(x, dtype=None):
@@ -229,13 +238,11 @@ def _fake_import_module_factory():
             assert out_axes == 0
 
             def wrapped(coords_batch):
-                energies = []
-                forces = []
-                for coords in np.asarray(coords_batch):
-                    energy_i, forces_i = fn(coords)
-                    energies.append(np.asarray(energy_i))
-                    forces.append(np.asarray(forces_i))
-                return np.stack(energies, axis=0), np.stack(forces, axis=0)
+                per_walker = [fn(coords) for coords in np.asarray(coords_batch)]
+                return tuple(
+                    np.stack([np.asarray(out[k]) for out in per_walker], axis=0)
+                    for k in range(len(per_walker[0]))
+                )
 
             return wrapped
 
@@ -269,6 +276,13 @@ class TestExporterMain:
         assert manifest["input_signature"][0]["shape"] == [3, 3]
         assert manifest["output_signature"][0]["shape"] == [1]
         assert manifest["output_signature"][1]["shape"] == [3, 3]
+        # Same contract as the TorchScript wrappers: charges always present
+        # (zeros when the model has none), plus the overflow flag.
+        assert manifest["output_names"] == ["energy", "forces", "charges", "overflow"]
+        assert manifest["input_names"] == ["coordinates"]
+        assert manifest["periodic"] is False
+        assert manifest["output_signature"][2]["shape"] == [3]
+        assert manifest["output_signature"][2]["source"] == "zeros"
 
         reference = np.load(out_dir / "reference.npz")
         assert reference["coordinates"].shape == (3, 3)
