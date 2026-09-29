@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repo is
 
-Wrappers around six ML interatomic potentials (MACE, NequIP, Allegro, SchNetPack, TorchANI, X-MACE) that expose a single, fixed TorchScript interface so a NAMD C++ engine can load any of them as `mlff_model.pt`. Everything in this repo exists to enforce that contract.
+Wrappers around seven ML interatomic potentials (MACE, NequIP, Allegro, SchNetPack, TorchANI, X-MACE, SevenNet) that expose a single, fixed TorchScript interface so a NAMD C++ engine can load any of them as `mlff_model.pt`. Everything in this repo exists to enforce that contract.
 
 ## The wrapper contract (the design constraint everything else serves)
 
@@ -35,7 +35,7 @@ data.xyz → src/training/prepare_data.py → prepared_data/{xyz,schnetpack,torc
          → src/cli.py --model-type <model> → mlff_model.pt   (NAMD-ready)
 ```
 
-`src/compile_{mace_off,schnetpack,torchani}.py` are an alternative entry point: they take a **pretrained foundation model** (e.g. `MACE-OFF23_medium.model`, `ANI2x`) and produce the compiled artifact that `src/cli.py` then wraps. Use these when you don't want to train from scratch.
+`src/compile_{mace_off,schnetpack,torchani,sevennet}.py` are an alternative entry point: they take a **pretrained foundation model** (e.g. `MACE-OFF23_medium.model`, `ANI2x`) and produce the compiled artifact that `src/cli.py` then wraps. Use these when you don't want to train from scratch.
 
 Shared utilities used by all wrappers:
 
@@ -47,7 +47,7 @@ Shared utilities used by all wrappers:
 
 Install (per model):
 ```bash
-pip install -e ".[mace]"      # or [nequip], [allegro], [schnet], [torchani], [all], [test]
+pip install -e ".[mace]"      # or [nequip], [allegro], [schnet], [torchani], [sevennet], [all], [test]
 ```
 
 Run all tests (uses mock inner models — no real weights required):
@@ -74,7 +74,7 @@ bash tests/run_e2e_water_dimer.sh --skip-orca      # reuse data
 
 Wrap any compiled model for NAMD:
 ```bash
-python -m src.cli --model-type {mace|nequip|allegro|schnet|torchani|xmace} \
+python -m src.cli --model-type {mace|nequip|allegro|schnet|torchani|xmace|sevennet} \
     --compiled <path> --out mlff_model.pt
 # schnet additionally requires --r-max (must match training cutoff)
 # torchani uses --elements (default 1,6,7,8,16,9,17 = ANI-2x order H C N O S F Cl)
@@ -86,7 +86,7 @@ python -m src.cli --model-type {mace|nequip|allegro|schnet|torchani|xmace} \
 This project cannot be installed into a single Python env. Inspect `.claude/settings.local.json` for the canonical interpreter paths actually used:
 
 - **MACE_312** — MACE training/compile. Pins `e3nn 0.4.4` (transitive via `mace-torch 0.3.x`), which is incompatible with NequIP ≥ 0.6.
-- **allegro** / **nequip_env** — NequIP/Allegro. Needs `e3nn ≥ 0.6.0` (NequIP 0.17 requirement). Also used for TorchANI, SchNetPack, wrapping, the test suite and all `scripts/opt/` builds. `torch 2.11+cu130` — the **only env with working CUDA on the RTX 5080 (sm_120)**; GPU runs need `$SP/nvidia/cu13/lib` on `LD_LIBRARY_PATH` (NVRTC; without it cuEquivariance silently falls back).
+- **allegro** / **nequip_env** — NequIP/Allegro. Needs `e3nn ≥ 0.6.0` (NequIP 0.17 requirement). Also used for TorchANI, SchNetPack, SevenNet (`sevenn 0.13`, installed additively), wrapping, the test suite and all `scripts/opt/` builds. `torch 2.11+cu130` — the **only env with working CUDA on the RTX 5080 (sm_120)**; GPU runs need `$SP/nvidia/cu13/lib` on `LD_LIBRARY_PATH` (NVRTC; without it cuEquivariance silently falls back).
 - **fennix** — JAX + FeNNol, for the FeNNiX StableHLO export only.
 - **MLIP_2026** — newer torch + e3nn experimentation env.
 - **x_mace** — X-MACE (rhyan10/X-MACE, branch `X-MACE_socs`). Source lives at `~/x-mace-src` (editable install) and contains local TorchScript-compatibility patches; do **not** `pip install mace-torch` over it. Pins `e3nn 0.5.1`, `torch 2.2`, `numpy<2`. Used by `wrap_xmace.py` and to recompile `*.model` → `*_compiled.pt`.
