@@ -217,7 +217,9 @@ XLA_PYTHON_CLIENT_PREALLOCATE=false conda run -n fennix python scripts/export_fe
 | `--pbc` | periodic export: takes the live cell as a second input and returns the virial |
 | `--cell` | reference cell for `--pbc`: 3 numbers (orthorhombic) or 9 (rows a, b, c); defaults to the PDB `CRYST1` |
 | `--nblist-margin` | headroom on the fixed neighbour-list capacity (default 1.25); if MD outgrows it, the artifact sets an overflow flag and NAMD stops |
-| `--matmul-precision` | `default` is TF32 on NVIDIA GPUs; `--pbc` defaults to `highest` |
+| `--matmul-precision` | `default` is TF32 on NVIDIA GPUs; `--pbc` and `--pc-capacity` default to `highest` |
+| `--pc-capacity P` | point-charge embedding (NAMD `QMElecEmbed`): adds padded, masked point-charge inputs and a `pc_forces` output (NAMD's `forward_pc_forces` contract); NAMD stops if a QM group sends more than P point charges. Not with `--pbc`. No FeNNol model uses external point charges, so it needs `--test-model` |
+| `--test-model` | export a synthetic closed-form model (`pc-stub`, `pc-stub-cr`, `pc-stub-tip3p`, in `scripts/fennix_pc_test_models.py`) instead of a `.fnx`, to test the NAMD side |
 
 The output directory holds `manifest.json`, the `.stablehlo.mlir`, and reference outputs. In NAMD:
 
@@ -227,6 +229,8 @@ QMExecPath              /path/to/models/fennix/my_system/manifest.json
 ```
 
 Under `--pbc` the model uses the minimum-image convention, so every perpendicular box width must be at least 2 × cutoff. `namd_benchmarks/export_fennix.sh` shows how to export for a series of system sizes.
+
+With `--pc-capacity` the energy excludes the QM–point-charge Coulomb sum, which NAMD adds from the returned charges, and the forces include the charge response. Padded slots are made inert before the model sees them. The export fails if padding or the capacity changes the result, or if the artifact differs from a float64 reference.
 
 ---
 
@@ -461,7 +465,7 @@ The unit tests use **mock inner models**, so they check the interface without an
 ```bash
 bash tests/run_nequip_tests.sh                  # NequIP/Allegro in their own env
 bash tests/run_e2e_water_dimer.sh [--skip-orca] # ORCA -> train every model -> wrap
-JAX_PLATFORMS=cpu conda run -n fennix python -m pytest tests/test_fennix_export.py tests/test_fennix_pbc.py -v
+JAX_PLATFORMS=cpu conda run -n fennix python -m pytest tests/test_fennix_export.py tests/test_fennix_pbc.py tests/test_fennix_pc.py -v
 ```
 
 ---

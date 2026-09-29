@@ -17,6 +17,10 @@ The artifact follows the same contract as the TorchScript wrappers
                    -> (energy[1], forces[N,3], charges[N], overflow[1])
     --pbc:         f(coordinates[N,3], cells[1,3,3])
                    -> (energy[1], forces[N,3], charges[N], virial[3,3], overflow[1])
+    --pc-capacity P (point-charge embedding, NAMD QMElecEmbed; test models only,
+                   see build_pc_eval_fn):
+                   f(coordinates[N,3], pc_coordinates[P,3], pc_charges[P], pc_mask[P])
+                   -> (energy[1], forces[N,3], charges[N], pc_forces[P,3], overflow[1])
 
 - energy/forces/virial are eV and eV/A; NAMD applies `ev_to_kcal`.
 - charges are the model's per-atom `--charges-key` output when it has one,
@@ -28,6 +32,10 @@ The artifact follows the same contract as the TorchScript wrappers
 - overflow is 1.0 when a fixed-capacity neighbour list (or another FeNNol
   preprocessing buffer) ran out of room this step.  The results are then
   wrong, so NAMD stops.  --nblist-margin sets the headroom.
+- pc_forces: the forces on the point charges from the model's own dependence
+  on them, eV/A.  With point charges the energy excludes the QM-PC Coulomb
+  sum and forces carry the charge response (NAMD MLFF_BUILD_GUIDE.md 4.1);
+  NAMD pads the point charges to P with mask 0 and stops above P.
 
 Output order is recorded by name in manifest.json's output_signature, and NAMD
 reads the outputs by name.  A periodic artifact cannot be evaluated without a
@@ -55,6 +63,22 @@ if str(_REPO_ROOT) not in sys.path:
 from src.constants import SYMBOL_TO_Z
 
 EV_TO_KCAL = 23.0621
+COULOMB_KCAL = 332.0636  # NAMD's Coulomb constant; point-charge artifacts must use it
+
+
+def _test_models():
+    """scripts/fennix_pc_test_models.py, loaded by path (this script is run
+    directly and also loaded by path from the tests)."""
+    import importlib.util
+
+    name = "fennix_pc_test_models"
+    if name in sys.modules:
+        return sys.modules[name]
+    spec = importlib.util.spec_from_file_location(name, Path(__file__).resolve().parent / f"{name}.py")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+    return module
 
 
 def parse_z_list(text: str) -> np.ndarray:
@@ -359,6 +383,96 @@ def build_eval_fn(jnp, model, state, species, total_charge: int, *,
     return eval_ev_pbc
 
 
+PC_SENTINEL_DISTANCE = 1.0e4  # A from the QM centroid to the padded point charges
+PC_SENTINEL_SPACING = 100.0   # A between padded point charges (a 3D lattice)
+
+
+def build_pc_eval_fn(jnp, model_fn, *, capacity: int, ev_to_kcal: float,
+                     coulomb_kcal: float, overflow_fn=None):
+    """Point-charge embedding evaluator (NAMD contract, MLFF_BUILD_GUIDE.md 4.1).
+
+        f(coordinates[N,3], pc_coordinates[P,3], pc_charges[P], pc_mask[P])
+            -> (energy[1], forces[N,3], charges[N], pc_forces[P,3], overflow[1])
+
+    `model_fn(x, R, Q, mask) -> (energy_eV, charges[N])` is the model's own
+    dependence on the point charges.  With phi_i = k sum_J Q_J / |x_i - R_J|
+    (k = coulomb_kcal / ev_to_kcal, i.e. NAMD's constant in eV), it returns
+    energy = E, which EXCLUDES sum_i q_i phi_i (NAMD adds that Coulomb term
+    from `charges`, with the fixed-charge force on both sides), and
+    forces, pc_forces = -grad of L = E + sum_i q_i stop_gradient(phi_i), so
+    forces carry the charge response -phi dq/dx and pc_forces exclude the
+    fixed-charge Coulomb force.
+
+    Padded slots (mask 0) are made inert before the model sees them: their
+    charge becomes 0 and their position a far sentinel, both through `where`.
+    The sentinels form a cubic lattice with 100 A spacing whose corner is
+    1e4 A from the QM centroid along x, so they are beyond any cutoff from
+    the QM atoms and from each other, and distinct.  So a model that only
+    uses charge-weighted or cutoff-limited point-charge features cannot see
+    them, and their pc_forces are exactly 0
+    (the `where` passes no gradient to a masked slot's input position, and
+    selects before any 1/r, so a padded slot sitting on a QM atom gives no
+    NaN).  A model with other position-only point-charge features must honour
+    the boolean mask it is given.  phi is computed elementwise (no dot), so
+    TF32 matmul rounding cannot touch it.
+    """
+    jax = importlib.import_module("jax")
+    k_ev = float(coulomb_kcal) / float(ev_to_kcal)
+    side = max(1, int(math.ceil(capacity ** (1.0 / 3.0) - 1e-9)))
+    idx = np.arange(capacity)
+    lattice = PC_SENTINEL_SPACING * np.stack(
+        [idx % side, (idx // side) % side, idx // (side * side)], axis=-1).astype(np.float64)
+    lattice[:, 0] += PC_SENTINEL_DISTANCE
+
+    def eval_pc(coordinates, pc_coordinates, pc_charges, pc_mask):
+        dtype = coordinates.dtype
+        mask = pc_mask > 0.5
+        centre = jax.lax.stop_gradient(jnp.mean(coordinates, axis=0))
+        sentinel = centre[None, :] + jnp.asarray(lattice, dtype=dtype)
+        charges_pc = jnp.where(mask, pc_charges, 0.0)
+
+        def lagrangian(x, r_in):
+            r_pc = jnp.where(mask[:, None], r_in, sentinel)
+            energy, q = model_fn(x, r_pc, charges_pc, mask)
+            d = x[:, None, :] - r_pc[None, :, :]
+            dist = jnp.sqrt(jnp.sum(d * d, axis=-1))
+            phi = k_ev * jnp.sum(charges_pc[None, :] / dist, axis=1)
+            lag = energy + jnp.sum(q * jax.lax.stop_gradient(phi))
+            return lag, (energy, q)
+
+        (dldx, dldr), (energy, q) = jax.grad(lagrangian, argnums=(0, 1), has_aux=True)(
+            coordinates, pc_coordinates)
+        overflow = (overflow_fn(coordinates) if overflow_fn is not None
+                    else jnp.zeros((1,), dtype=jnp.float32))
+        return (jnp.reshape(energy, (1,)).astype(dtype), -dldx, q.astype(dtype),
+                -dldr, overflow)
+
+    return eval_pc
+
+
+def build_test_eval_fn(jnp, model_fn):
+    """A test model without point charges, in the plain (non-periodic)
+    artifact layout: f(coordinates) -> (energy[1], forces[N,3], charges[N],
+    overflow[1]).  Used for deterministic regression artifacts."""
+    jax = importlib.import_module("jax")
+
+    def eval_plain(coordinates):
+        dtype = coordinates.dtype
+        empty_r = jnp.zeros((0, 3), dtype=dtype)
+        empty_q = jnp.zeros((0,), dtype=dtype)
+        empty_m = jnp.zeros((0,), dtype=bool)
+
+        def energy_fn(x):
+            e, q = model_fn(x, empty_r, empty_q, empty_m)
+            return e, (e, q)
+
+        dedx, (energy, q) = jax.grad(energy_fn, has_aux=True)(coordinates)
+        return (jnp.reshape(energy, (1,)).astype(dtype), -dedx, q.astype(dtype),
+                jnp.zeros((1,), dtype=jnp.float32))
+
+    return eval_plain
+
+
 def default_coords(n_atoms: int) -> np.ndarray:
     """Return deterministic non-overlapping test coordinates in Angstrom."""
     if n_atoms == 3:
@@ -487,10 +601,41 @@ def main(argv: list[str] | None = None) -> None:
         default=None,
         help="JAX matmul precision baked into the graph. On NVIDIA GPUs 'default' means TF32, which rounds the cell/coordinate products in the periodic image vectors to ~1e-2 A, so --pbc defaults to 'highest'; non-periodic exports keep 'default'.",
     )
+    parser.add_argument(
+        "--pc-capacity",
+        type=int,
+        default=None,
+        help="Export the point-charge embedding variant (NAMD QMElecEmbed): extra inputs pc_coordinates [P,3], pc_charges [P], pc_mask [P] and output pc_forces [P,3], with P this capacity.  NAMD pads the point charges it sends to P and stops if a QM group has more; it reports the count at the first step, and 1.25 x that count is a reasonable capacity.  Defaults --matmul-precision to 'highest'.  Not with --pbc.",
+    )
+    parser.add_argument(
+        "--test-model",
+        choices=list(_test_models().TEST_MODELS),
+        default=None,
+        help="Export a synthetic closed-form test model instead of a FeNNol .fnx model (scripts/fennix_pc_test_models.py, the JAX twins of NAMD's make_pc_stub.py).  With --pc-capacity it is a point-charge embedding artifact; without, a plain artifact.",
+    )
     args = parser.parse_args(argv)
 
     if args.pdb is not None and args.z_list is not None:
         raise SystemExit("Use either --pdb or --z-list, not both.")
+    if args.pc_capacity is not None:
+        if args.pc_capacity < 1:
+            raise SystemExit("--pc-capacity must be >= 1")
+        if args.pbc:
+            raise SystemExit(
+                "--pc-capacity cannot be combined with --pbc: NAMD runs a periodic "
+                "model only without point charges (the MLFF rule)."
+            )
+        if args.test_model is None:
+            raise SystemExit(
+                "--pc-capacity needs a model that uses the point charges, and no "
+                "FeNNol model does: its ELECTRIC_FIELD / polarisation modules act on "
+                "the model's own atoms, and FENNIX-BIO1 returns zero charges.  A BIO1 "
+                "point-charge artifact would be mechanical embedding labelled as "
+                "electrostatic.  Use --test-model to test the pipeline; a future "
+                "embedding model plugs into build_pc_eval_fn()."
+            )
+    if args.test_model is not None and args.pbc:
+        raise SystemExit("--test-model has no periodic form; drop --pbc.")
     if args.cell is not None and not args.pbc:
         raise SystemExit("--cell only applies with --pbc.")
     if args.nblist_margin < 1.0:
@@ -591,89 +736,151 @@ def main(argv: list[str] | None = None) -> None:
     if cell is not None:
         print(f"Periodic (minimum image), reference cell rows: {cell.tolist()}")
 
-    print(f"Loading FeNNol model: {model_path}")
-    model = FENNIX.load(str(model_path))
-    print(
-        "Loaded:",
-        f"cutoff={model.cutoff}",
-        f"energy_unit={model.energy_unit}",
-        f"energy_terms={model.energy_terms}",
-    )
-
-    cutoff = float(model.cutoff)
-    min_width = None
-    if cell is not None:
-        min_width = cell_min_perp_width(cell)
-        if min_width < 2.0 * cutoff:
-            raise SystemExit(
-                f"Reference cell is {min_width:.3f} A across at its thinnest, under "
-                f"2 * cutoff = {2.0 * cutoff:.3f} A.  Minimum image would drop "
-                "interactions; use a larger box."
-            )
-
-    single_raw_np = {
-        "species": Z,
-        "coordinates": coords,
-        "natoms": np.array([n_atoms], dtype=np.int32),
-        "batch_index": np.zeros(n_atoms, dtype=np.int32),
-        "total_charge": np.array([total_charge], dtype=np.int32),
-    }
-    if cell is not None:
-        single_raw_np["cells"] = cell[None, :, :]
-        single_raw_np["flags"] = {"minimum_image": None}
-
-    # Warm/init preprocessing once.  The JAX process path then uses the fixed
-    # neighbor-list capacities in this state, avoiding Python-side checks.
-    # For --pbc the warm-up sees the real periodic structure, so the pair
-    # buffers are sized for fully coordinated atoms, then get the margin.
-    _ = model.preprocess(**single_raw_np)
-    state = scale_nblist_capacity(model.preproc_state, args.nblist_margin)
-
-    matmul_precision = args.matmul_precision or ("highest" if cell is not None else "default")
-    print(f"Matmul precision: {matmul_precision}")
-    precision_ctx = (
-        contextlib.nullcontext() if matmul_precision == "default"
-        else jax.default_matmul_precision(matmul_precision)
-    )
-    precision_ctx.__enter__()
-
-    trace_info: dict = {}
-    eval_ev = build_eval_fn(
-        jnp, model, state, jnp.asarray(Z), total_charge,
-        periodic=cell is not None, charges_key=args.charges_key, info=trace_info,
-    )
-    output_names = ["energy", "forces", "charges"]
-    if cell is not None:
-        output_names.append("virial")
-    output_names.append("overflow")
-
+    pc_capacity = args.pc_capacity
+    if (args.test_model is not None or pc_capacity is not None) and n_walkers != 1:
+        raise SystemExit("--test-model and --pc-capacity support a single walker only.")
     virial_ref_np = None
-    if n_walkers == 1:
-        jit_eval = jax.jit(eval_ev)
-        if cell is not None:
-            energy_ref, forces_ref, vir_ref, _ = model.energy_and_forces_and_virial(**single_raw_np)
-            virial_ref_np = -np.asarray(vir_ref, dtype=np.float32).reshape(3, 3).T
-            jit_args = (jnp.asarray(export_coords), jnp.asarray(cell[None, :, :]))
+    charges_ref_np = None
+    pc_forces_ref_np = None
+    pc_ref = None  # (pc_coordinates, pc_charges, pc_mask) of the reference structure
+    trace_info: dict = {}
+    if args.test_model is not None:
+        tm = _test_models()
+        print(f"Test model: {args.test_model} (closed form, scripts/fennix_pc_test_models.py)")
+        model_fn = tm.make_model_fn(args.test_model, Z, EV_TO_KCAL)
+        cutoff = None
+        min_width = None
+        matmul_precision = args.matmul_precision or ("highest" if pc_capacity else "default")
+        print(f"Matmul precision: {matmul_precision}")
+        precision_ctx = (
+            contextlib.nullcontext() if matmul_precision == "default"
+            else jax.default_matmul_precision(matmul_precision)
+        )
+        precision_ctx.__enter__()
+        trace_info["charges_source"] = f"model:{args.test_model}"
+        if pc_capacity is not None:
+            # Reference point charges for the validation below, padded to
+            # the capacity with the slot layout NAMD uses (zeros, mask 0).
+            # Leave at least one slot padded so the validation covers padding.
+            n_ref = min(pc_capacity - 1, 24) if pc_capacity > 1 else 1
+            r_ref, q_ref_pc = tm.reference_point_charges(coords, n_ref)
+            pc_xyz = np.zeros((pc_capacity, 3), dtype=np.float32)
+            pc_q = np.zeros((pc_capacity,), dtype=np.float32)
+            pc_mask = np.zeros((pc_capacity,), dtype=np.float32)
+            pc_xyz[:n_ref] = r_ref
+            pc_q[:n_ref] = q_ref_pc
+            pc_mask[:n_ref] = 1.0
+            pc_ref = (pc_xyz, pc_q, pc_mask)
+            eval_ev = build_pc_eval_fn(jnp, model_fn, capacity=pc_capacity,
+                                       ev_to_kcal=EV_TO_KCAL, coulomb_kcal=COULOMB_KCAL)
+            output_names = ["energy", "forces", "charges", "pc_forces", "overflow"]
+            jit_args = (jnp.asarray(export_coords), jnp.asarray(pc_xyz),
+                        jnp.asarray(pc_q), jnp.asarray(pc_mask))
+            r_real, q_real = r_ref.astype(np.float64), q_ref_pc.astype(np.float64)
         else:
-            energy_ref, forces_ref, _ = model.energy_and_forces(**single_raw_np)
+            eval_ev = build_test_eval_fn(jnp, model_fn)
+            output_names = ["energy", "forces", "charges", "overflow"]
             jit_args = (jnp.asarray(export_coords),)
+            r_real, q_real = np.zeros((0, 3)), np.zeros((0,))
+        # Float64 closed-form reference, in the artifact's units (eV): the
+        # contract's forces are those of U = E + sum q phi minus NAMD's
+        # fixed-charge Coulomb forces.
+        x64 = coords.astype(np.float64)
+        e_ref, charges_ref_np = tm.reference_energy_charges(args.test_model, Z, x64, r_real, q_real)
+        fu_qm, fu_pc = tm.reference_forces_fd(args.test_model, Z, x64, r_real, q_real)
+        if r_real.shape[0]:
+            fc_qm, fc_pc = tm.reference_coulomb_forces(x64, charges_ref_np, r_real, q_real)
+            fu_qm, fu_pc = fu_qm - fc_qm, fu_pc - fc_pc
+            pc_forces_ref_np = np.zeros((pc_capacity, 3))
+            pc_forces_ref_np[: r_real.shape[0]] = fu_pc / EV_TO_KCAL
+        energy_ref = np.asarray([e_ref / EV_TO_KCAL])
+        forces_ref = fu_qm / EV_TO_KCAL
+        # keep_unused: jit drops arguments the graph never reads, and NAMD
+        # binds all four point-charge inputs by name.  (PC path only, so the
+        # plain exports stay byte-identical.)
+        jit_eval = jax.jit(eval_ev, keep_unused=pc_capacity is not None)
     else:
-        jit_eval = jax.jit(jax.vmap(eval_ev, in_axes=0, out_axes=0))
-        ref_energies = []
-        ref_forces = []
-        for walker_coords in export_coords:
-            energy_ref_i, forces_ref_i, _ = model.energy_and_forces(
-                species=single_raw_np["species"],
-                coordinates=walker_coords,
-                natoms=single_raw_np["natoms"],
-                batch_index=single_raw_np["batch_index"],
-                total_charge=single_raw_np["total_charge"],
-            )
-            ref_energies.append(np.asarray(energy_ref_i))
-            ref_forces.append(np.asarray(forces_ref_i))
-        energy_ref = np.stack(ref_energies, axis=0)
-        forces_ref = np.stack(ref_forces, axis=0)
-        jit_args = (jnp.asarray(export_coords),)
+        print(f"Loading FeNNol model: {model_path}")
+        model = FENNIX.load(str(model_path))
+        print(
+            "Loaded:",
+            f"cutoff={model.cutoff}",
+            f"energy_unit={model.energy_unit}",
+            f"energy_terms={model.energy_terms}",
+        )
+
+        cutoff = float(model.cutoff)
+        min_width = None
+        if cell is not None:
+            min_width = cell_min_perp_width(cell)
+            if min_width < 2.0 * cutoff:
+                raise SystemExit(
+                    f"Reference cell is {min_width:.3f} A across at its thinnest, under "
+                    f"2 * cutoff = {2.0 * cutoff:.3f} A.  Minimum image would drop "
+                    "interactions; use a larger box."
+                )
+
+        single_raw_np = {
+            "species": Z,
+            "coordinates": coords,
+            "natoms": np.array([n_atoms], dtype=np.int32),
+            "batch_index": np.zeros(n_atoms, dtype=np.int32),
+            "total_charge": np.array([total_charge], dtype=np.int32),
+        }
+        if cell is not None:
+            single_raw_np["cells"] = cell[None, :, :]
+            single_raw_np["flags"] = {"minimum_image": None}
+
+        # Warm/init preprocessing once.  The JAX process path then uses the fixed
+        # neighbor-list capacities in this state, avoiding Python-side checks.
+        # For --pbc the warm-up sees the real periodic structure, so the pair
+        # buffers are sized for fully coordinated atoms, then get the margin.
+        _ = model.preprocess(**single_raw_np)
+        state = scale_nblist_capacity(model.preproc_state, args.nblist_margin)
+
+        matmul_precision = args.matmul_precision or ("highest" if cell is not None else "default")
+        print(f"Matmul precision: {matmul_precision}")
+        precision_ctx = (
+            contextlib.nullcontext() if matmul_precision == "default"
+            else jax.default_matmul_precision(matmul_precision)
+        )
+        precision_ctx.__enter__()
+
+        eval_ev = build_eval_fn(
+            jnp, model, state, jnp.asarray(Z), total_charge,
+            periodic=cell is not None, charges_key=args.charges_key, info=trace_info,
+        )
+        output_names = ["energy", "forces", "charges"]
+        if cell is not None:
+            output_names.append("virial")
+        output_names.append("overflow")
+
+        if n_walkers == 1:
+            jit_eval = jax.jit(eval_ev)
+            if cell is not None:
+                energy_ref, forces_ref, vir_ref, _ = model.energy_and_forces_and_virial(**single_raw_np)
+                virial_ref_np = -np.asarray(vir_ref, dtype=np.float32).reshape(3, 3).T
+                jit_args = (jnp.asarray(export_coords), jnp.asarray(cell[None, :, :]))
+            else:
+                energy_ref, forces_ref, _ = model.energy_and_forces(**single_raw_np)
+                jit_args = (jnp.asarray(export_coords),)
+        else:
+            jit_eval = jax.jit(jax.vmap(eval_ev, in_axes=0, out_axes=0))
+            ref_energies = []
+            ref_forces = []
+            for walker_coords in export_coords:
+                energy_ref_i, forces_ref_i, _ = model.energy_and_forces(
+                    species=single_raw_np["species"],
+                    coordinates=walker_coords,
+                    natoms=single_raw_np["natoms"],
+                    batch_index=single_raw_np["batch_index"],
+                    total_charge=single_raw_np["total_charge"],
+                )
+                ref_energies.append(np.asarray(energy_ref_i))
+                ref_forces.append(np.asarray(forces_ref_i))
+            energy_ref = np.stack(ref_energies, axis=0)
+            forces_ref = np.stack(ref_forces, axis=0)
+            jit_args = (jnp.asarray(export_coords),)
 
     print("Evaluating Python/JAX reference and lowered executable...")
     outputs_jit = {name: np.asarray(v) for name, v in zip(output_names, jit_eval(*jit_args))}
@@ -699,11 +906,65 @@ def main(argv: list[str] | None = None) -> None:
         virial_diff = float(np.max(np.abs(outputs_jit["virial"] - virial_ref_np)))
         print("virial (NAMD convention) eV:", outputs_jit["virial"].tolist())
         print("virial max abs diff eV:", virial_diff)
+    charges_diff = None
+    if charges_ref_np is not None:
+        charges_diff = float(np.max(np.abs(outputs_jit["charges"] - charges_ref_np)))
+        print("charges max abs diff e:", charges_diff)
+    pc_forces_diff = None
+    if pc_forces_ref_np is not None:
+        pc_forces_diff = float(np.max(np.abs(outputs_jit["pc_forces"] - pc_forces_ref_np)))
+        print("pc_forces max abs diff eV/A:", pc_forces_diff)
+        if np.any(outputs_jit["pc_forces"][pc_ref[2] == 0] != 0):
+            raise SystemExit("pc_forces are nonzero on padded slots; exporter bug.")
+        # Padding invariance: garbage in the masked slots (positions on the QM
+        # atoms, nonzero charges) must not change anything (NAMD repeats this
+        # check at load).
+        g_xyz, g_q = pc_ref[0].copy(), pc_ref[1].copy()
+        pad = np.nonzero(pc_ref[2] == 0)[0]
+        g_xyz[pad] = coords[pad % n_atoms]
+        g_q[pad] = np.where(pad % 2 == 0, -0.7, 0.7)
+        garbage = jit_eval(jit_args[0], jnp.asarray(g_xyz), jnp.asarray(g_q), jit_args[3])
+        for name, v in zip(output_names, garbage):
+            v = np.asarray(v)
+            if not np.all(np.isfinite(v)) or not np.allclose(v, outputs_jit[name], rtol=1e-5, atol=1e-6):
+                raise SystemExit(f"output {name!r} depends on the padded point-charge slots; "
+                                 "the model does not honour pc_mask.")
+        # Capacity invariance: the same real point charges with no padding at
+        # all (capacity = their count) must give the same outputs.  The check
+        # above cannot see a model that, e.g., averages point-charge features
+        # over the capacity instead of the real count, because the padded
+        # slots it varies are replaced by sentinels before the model sees them.
+        n_real = int(np.count_nonzero(pc_ref[2]))
+        eval_tight = build_pc_eval_fn(jnp, model_fn, capacity=n_real,
+                                      ev_to_kcal=EV_TO_KCAL, coulomb_kcal=COULOMB_KCAL)
+        tight = [np.asarray(v) for v in jax.jit(eval_tight)(
+            jit_args[0], jnp.asarray(pc_ref[0][:n_real]), jnp.asarray(pc_ref[1][:n_real]),
+            jnp.asarray(pc_ref[2][:n_real]))]
+        for name, v in zip(output_names, tight):
+            full = outputs_jit[name][:n_real] if name == "pc_forces" else outputs_jit[name]
+            if not np.all(np.isfinite(v)) or not np.allclose(v, full, rtol=1e-5, atol=1e-6):
+                raise SystemExit(f"output {name!r} changes between capacity {n_real} and "
+                                 f"{pc_capacity} with the same point charges; the model's "
+                                 "point-charge features depend on the padding.")
+        # The artifact must reproduce the float64 closed-form reference.
+        for name, got, want in (("energy", energy_jit_np, energy_ref_np),
+                                ("forces", forces_jit_np, forces_ref_np),
+                                ("pc_forces", outputs_jit["pc_forces"], pc_forces_ref_np)):
+            tol = 1e-4 * max(1.0, float(np.max(np.abs(want))))
+            if not np.max(np.abs(np.asarray(got) - np.asarray(want))) <= tol:
+                raise SystemExit(f"{name} differs from the float64 reference by more than "
+                                 f"{tol:.3g}; the export is wrong.")
     print(f"charges output: {charges_source}")
 
     print("Lowering to StableHLO...")
     lowered = jit_eval.lower(*jit_args)
     stablehlo_text = str(lowered.compiler_ir(dialect="stablehlo"))
+    if pc_capacity is not None:
+        main_sig = stablehlo_text[stablehlo_text.index("func.func public @main("):]
+        main_sig = main_sig[: main_sig.index(")")]
+        if main_sig.count("%arg") != len(jit_args):
+            raise SystemExit(f"lowered @main takes {main_sig.count('%arg')} arguments, "
+                             f"expected {len(jit_args)} (an input was dropped)")
     precision_ctx.__exit__(None, None, None)
     stablehlo_path = out_dir / "fennix_bio1_eval.stablehlo.mlir"
     stablehlo_path.write_text(stablehlo_text)
@@ -729,6 +990,10 @@ def main(argv: list[str] | None = None) -> None:
         extra_npz["cell"] = cell
         extra_npz["virial_jit_ev"] = outputs_jit["virial"]
         extra_npz["virial_ref_ev"] = virial_ref_np
+    if pc_ref is not None:
+        extra_npz["pc_coordinates"], extra_npz["pc_charges"], extra_npz["pc_mask"] = pc_ref
+        extra_npz["pc_forces_jit_ev_a"] = outputs_jit["pc_forces"]
+        extra_npz["pc_forces_ref_ev_a"] = pc_forces_ref_np
     np.savez(
         out_dir / "reference.npz",
         Z=Z,
@@ -767,6 +1032,9 @@ def main(argv: list[str] | None = None) -> None:
                    "convention": "sum_i f_i (x) r_i, strain form under PBC"},
         "overflow": {"dtype": "float32", "units": "flag",
                      "meaning": "nonzero = a fixed-capacity preprocessing buffer overflowed; results invalid"},
+        "pc_forces": {"dtype": "float32", "units": "eV/Angstrom",
+                      "meaning": "-dL/dR_pc, L = E + sum_i q_i stop_gradient(phi_i); excludes the "
+                                 "fixed-charge Coulomb force, which NAMD adds; exactly 0 on padded slots"},
     }
     input_signature = [
         {"name": "coordinates", "shape": list(export_coords.shape), "dtype": "float32", "units": "Angstrom"}
@@ -776,10 +1044,17 @@ def main(argv: list[str] | None = None) -> None:
             {"name": "cells", "shape": [1, 3, 3], "dtype": "float32", "units": "Angstrom",
              "layout": "rows are lattice vectors a, b, c"}
         )
+    if pc_capacity is not None:
+        input_signature += [
+            {"name": "pc_coordinates", "shape": [pc_capacity, 3], "dtype": "float32", "units": "Angstrom"},
+            {"name": "pc_charges", "shape": [pc_capacity], "dtype": "float32", "units": "e"},
+            {"name": "pc_mask", "shape": [pc_capacity], "dtype": "float32", "units": "flag",
+             "meaning": "1 = real point charge, 0 = padding (inert)"},
+        ]
 
     manifest = {
-        "model_path": str(model_path),
-        "model_type": "FENNIX-BIO1",
+        "model_path": str(model_path) if args.test_model is None else None,
+        "model_type": "FENNIX-BIO1" if args.test_model is None else f"TEST:{args.test_model}",
         "n_atoms": n_atoms,
         "n_walkers": n_walkers,
         "z_list": Z.tolist(),
@@ -800,11 +1075,15 @@ def main(argv: list[str] | None = None) -> None:
         ],
         "periodic": cell is not None,
         "conversion": {"ev_to_kcal": EV_TO_KCAL},
-        "fennol": {
+        "fennol": None if args.test_model is not None else {
             "cutoff": cutoff,
             "energy_unit": str(model.energy_unit),
             "energy_terms": list(model.energy_terms),
         },
+        # Point-charge embedding (NAMD MLFF_BUILD_GUIDE.md 4.1): energy
+        # excludes the QM-PC Coulomb sum, forces carry the charge response,
+        # pc_forces are added to NAMD's Coulomb force on the point charges.
+        "pc_embedding": pc_capacity is not None,
         "nblist_margin": float(args.nblist_margin),
         "matmul_precision": matmul_precision,
         "jax": {
@@ -824,6 +1103,15 @@ def main(argv: list[str] | None = None) -> None:
         },
         "runtime_note": "This artifact is specialized to fixed atom identity/count and fixed walker count. Runtime Python is not required by the intended PJRT C++ consumer.",
     }
+    if charges_diff is not None:
+        manifest["validation"]["charges_max_abs_diff_e"] = charges_diff
+    if pc_capacity is not None:
+        manifest["pc_capacity"] = pc_capacity
+        manifest["pc_coulomb_kcal"] = COULOMB_KCAL
+        # The constant actually in the graph (phi in eV/e); NAMD checks that
+        # pc_coulomb_ev * ev_to_kcal is its own Coulomb constant.
+        manifest["pc_coulomb_ev"] = COULOMB_KCAL / EV_TO_KCAL
+        manifest["validation"]["pc_forces_max_abs_diff_ev_a"] = pc_forces_diff
     if cell is not None:
         manifest["pbc_mode"] = "minimum_image"
         manifest["pbc_cutoff"] = cutoff
