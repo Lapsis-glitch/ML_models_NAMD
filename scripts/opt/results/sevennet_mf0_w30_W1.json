@@ -1,0 +1,52 @@
+{
+ "meta": {
+  "torch": "2.11.0+cu130",
+  "gpu": "NVIDIA GeForce RTX 5080 Laptop GPU",
+  "time": "2026-09-30 00:44:15",
+  "argv": [
+   "/home/rat/PycharmProjects/ML_models_NAMD/scripts/opt/nequip/../bench_common.py",
+   "--extra-lib",
+   "scripts/opt/nequip/oeq_native/liboeq_native.so",
+   "--model",
+   "mf0_stock=/tmp/claude-1000/-home-rat-PycharmProjects-ML-models-NAMD/20282d6a-fec1-429d-a9df-334eb593e110/scratchpad/mf0_stock_w.pt",
+   "--model",
+   "mf0_fast=/tmp/claude-1000/-home-rat-PycharmProjects-ML-models-NAMD/20282d6a-fec1-429d-a9df-334eb593e110/scratchpad/mf0_fast_w.pt",
+   "--systems",
+   "30",
+   "--walkers",
+   "1",
+   "--jitter",
+   "0.02",
+   "--out",
+   "scripts/opt/results/sevennet_mf0_w30_W1.json"
+  ]
+ },
+ "results": [
+  {
+   "system": "water30",
+   "n_atoms": 30,
+   "walkers": 1,
+   "model": "mf0_stock",
+   "peak_alloc_mib": 61.6,
+   "dE_max_kcal": 0.0,
+   "dF_max_kcal_A": 0.0,
+   "median_ms": 55.927,
+   "p10_ms": 32.827,
+   "p90_ms": 67.9,
+   "n": 90
+  },
+  {
+   "system": "water30",
+   "n_atoms": 30,
+   "walkers": 1,
+   "model": "mf0_fast",
+   "peak_alloc_mib": 10.9,
+   "dE_max_kcal": 5.498432983586099e-06,
+   "dF_max_kcal_A": 2.248169154128732e-05,
+   "median_ms": 11.39,
+   "p10_ms": 5.068,
+   "p90_ms": 13.675,
+   "n": 90
+  }
+ ]
+}

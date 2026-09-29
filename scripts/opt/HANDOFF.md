@@ -99,3 +99,10 @@ Next (per plan): pytest, final combined bench of all optimised artifacts, cross-
 - src/cli.py now has the SchNet fast flags (--fast etc.), TorchANI --lean and --extra-libs (resolves the "src/cli.py lacks new schnet flags" item above).
 - mace/build_fast.py --state (any MACE), ani/build_fast.py --model ani1x|ani1ccx|ani2x, parity checks cycle all species; build scripts read PY/SP/TORCH/MACE_PY from env.
 - Rebuilt MACE-OFF23, NequIP-OAM-L, ANI-2x, SchNet via the new path: identical to models/opt artifacts. Recipe documented in README "Guide: optimised builds".
+
+## 2026-09-30: SevenNet optimised (user request, this session ran it directly, no subagent)
+- scripts/opt/sevennet/{build.sh,parity.py,prof.py,run_grid.sh,namd_smoke/,REPORT.md}; rewrites in src/sevennet_fast.py, entry point `src.compile_sevennet --fast` (any checkpoint, multi-fidelity included); artifacts models/opt/sevennet_{baseline,oeq,fast}{,_d3}.pt.
+- OEQ via SevenNet's own deploy(use_oeq=True) (new `src.compile_sevennet --oeq`) + the NequIP liboeq_native.so, unchanged; FastSevenNet exact rewrites (dense linears, gate, fused radial MLP, fused intro/si1).
+- 7net-0: 5.7x @30, 7.7x @300, 12.4x @3000 (bench_common); namd3 300 atoms 40.5 -> 8.6 ms/step. 7net-l3i5 also works (9.5x/14.3x); multi-fidelity: kernels only.
+- Wrapper: read_sevennet_metadata reads _extra_files from the zip; clear error if an OEQ deployment is loaded without the op lib. Scripted path unchanged.
+- 2026-09-30 (user): wrapper now sums SevenNet energies in fp64; src.cli auto-loads liboeq_native.so for OEQ deployments. Pending: D3 is the next bottleneck at >=3000 atoms.

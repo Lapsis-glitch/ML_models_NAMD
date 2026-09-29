@@ -232,3 +232,74 @@ def test_cuda_matches_cpu(wrapper):
     assert abs(e1.item() - e0.item()) < 1e-5 * abs(e0.item())
     assert _close(f1.detach().cpu(), f0, fmax, 1e-4)
     assert _close(v1.detach().cpu(), v0, v0.abs().max().item(), 1e-4)
+
+
+# -------------------------------------------------------------------
+#  Optimised deployments (scripts/opt/sevennet): OEQ kernels and the
+#  FastSevenNet rewrites must reproduce the stock deployment
+# -------------------------------------------------------------------
+
+def _oeq_available():
+    # find_spec, not import: importing openequivariance registers its ops,
+    # which must not happen at collection time.
+    import importlib.util
+    return torch.cuda.is_available() and importlib.util.find_spec("openequivariance") is not None
+
+
+@pytest.fixture(scope="module")
+def optimised_wrappers():
+    from src.compile_sevennet import compile_sevennet
+
+    tmp = tempfile.mkdtemp()
+    oeq = os.path.join(tmp, "inner_oeq.pt")
+    fast = os.path.join(tmp, "inner_fast.pt")
+    assert compile_sevennet(CHECKPOINT, oeq, oeq=True) == "oeq"
+    assert compile_sevennet(CHECKPOINT, fast, fast=True) == "fast"
+    return {k: SevenNet_Wrapper(p, device="cuda").eval()
+            for k, p in (("stock", MODEL), ("oeq", oeq), ("fast", fast))}
+
+
+def _run_cuda(w, coords, Z, cell):
+    c = coords.cuda().requires_grad_(True)
+    e, f, _, v = w(c, Z.cuda(), EMPTY_PC.cuda(), EMPTY_PC_Q.cuda(), cell.reshape(1, 3, 3).cuda())
+    return e.detach().cpu(), f.detach().cpu(), v.detach().cpu()
+
+
+@pytest.mark.skipif(not _oeq_available(), reason="needs CUDA and openequivariance")
+@pytest.mark.parametrize("variant", ["oeq", "fast"])
+@pytest.mark.parametrize("system", ["molecule", "periodic"])
+def test_optimised_deployment_matches_stock(optimised_wrappers, variant, system):
+    coords, Z = _molecule() if system == "molecule" else _water_box(seed=6)
+    cell = torch.zeros(3, 3, dtype=torch.float64) if system == "molecule" else TRICLINIC
+    e0, f0, v0 = _run_cuda(optimised_wrappers["stock"], coords, Z, cell)
+    e1, f1, v1 = _run_cuda(optimised_wrappers[variant], coords, Z, cell)
+    assert abs(e1.item() - e0.item()) < 1e-5 * abs(e0.item())
+    assert _close(f1, f0, f0.abs().max().item(), 1e-4)
+    assert _close(v1, v0, v0.abs().max().item(), 1e-4)
+
+
+@pytest.fixture(scope="module")
+def multifidelity_wrappers():
+    """7net-mf-0 at its second fidelity: the rewrites fold the modality one-hot
+    into constant biases, so a non-zero modal index is the case to check."""
+    from src.compile_sevennet import compile_sevennet
+
+    tmp = tempfile.mkdtemp()
+    stock = os.path.join(tmp, "mf_stock.pt")
+    fast = os.path.join(tmp, "mf_fast.pt")
+    compile_sevennet("7net-mf-0", stock, modal="PBE")
+    assert compile_sevennet("7net-mf-0", fast, modal="PBE", fast=True) == "fast"
+    return {k: SevenNet_Wrapper(p, device="cuda").eval()
+            for k, p in (("stock", stock), ("fast", fast))}
+
+
+@pytest.mark.skipif(not _oeq_available(), reason="needs CUDA and openequivariance")
+@pytest.mark.parametrize("system", ["molecule", "periodic"])
+def test_fast_multifidelity_matches_stock(multifidelity_wrappers, system):
+    coords, Z = _molecule() if system == "molecule" else _water_box(seed=7)
+    cell = torch.zeros(3, 3, dtype=torch.float64) if system == "molecule" else TRICLINIC
+    e0, f0, v0 = _run_cuda(multifidelity_wrappers["stock"], coords, Z, cell)
+    e1, f1, v1 = _run_cuda(multifidelity_wrappers["fast"], coords, Z, cell)
+    assert abs(e1.item() - e0.item()) < 1e-5 * abs(e0.item())
+    assert _close(f1, f0, f0.abs().max().item(), 1e-4)
+    assert _close(v1, v0, v0.abs().max().item(), 1e-4)

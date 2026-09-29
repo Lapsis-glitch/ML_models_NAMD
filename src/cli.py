@@ -10,6 +10,9 @@ Usage examples::
     python -m src.cli --model-type torchani --compiled model.pt --out mlff.pt --elements 1,6,7,8
     python -m src.cli --model-type sevennet --compiled deployed_serial.pt --out mlff.pt
     python -m src.cli --model-type sevennet --compiled deployed_serial.pt --d3 --out mlff.pt
+    # optimised SevenNet (python -m src.compile_sevennet --fast); the OEQ op
+    # library is loaded automatically
+    python -m src.cli --model-type sevennet --compiled deployed_fast.pt --out mlff.pt
 
 Optimised inner models (scripts/opt/) use custom ops; pass the same native
 libraries NAMD will load via NAMD_MLFF_EXTRA_LIBS::
@@ -157,7 +160,14 @@ def main(argv=None):
         ).eval()
 
     elif model_type == "sevennet":
-        from .wrappers.wrap_sevennet import SevenNet_Wrapper
+        from .wrappers.wrap_sevennet import SevenNet_Wrapper, load_oeq_library, uses_oeq
+        if uses_oeq(args.compiled):
+            # OEQ / --fast deployment: register its ops from the native library
+            # unless --extra-libs already did
+            lib = load_oeq_library()
+            if lib:
+                print(f"[SevenNet] OpenEquivariance deployment: loaded {lib}\n"
+                      f"  run NAMD with  export NAMD_MLFF_EXTRA_LIBS={lib}")
         wrapper = SevenNet_Wrapper(args.compiled, device=args.device).eval()
 
     else:

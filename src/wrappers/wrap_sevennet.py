@@ -24,15 +24,22 @@ to the weights, which is also where ``pair_e3gnn.cpp`` reads them:
     symbol is its type index.
   * ``cutoff`` - Å.
   * ``dtype`` - ``single`` (float32, every released model) or ``double``.
+  * ``oeq`` - ``yes`` when deployed with OpenEquivariance kernels
+    (``src.compile_sevennet --oeq``).  Their op ``libtorch_tp_jit::jit_conv_forward``
+    must be registered before the model loads: the native library
+    ``scripts/opt/nequip/oeq_native/liboeq_native.so`` (``--extra-libs`` /
+    ``NAMD_MLFF_EXTRA_LIBS``), or ``import openequivariance`` in Python.  CUDA only.
 
 Positions, strain and edge vectors stay float64 and are cast to the model's
 dtype only at the call, as LAMMPS does, so large absolute coordinates don't
 cost precision in the edge vectors.
 
-Batching: the deployment sets ``is_batch_data=False``, so on a block-diagonal
-graph ``inferred_total_energy`` is the sum over every molecule.  SevenNet is
-strictly local and ``atomic_energy`` already carries the per-atom shift and
-scale, so per-molecule energies are ``atomic_energy`` summed over ``batch``.
+Energies: SevenNet is strictly local and ``atomic_energy`` already carries
+the per-atom shift and scale, so the wrapper sums ``atomic_energy`` itself, in
+float64 (SevenNet's own ``inferred_total_energy`` is a float32 sum, which
+rounds a 3000-atom energy by ~1e-2 kcal/mol).  The deployment sets
+``is_batch_data=False``, so for a batch the per-molecule energies are
+``atomic_energy`` summed over ``batch``.
 
 Exposes the standard NAMD MLIP interface:
     forward(coords, Z, pc_coords, pc_charges, cell)
@@ -41,6 +48,8 @@ Exposes the standard NAMD MLIP interface:
         -> (energies, forces, charges, virials)
 """
 
+import os
+import zipfile
 from typing import Dict, Tuple
 
 import torch
@@ -56,12 +65,28 @@ from ..virial import (make_strain, apply_strain, forces_and_virial,
 _DTYPES = {"single": torch.float32, "double": torch.float64}
 
 
+def _read_extra_files(path: str) -> Dict[str, str]:
+    """The ``_extra_files`` of a TorchScript archive, read from the zip without
+    loading the model (which would need any custom ops it uses)."""
+    meta: Dict[str, str] = {}
+    with zipfile.ZipFile(path) as zf:
+        for name in zf.namelist():
+            parts = name.split("/")
+            if len(parts) == 3 and parts[1] == "extra":
+                meta[parts[2]] = zf.read(name).decode().strip()
+    return meta
+
+
+def uses_oeq(path: str) -> bool:
+    """Whether a SevenNet deployment was built with OpenEquivariance kernels."""
+    return _read_extra_files(path).get("oeq", "no") == "yes"
+
+
 def read_sevennet_metadata(path: str) -> Tuple[Dict[int, int], float, torch.dtype]:
     """``({Z: type_index}, cutoff, dtype)`` from a SevenNet deployment."""
-    extra = {"chemical_symbols_to_index": "", "cutoff": "", "dtype": ""}
-    torch.jit.load(path, map_location="cpu", _extra_files=extra)
-    meta = {k: (v.decode() if isinstance(v, bytes) else v).strip()
-            for k, v in extra.items()}
+    meta = _read_extra_files(path)
+    for key in ("chemical_symbols_to_index", "cutoff", "dtype"):
+        meta.setdefault(key, "")
     if not meta["chemical_symbols_to_index"] or not meta["cutoff"]:
         raise RuntimeError(
             f"{path} has no SevenNet deployment metadata "
@@ -80,6 +105,34 @@ def read_sevennet_metadata(path: str) -> Tuple[Dict[int, int], float, torch.dtyp
     return type_map, float(meta["cutoff"]), _DTYPES[dtype_name]
 
 
+OEQ_NATIVE_LIB = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..",
+                              "scripts", "opt", "nequip", "oeq_native", "liboeq_native.so")
+
+
+def _oeq_op_registered() -> bool:
+    try:
+        torch.ops.libtorch_tp_jit.jit_conv_forward
+    except (AttributeError, RuntimeError):
+        return False
+    return True
+
+
+def load_oeq_library(path: str = OEQ_NATIVE_LIB) -> str:
+    """Register the OpenEquivariance ops from the native (Python-free) library,
+    the one NAMD loads via ``NAMD_MLFF_EXTRA_LIBS``.  Returns its absolute path
+    ("" if the ops were already registered, e.g. by ``import openequivariance``;
+    loading both in one process would register the namespace twice)."""
+    if _oeq_op_registered():
+        return ""
+    path = os.path.abspath(path)
+    if not os.path.exists(path):
+        raise RuntimeError(
+            f"{path} not found. Build it once with "
+            "`TORCH=<NAMD's libtorch> bash scripts/opt/nequip/oeq_native/build.sh`.")
+    torch.ops.load_library(path)
+    return path
+
+
 class SevenNet_Wrapper(nn.Module):
     """
     Wrap a SevenNet serial deployment (``deployed_serial.pt``) for NAMD.
@@ -94,6 +147,11 @@ class SevenNet_Wrapper(nn.Module):
         super().__init__()
         type_map, r_max, model_dtype = read_sevennet_metadata(model_path)
 
+        if uses_oeq(model_path) and not _oeq_op_registered():
+            raise RuntimeError(
+                f"{model_path} uses OpenEquivariance kernels. Register their ops "
+                "first: load_oeq_library() (what src.cli does), --extra-libs "
+                "scripts/opt/nequip/oeq_native/liboeq_native.so, or `import openequivariance`.")
         self.inner = torch.jit.load(model_path, map_location=device)
         self.inner.eval()
 
@@ -165,11 +223,12 @@ class SevenNet_Wrapper(nn.Module):
             shifts = torch.zeros((edge_index.size(1), 3), dtype=dt, device=dev)
 
         edge_vec = self._edge_vectors(pos_s, edge_index, shifts)
-        energy_ev = self._run_inner(types, edge_index, edge_vec)["inferred_total_energy"]
+        atomic = self._run_inner(types, edge_index, edge_vec)["atomic_energy"]
+        energy_ev = atomic.to(torch.float64).sum()
 
         forces, virial = forces_and_virial(energy_ev, pos, D, self.ev_to_kcal)
 
-        energy = energy_ev.to(torch.float64).sum() * self.ev_to_kcal
+        energy = energy_ev * self.ev_to_kcal
         charges = torch.zeros(N, dtype=torch.float64, device=dev)
         virial = finalize(virial) if periodic else zero_virial(coords)
         return energy, forces, charges, virial
@@ -218,8 +277,8 @@ class SevenNet_Wrapper(nn.Module):
 
         edge_vec = self._edge_vectors(pos_s, edge_index, shifts)
         atomic = self._run_inner(types, edge_index, edge_vec)["atomic_energy"]
-        energy_ev = torch.zeros(B, dtype=atomic.dtype, device=dev).index_add(
-            0, batch, atomic.reshape(-1))                                # [B]
+        energy_ev = torch.zeros(B, dtype=torch.float64, device=dev).index_add(
+            0, batch, atomic.reshape(-1).to(torch.float64))              # [B]
 
         grads = torch.autograd.grad([energy_ev.sum()], [pos, D], allow_unused=True)
         g_pos = grads[0]
@@ -234,6 +293,6 @@ class SevenNet_Wrapper(nn.Module):
             V = -g_D * self.ev_to_kcal
             virials = 0.5 * (V + V.transpose(1, 2))
 
-        energies = energy_ev.to(torch.float64) * self.ev_to_kcal
+        energies = energy_ev * self.ev_to_kcal
         charges = torch.zeros(N_total, dtype=torch.float64, device=dev)
         return energies, forces, charges, virials

@@ -77,7 +77,7 @@ The examples below use published pretrained models. A model you trained yourself
 | NequIP-OAM-L | `allegro` | `python scripts/opt/nequip/compile_ts.py nequip.net:mir-group/NequIP-OAM-L:0.1 models/compiled_nequip_oam_l.nequip.pth --device cuda` | TorchScript `.nequip.pth` |
 | ANI-2x / ANI-1x / ANI-1ccx | `allegro` | `python -m src.compile_torchani --variant ani2x --out models/compiled_ani2x.pt` | TorchScript + element order |
 | X-MACE | `x_mace` | see [X-MACE](#x-mace) below | TorchScript |
-| SevenNet | `allegro` | `python -m src.compile_sevennet --checkpoint 7net-0 --out models/compiled_sevennet_0.pt` | fp32 TorchScript + metadata |
+| SevenNet | `allegro` | `python -m src.compile_sevennet --checkpoint 7net-0 --out models/compiled_sevennet_0.pt` (add `--fast` for the [optimised build](#sevennet)) | fp32 TorchScript + metadata |
 | SchNetPack | `allegro` | no pretrained model; train one, or use `python -m src.compile_schnetpack --out … --r-max 5.0` for **random weights (timing only)** | TorchScript |
 
 Notes:
@@ -246,16 +246,17 @@ With `--pc-capacity` the energy excludes the QM–point-charge Coulomb sum, whic
 - Cost: every pair within 50 Å, summed over periodic images, in float64. For a periodic box of side L that is about N²·(100/L)³ pair-images, so lower `--d3-cutoff` for large boxes.
 - D3 is only applied among the atoms the model sees (the QM region in QM/MM).
 
-`python -m src.cli` on its own always produces the **reference** model. The optimised models are built with the tools in `scripts/opt/<model>/`. They keep the same weights and the same maths, but swap in faster GPU kernels and remove overhead. The recipes below use **the same settings as the benchmark artifacts in `models/opt/`**. Rebuilding MACE-OFF23, NequIP-OAM-L, ANI-2x and SchNet this way reproduces those artifacts exactly (ΔE = ΔF = 0). The MACE and NequIP builds assert parity with the stock model before saving. Their checks cycle through every element the model knows, so they test your model's actual species rather than only H and O. ANI is checked with the comparison step at the end of this guide.
+`python -m src.cli` on its own always produces the **reference** model. The optimised models are built with the tools in `scripts/opt/<model>/`. They keep the same weights and the same maths, but swap in faster GPU kernels and remove overhead. The recipes below use **the same settings as the benchmark artifacts in `models/opt/`**. Rebuilding MACE-OFF23, NequIP-OAM-L, ANI-2x and SchNet this way reproduces those artifacts exactly (ΔE = ΔF = 0). The MACE and NequIP builds assert parity with the stock model before saving, and the SevenNet build checks each rewrite against the module it replaces. Their checks cycle through every element the model knows, so they test your model's actual species rather than only H and O. ANI is checked with the comparison step at the end of this guide.
 
 | Model | What the optimised build changes | Works for | Extra requirement in NAMD |
 |---|---|---|---|
 | MACE | cuEquivariance kernels + FastMACE exact rewrites | any MACE `*.model` | 3 native libs via `NAMD_MLFF_EXTRA_LIBS` |
 | NequIP | OpenEquivariance kernels + FastNequIP exact rewrites | NequIP packages (a kernels-only fallback is available if the rewrites don't fit your model) | `liboeq_native.so` via `NAMD_MLFF_EXTRA_LIBS` |
+| SevenNet | OpenEquivariance kernels (SevenNet's own `use_oeq` deployment) + FastSevenNet exact rewrites | any SevenNet checkpoint, multi-fidelity included (`src.compile_sevennet --fast`) | `liboeq_native.so` via `NAMD_MLFF_EXTRA_LIBS` (the NequIP library) |
 | ANI | cuAEV + fused per-element ensemble networks | torchani's pretrained ANI-1x, ANI-1ccx, ANI-2x (not custom-trained ANI) | `libcuaev_native_precise.so` via `NAMD_MLFF_EXTRA_LIBS` |
 | SchNet | fast energy route, cell-list neighbour list, half-list filter | any SchNetPack model with an `Atomwise` energy head | none |
 | FeNNiX | nothing on the model side; NAMD-side patches + config | any export | NAMD patch `02` (+ `03`), `QMNoPntChrg on` |
-| Allegro, X-MACE, SevenNet | no optimised route; use the reference model | | |
+| Allegro, X-MACE | no optimised route; use the reference model | | |
 
 Speed-ups on an RTX 5080 range from 1.1× (SchNet) to about 15× (MACE). They are in `scripts/opt/COMPARISON.md`, and each model's `scripts/opt/<model>/REPORT.md` has the details and parity numbers.
 
@@ -274,6 +275,7 @@ Every optimised build is the same four steps. Only the tools in each step change
 |---|---|---|---|
 | MACE | `mace/cueq_native/build.sh` | `mace/build_fast.py cueqf OUT --no-plain-linear --state STATE` (after `extract_state.py` in `MACE_312`) | `--extra-libs` |
 | NequIP | `nequip/oeq_native/build.sh` | `nequip/build_fast.py PKG OUT` | `--extra-libs` (`--r-max` if needed) |
+| SevenNet | `nequip/oeq_native/build.sh` (the same library) | `python -m src.compile_sevennet --checkpoint CKPT --fast --out OUT` | none: `src.cli` loads the library itself (`--d3` as usual) |
 | ANI | `ani/cuaev_native/build.sh` | `ani/build_fast.py --model ani2x --cache-species --group-max-atoms 1024 OUT` | `--extra-libs --lean --elements …` |
 | SchNet | — | — (wrap the normal inner) | `--fast` |
 
@@ -339,6 +341,30 @@ python scripts/opt/nequip/compile_ts.py my_model.nequip.zip inner.nequip.pth --d
 ```
 
 Then wrap it the same way.
+
+### SevenNet
+
+The usual compile-then-wrap, with `--fast` on the compile step. It works for any SevenNet checkpoint: pretrained names, your own `.pth`, and multi-fidelity ones with `--modal`.
+
+```bash
+# 1. native OpenEquivariance op library (once per machine; the same library NequIP uses)
+TORCH=/path/to/libtorch bash scripts/opt/nequip/oeq_native/build.sh
+
+# 2. compile: SevenNet's own OEQ deployment plus exact rewrites of its linears, gates and
+#    radial MLPs (each rewrite is checked in fp64 against what it replaces)
+python -m src.compile_sevennet --checkpoint 7net-0 --fast --out models/opt/my_sevennet_inner_fast.pt
+
+# 3. wrap (add --d3 for D3 dispersion, as with the reference model); src.cli loads the
+#    OEQ library by itself and prints the NAMD_MLFF_EXTRA_LIBS line to use in NAMD
+python -m src.cli --model-type sevennet --compiled models/opt/my_sevennet_inner_fast.pt --out models/opt/my_sevennet_fast.pt
+
+# 4. NAMD
+export NAMD_MLFF_EXTRA_LIBS=$PWD/scripts/opt/nequip/oeq_native/liboeq_native.so
+```
+
+- If a rewrite doesn't fit a model's structure, `--fast` falls back to the OpenEquivariance kernels alone and says so. `--oeq` asks for the kernels alone directly.
+- On 7net-0 the fast build is 5.7× the reference at 30 atoms, 7.7× at 300 and 12× at 3000, with forces within 2–3× fp32 noise. Details are in `scripts/opt/sevennet/REPORT.md`.
+- Don't load `liboeq_native.so` into a Python process that also imports `openequivariance`, e.g. one that builds SevenNet models. The ops would be registered twice.
 
 ### ANI
 
@@ -407,6 +433,7 @@ print("dE =", abs(e1 - e0), "kcal/mol   max dF =", (f1 - f0).abs().max().item(),
 
 Expected differences from the reference:
 - fp64 MACE: exact (ΔE = 0, ΔF ≈ 1e-13);
+- SevenNet (fp32): ΔF ≈ 1e-4 kcal/mol/Å, ΔE up to ~4e-8 of the total energy;
 - ANI: 1e-3 to 1e-2 kcal/mol, from the fp64 summation;
 - fp32 and TF32 variants: 1e-4 to 1e-2.
 
