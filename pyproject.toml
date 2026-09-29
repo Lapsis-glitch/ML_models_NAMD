@@ -17,6 +17,7 @@ nequip = ["nequip>=0.6.0"]
 allegro = ["allegro", "nequip>=0.6.0"]
 schnet = ["schnetpack>=2.0", "pytorch-lightning>=2.0"]
 torchani = ["torchani>=2.2", "h5py"]
+sevennet = ["sevenn>=0.13"]
 training = ["ase", "h5py", "pyyaml", "numpy"]
 datagen = ["ase"]
 test = ["pytest>=7.0", "pytest-cov", "ase"]
@@ -27,6 +28,7 @@ all = [
     "schnetpack>=2.0",
     "pytorch-lightning>=2.0",
     "torchani>=2.2",
+    "sevenn>=0.13",
     "ase",
     "h5py",
     "pyyaml",

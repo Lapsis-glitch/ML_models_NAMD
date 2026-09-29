@@ -140,6 +140,27 @@ class _MockTorchANIInner(nn.Module):
         return species, energies
 
 
+class _MockSevenNetInner(nn.Module):
+    """Mimics a SevenNet serial deployment: dict in, dict out, float32.
+
+    Per-atom energy depends on the edge vectors so autograd has something to
+    differentiate, as it does in the real model.
+    """
+
+    def forward(
+        self, data: Dict[str, torch.Tensor],
+    ) -> Dict[str, torch.Tensor]:
+        x = data["x"]
+        ei = data["edge_index"]
+        vec = data["edge_vec"]
+        pair = 0.01 * (vec * vec).sum(dim=1)
+        atomic = torch.zeros(x.size(0), dtype=vec.dtype, device=vec.device)
+        atomic = atomic.index_add(0, ei[0], pair) + 0.1 * x.to(vec.dtype)
+        data["atomic_energy"] = atomic.unsqueeze(-1)
+        data["inferred_total_energy"] = atomic.sum()
+        return data
+
+
 # ===================================================================
 #  Factory: build a real wrapper around a mock inner model
 # ===================================================================
@@ -205,12 +226,31 @@ def _build_torchani_wrapper():
     return wrapper
 
 
+def _build_sevennet_wrapper():
+    """SevenNet wrapper with mock inner, saved with deployment metadata."""
+    from src.wrappers.wrap_sevennet import SevenNet_Wrapper
+
+    mock = torch.jit.script(_MockSevenNetInner())
+    import tempfile, os
+    path = os.path.join(tempfile.mkdtemp(), "mock_sevennet.pt")
+    torch.jit.save(mock, path, _extra_files={
+        "chemical_symbols_to_index": "H C N O ",
+        "cutoff": "4.0",
+        "dtype": "single",
+    })
+
+    wrapper = SevenNet_Wrapper(path, device="cpu")
+    wrapper.eval()
+    return wrapper
+
+
 # Collect all builders in a list for parametrisation.
 _WRAPPER_BUILDERS = {
     "MACE":    _build_mace_wrapper,
     "NequIP":  _build_nequip_wrapper,
     "SchNet":  _build_schnet_wrapper,
     "TorchANI": _build_torchani_wrapper,
+    "SevenNet": _build_sevennet_wrapper,
 }
 
 

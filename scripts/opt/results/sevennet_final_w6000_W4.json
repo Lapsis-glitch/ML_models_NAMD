@@ -1,0 +1,64 @@
+{
+ "meta": {
+  "torch": "2.11.0+cu130",
+  "gpu": "NVIDIA GeForce RTX 5080 Laptop GPU",
+  "time": "2026-09-30 00:04:31",
+  "argv": [
+   "/home/rat/PycharmProjects/ML_models_NAMD/scripts/opt/nequip/../bench_common.py",
+   "--extra-lib",
+   "scripts/opt/nequip/oeq_native/liboeq_native.so",
+   "--model",
+   "oeq=models/opt/sevennet_oeq.pt",
+   "--model",
+   "oeq_d3=models/opt/sevennet_oeq_d3.pt",
+   "--model",
+   "fast=models/opt/sevennet_fast.pt",
+   "--model",
+   "fast_d3=models/opt/sevennet_fast_d3.pt",
+   "--systems",
+   "6000",
+   "--walkers",
+   "4",
+   "--jitter",
+   "0.02",
+   "--warmup",
+   "4",
+   "--iters",
+   "8",
+   "--rounds",
+   "2",
+   "--out",
+   "scripts/opt/results/sevennet_final_w6000_W4.json"
+  ]
+ },
+ "results": [
+  {
+   "system": "water6000",
+   "n_atoms": 6000,
+   "walkers": 4,
+   "model": "oeq",
+   "error": "The following operation failed in the TorchScript interpreter."
+  },
+  {
+   "system": "water6000",
+   "n_atoms": 6000,
+   "walkers": 4,
+   "model": "oeq_d3",
+   "error": "The following operation failed in the TorchScript interpreter."
+  },
+  {
+   "system": "water6000",
+   "n_atoms": 6000,
+   "walkers": 4,
+   "model": "fast",
+   "error": "The following operation failed in the TorchScript interpreter."
+  },
+  {
+   "system": "water6000",
+   "n_atoms": 6000,
+   "walkers": 4,
+   "model": "fast_d3",
+   "error": "The following operation failed in the TorchScript interpreter."
+  }
+ ]
+}

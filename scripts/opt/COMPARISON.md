@@ -126,6 +126,25 @@ The SchNet CUDA-graph path (patched shim, not installed) gives 0.50 / 1.20 / 2.0
 | 3000×4 | does not fit | 631 (14755) | – |
 | 6000×4 | does not fit | OOM | – |
 
+### SevenNet-0 (added 2026-09-30, separate run): `sevennet_baseline.pt` vs `sevennet_fast.pt`
+
+This comes from a **later, separate invocation** (`sevennet/run_grid.sh`, same harness and settings). Compare it with the other models' cross-model tables only roughly. Details are in `sevennet/REPORT.md`. Values are median ms per call (peak alloc MiB).
+
+| N×W | base | oeq (kernels only) | fast | speedup |
+|---|---|---|---|---|
+| 30×1 | 27.7 (63) | 14.3 (10) | 4.9 (10) | 5.7× |
+| 300×1 | 46.1 (885) | 14.4 (174) | 6.0 (181) | 7.7× |
+| 900×1 | 133 (3071) | 18.3 (606) | 12.0 (631) | 11.1× |
+| 3000×1 | 511 (12278) | 45.2 (2418) | 41.3 (2517) | 12.4× |
+| 6000×1 | does not fit | 91.3 (5114) | 87.0 (5303) | – |
+| 30×4 | 29.7 (197) | 14.4 (38) | 5.2 (39) | 5.7× |
+| 300×4 | 149 (3486) | 20.2 (691) | 13.6 (722) | 11.0× |
+| 900×4 | does not fit | 45.8 (2433) | 41.7 (2524) | – |
+| 3000×4 | does not fit | 170 (9679) | 163 (10061) | – |
+| 6000×4 | does not fit | OOM | OOM | – |
+
+SevenNet-0 is fp32. `fast_d3` (with D3(BJ)) adds 2 ms up to 900 atoms, 15 ms at 3000 and 57 ms at 6000.
+
 ### ANI-2x: `ani_baseline.pt` vs `ani_fast.pt`
 
 | N×W | base | fast | speedup |
@@ -159,6 +178,7 @@ Periodic ANI at 3000 atoms: base 3119 ms / 9 GB → fast 13.2 ms (ANI REPORT).
 |---|---|---|---|
 | MACE (fp64) | 293 → **19.5** (15×); fp32 extra 12.0 | fast 184 (base does not fit) | – |
 | NequIP | 141 → **26.5** (5.3×) | – | – |
+| SevenNet-0 (added 2026-09-30) | 40.5 → **8.6** (4.7×); with D3 46.2 → 9.5 | – | – |
 | ANI-2x | 14.0 → **2.09** (6.7×) | 25.0 → **10.2** | – |
 | FeNNiX (TF32), patched backend only | 6.28 → **2.39** | 12.9 → **9.95** | 37.3 → 25.6 |
 | FeNNiX, + `QMNoPntChrg on` + `NAMD_QM_FAST_INDEX=1` | → 1.91 | → 4.10 | → 7.51 |
@@ -178,6 +198,8 @@ SP=/home/rat/miniconda3/envs/allegro/lib/python3.12/site-packages; R=/home/rat/P
 export NAMD_MLFF_EXTRA_LIBS=$SP/nvidia/cu13/lib/libnvrtc.so.13:$SP/cuequivariance_ops/lib/libcue_ops.so:$R/scripts/opt/mace/cueq_native/libcueq_uniform1d_native.so
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True     # large systems (>=3000 x4)
 # NequIP  (models/opt/nequip_fast_oeq.pt):
+export NAMD_MLFF_EXTRA_LIBS=$R/scripts/opt/nequip/oeq_native/liboeq_native.so
+# SevenNet (models/opt/sevennet_fast.pt / sevennet_fast_d3.pt): the same library as NequIP
 export NAMD_MLFF_EXTRA_LIBS=$R/scripts/opt/nequip/oeq_native/liboeq_native.so
 # ANI-2x  (models/opt/ani_fast.pt):
 export NAMD_MLFF_EXTRA_LIBS=$R/scripts/opt/ani/cuaev_native/libcuaev_native_precise.so

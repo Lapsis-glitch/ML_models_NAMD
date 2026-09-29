@@ -8,6 +8,11 @@ Usage examples::
     python -m src.cli --model-type allegro --compiled model.pth --out mlff.pt
     python -m src.cli --model-type schnet  --compiled model.pt --r-max 5.0 --out mlff.pt
     python -m src.cli --model-type torchani --compiled model.pt --out mlff.pt --elements 1,6,7,8
+    python -m src.cli --model-type sevennet --compiled deployed_serial.pt --out mlff.pt
+    python -m src.cli --model-type sevennet --compiled deployed_serial.pt --d3 --out mlff.pt
+    # optimised SevenNet (python -m src.compile_sevennet --fast); the OEQ op
+    # library is loaded automatically
+    python -m src.cli --model-type sevennet --compiled deployed_fast.pt --out mlff.pt
 
 Optimised inner models (scripts/opt/) use custom ops; pass the same native
 libraries NAMD will load via NAMD_MLFF_EXTRA_LIBS::
@@ -32,7 +37,8 @@ def main(argv=None):
     parser.add_argument(
         "--model-type",
         required=True,
-        choices=["mace", "nequip", "allegro", "schnet", "torchani", "xmace"],
+        choices=["mace", "nequip", "allegro", "schnet", "torchani", "xmace",
+                 "sevennet"],
         help="Type of ML potential to wrap",
     )
     parser.add_argument(
@@ -88,6 +94,20 @@ def main(argv=None):
                         help="[xmace] Electronic state index to expose "
                              "(default: 0 = ground state)")
 
+    # D3 dispersion, any model type
+    parser.add_argument("--d3", action="store_true",
+                        help="Add D3(BJ) dispersion (SevenNet's D3, parameters "
+                             "read from the installed sevenn package)")
+    parser.add_argument("--d3-functional", default="pbe",
+                        help="[--d3] Functional for the BJ parameters "
+                             "(default: pbe, what SevenNet uses)")
+    parser.add_argument("--d3-cutoff", type=float, default=9000.0,
+                        help="[--d3] Dispersion cutoff on r^2 in bohr^2, as "
+                             "SevenNet takes it (default 9000 = 50.2 A)")
+    parser.add_argument("--d3-cn-cutoff", type=float, default=1600.0,
+                        help="[--d3] Coordination-number cutoff on r^2 in "
+                             "bohr^2 (default 1600 = 21.2 A)")
+
     args = parser.parse_args(argv)
 
     for lib in filter(None, args.extra_libs.split(":")):
@@ -139,9 +159,27 @@ def main(argv=None):
             args.compiled, state_idx=args.state, device=args.device,
         ).eval()
 
+    elif model_type == "sevennet":
+        from .wrappers.wrap_sevennet import SevenNet_Wrapper, load_oeq_library, uses_oeq
+        if uses_oeq(args.compiled):
+            # OEQ / --fast deployment: register its ops from the native library
+            # unless --extra-libs already did
+            lib = load_oeq_library()
+            if lib:
+                print(f"[SevenNet] OpenEquivariance deployment: loaded {lib}\n"
+                      f"  run NAMD with  export NAMD_MLFF_EXTRA_LIBS={lib}")
+        wrapper = SevenNet_Wrapper(args.compiled, device=args.device).eval()
+
     else:
         parser.error(f"Unknown model type: {model_type}")
         return  # unreachable, parser.error raises
+
+    if args.d3:
+        from .d3 import D3_Wrapper
+        wrapper = D3_Wrapper(
+            wrapper, functional=args.d3_functional,
+            cutoff=args.d3_cutoff, cn_cutoff=args.d3_cn_cutoff,
+        ).to(args.device).eval()
 
     label = model_type.upper()
     if model_type == "nequip":
@@ -154,6 +192,11 @@ def main(argv=None):
         label = "TorchANI"
     elif model_type == "xmace":
         label = "X-MACE"
+    elif model_type == "sevennet":
+        label = "SevenNet"
+
+    if args.d3:
+        label += f"+D3({args.d3_functional})"
 
     export_wrapped(wrapper, args.out, model_type=label)
 

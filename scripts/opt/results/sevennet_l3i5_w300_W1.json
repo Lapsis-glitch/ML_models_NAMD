@@ -1,0 +1,58 @@
+{
+ "meta": {
+  "torch": "2.11.0+cu130",
+  "gpu": "NVIDIA GeForce RTX 5080 Laptop GPU",
+  "time": "2026-09-30 00:08:05",
+  "argv": [
+   "/home/rat/PycharmProjects/ML_models_NAMD/scripts/opt/nequip/../bench_common.py",
+   "--extra-lib",
+   "scripts/opt/nequip/oeq_native/liboeq_native.so",
+   "--model",
+   "l3i5_stock=/tmp/claude-1000/-home-rat-PycharmProjects-ML-models-NAMD/20282d6a-fec1-429d-a9df-334eb593e110/scratchpad/l3i5_stock_w.pt",
+   "--model",
+   "l3i5_fast=/tmp/claude-1000/-home-rat-PycharmProjects-ML-models-NAMD/20282d6a-fec1-429d-a9df-334eb593e110/scratchpad/l3i5_fast_w.pt",
+   "--systems",
+   "300",
+   "--walkers",
+   "1",
+   "--jitter",
+   "0.02",
+   "--warmup",
+   "15",
+   "--iters",
+   "30",
+   "--rounds",
+   "3",
+   "--out",
+   "scripts/opt/results/sevennet_l3i5_w300_W1.json"
+  ]
+ },
+ "results": [
+  {
+   "system": "water300",
+   "n_atoms": 300,
+   "walkers": 1,
+   "model": "l3i5_stock",
+   "peak_alloc_mib": 2018.7,
+   "dE_max_kcal": 0.0,
+   "dF_max_kcal_A": 0.0,
+   "median_ms": 123.053,
+   "p10_ms": 121.46,
+   "p90_ms": 124.337,
+   "n": 90
+  },
+  {
+   "system": "water300",
+   "n_atoms": 300,
+   "walkers": 1,
+   "model": "l3i5_fast",
+   "peak_alloc_mib": 294.1,
+   "dE_max_kcal": 0.0,
+   "dF_max_kcal_A": 7.723274555360149e-05,
+   "median_ms": 8.6,
+   "p10_ms": 8.211,
+   "p90_ms": 9.095,
+   "n": 90
+  }
+ ]
+}
