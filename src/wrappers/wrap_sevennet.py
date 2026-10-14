@@ -27,7 +27,7 @@ to the weights, which is also where ``pair_e3gnn.cpp`` reads them:
   * ``oeq`` - ``yes`` when deployed with OpenEquivariance kernels
     (``src.compile_sevennet --oeq``).  Their op ``libtorch_tp_jit::jit_conv_forward``
     must be registered before the model loads: the native library
-    ``scripts/opt/nequip/oeq_native/liboeq_native.so`` (``--extra-libs`` /
+    ``src/fast/native/oeq/liboeq_native.so`` (``--extra-libs`` /
     ``NAMD_MLFF_EXTRA_LIBS``), or ``import openequivariance`` in Python.  CUDA only.
 
 Positions, strain and edge vectors stay float64 and are cast to the model's
@@ -105,8 +105,8 @@ def read_sevennet_metadata(path: str) -> Tuple[Dict[int, int], float, torch.dtyp
     return type_map, float(meta["cutoff"]), _DTYPES[dtype_name]
 
 
-OEQ_NATIVE_LIB = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..",
-                              "scripts", "opt", "nequip", "oeq_native", "liboeq_native.so")
+OEQ_NATIVE_LIB = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..",
+                              "fast", "native", "oeq", "liboeq_native.so")
 
 
 def _oeq_op_registered() -> bool:
@@ -128,7 +128,7 @@ def load_oeq_library(path: str = OEQ_NATIVE_LIB) -> str:
     if not os.path.exists(path):
         raise RuntimeError(
             f"{path} not found. Build it once with "
-            "`TORCH=<NAMD's libtorch> bash scripts/opt/nequip/oeq_native/build.sh`.")
+            "`TORCH=<NAMD's libtorch> bash src/fast/native/oeq/build.sh`.")
     torch.ops.load_library(path)
     return path
 
@@ -151,7 +151,7 @@ class SevenNet_Wrapper(nn.Module):
             raise RuntimeError(
                 f"{model_path} uses OpenEquivariance kernels. Register their ops "
                 "first: load_oeq_library() (what src.cli does), --extra-libs "
-                "scripts/opt/nequip/oeq_native/liboeq_native.so, or `import openequivariance`.")
+                "src/fast/native/oeq/liboeq_native.so, or `import openequivariance`.")
         self.inner = torch.jit.load(model_path, map_location=device)
         self.inner.eval()
 

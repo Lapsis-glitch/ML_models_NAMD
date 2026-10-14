@@ -19,7 +19,7 @@
 - `src/edges.py`: shared O(N^2) FP32 neighbor lists used by all wrappers except TorchANI.
 - `src/datagen/cli.py` + `src/datagen/qmmm/`: ORCA-backed pure-QM and QM/MM data generation; both produce extended XYZ that `src/training/prepare_data.py` can ingest.
 - `src/training/prepare_data.py` + `src/training/train_*.py`: data conversion and framework-specific train/deploy pipelines.
-- `src/compile_mace_off.py`, `src/compile_schnetpack.py`, `src/compile_torchani.py`: foundation-model compile shortcuts.
+- `src/build.py`: one call from checkpoint to NAMD model (`--fast` for the optimised build). `src/compile_{mace,nequip,sevennet,torchani,xmace,schnetpack}.py`: per-model compile steps. `src/fast/`: optimised builders and native op libraries.
 
 ## Data flow to keep in mind
 - `data.xyz -> prepare_data.py -> prepared_data/{xyz,schnetpack,torchani} -> train_<model>.py -> compiled artifact -> src.cli -> mlff_model.pt`.

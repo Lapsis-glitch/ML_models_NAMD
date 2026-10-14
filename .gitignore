@@ -50,7 +50,11 @@ Thumbs.db
 models/opt/
 models/archive_pre_pbc_2026-07-31/
 scripts/opt/l40s_bundle/
-scripts/opt/ani/toolchain/
+# native op library build outputs (src/fast/native/*/build.sh)
+src/fast/native/*/lib/
+src/fast/native/*/obj/
+src/fast/native/cuaev/src/
+src/fast/native/cuaev/toolchain/
 # NAMD run outputs and per-size FeNNiX StableHLO exports
 runs/
 runs_old/
