@@ -12,7 +12,8 @@ set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$HERE/../env.sh"
 VARIANT="${VARIANT:-precise}"
-ARCH="${ARCH:-$("$PY" -c 'import torch; a, b = torch.cuda.get_device_capability(); print(f"{a}{b}")')}"
+ARCH="${ARCH:-$("$PY" -c 'import torch; a, b = torch.cuda.get_device_capability(); print(f"{a}{b}")' 2>/dev/null)}" \
+  || die "no CUDA GPU visible to torch: set ARCH to the compute capability to build for (e.g. 89, 90, 120)"
 OUT="${OUTLIB:-$HERE/libcuaev_native_${VARIANT}.so}"
 supports() { [ -x "$1/bin/nvcc" ] && "$1/bin/nvcc" --list-gpu-arch 2>/dev/null | grep -qx "compute_$ARCH"; }
 if [ -z "${NVCC_HOME:-}" ]; then
@@ -26,8 +27,9 @@ if [ -z "${NVCC_HOME:-}" ] && [ "$CUDA_MAJOR" = 13 ]; then
       nvidia-cuda-nvcc==13.0.88 nvidia-cuda-cccl==13.0.85 nvidia-cuda-crt==13.0.88 nvidia-nvvm==13.0.88
   NVCC_HOME="$HERE/toolchain/nvidia/cu13"
 fi
-: "${NVCC_HOME:?no nvcc supporting sm_$ARCH found: set NVCC_HOME to a CUDA $CUDA_MAJOR toolkit that does}"
+[ -n "${NVCC_HOME:-}" ] || die "no nvcc supporting sm_$ARCH found: set NVCC_HOME to a CUDA $CUDA_MAJOR toolkit that does"
 NVCC="$NVCC_HOME/bin/nvcc"
+[ -d "$SP/torchani/csrc" ] || die "torchani is not installed with its csrc/ sources (needed for cuAEV)"
 mkdir -p "$HERE/src" "$HERE/lib" "$HERE/obj"
 ln -sf "$CUDART" "$HERE/lib/libcudart.so.$CUDA_MAJOR"
 for f in aev.cu aev.h cuaev.cpp cuaev_cub.cuh; do

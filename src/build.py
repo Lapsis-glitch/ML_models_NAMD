@@ -95,8 +95,9 @@ def main(argv=None):
     p.add_argument("--libtorch", default=os.environ.get("TORCH"),
                    help="libtorch NAMD uses, for the native op libraries "
                         "(default: $TORCH, else the torch of this Python)")
-    p.add_argument("--compile-device", default="cuda",
-                   help="[nequip, allegro] device the model will run on (default: cuda)")
+    p.add_argument("--compile-device", default=None,
+                   help="[nequip, allegro] device the model will run on "
+                        "(default: cuda if a GPU is visible, else cpu)")
     p.add_argument("--dtype", default="float64", choices=["float64", "float32"],
                    help="[mace] model precision (default: float64)")
     p.add_argument("--mace-python", default=os.environ.get("MACE_PY"),
@@ -113,6 +114,11 @@ def main(argv=None):
 
     if a.fast and a.model_type in NO_FAST:
         p.error(f"{a.model_type} has no optimised build; drop --fast")
+    import torch
+    if a.fast and a.model_type != "schnet" and not torch.cuda.is_available():
+        p.error("--fast needs a CUDA GPU visible to torch (only schnet --fast runs on CPU)")
+    if a.compile_device is None:
+        a.compile_device = "cuda" if torch.cuda.is_available() else "cpu"
     if a.fast:
         from .fast.native import ensure_cuda_lib_path
         ensure_cuda_lib_path("src.build")

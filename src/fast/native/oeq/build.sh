@@ -5,6 +5,8 @@ set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$HERE/../env.sh"
 OEQ="$SP/openequivariance/extension"
+[ -d "$OEQ" ] || die "openequivariance is not installed: pip install openequivariance"
+[ -n "$NVRTC" ] && [ -n "$CUBLAS" ] || die "libnvrtc / libcublas not found in $TL or $CUDA_LIB"
 OUT="${OUTLIB:-$HERE/liboeq_native.so}"
 # expose cudart/nvrtc under their SONAMEs so the loader resolves the same files libtorch uses
 mkdir -p "$HERE/lib"

@@ -42,6 +42,7 @@ itself when it wraps such a deployment.
 """
 
 import argparse
+import importlib.util
 from pathlib import Path
 
 
@@ -61,6 +62,9 @@ def compile_sevennet(checkpoint: str, out_path: str, modal: str = None,
             "Checkpoint type map is not in index order; the deployed "
             "chemical_symbols_to_index would be wrong.")
 
+    if (oeq or fast) and importlib.util.find_spec("openequivariance") is None:
+        raise RuntimeError("--oeq / --fast need the openequivariance package "
+                           "(pip install openequivariance)")
     Path(out_path).parent.mkdir(parents=True, exist_ok=True)
     kind = "fast" if fast else ("oeq" if oeq else "stock")
     if fast:

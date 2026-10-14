@@ -14,7 +14,7 @@ dependencies = [
 [project.optional-dependencies]
 mace = ["mace-torch"]
 nequip = ["nequip>=0.6.0"]
-allegro = ["allegro", "nequip>=0.6.0"]
+allegro = ["nequip-allegro", "nequip>=0.6.0"]
 schnet = ["schnetpack>=2.0", "pytorch-lightning>=2.0"]
 torchani = ["torchani>=2.2", "h5py"]
 sevennet = ["sevenn>=0.13"]
@@ -27,7 +27,7 @@ test = ["pytest>=7.0", "pytest-cov", "ase"]
 all = [
     "mace-torch",
     "nequip>=0.6.0",
-    "allegro",
+    "nequip-allegro",
     "schnetpack>=2.0",
     "pytorch-lightning>=2.0",
     "torchani>=2.2",

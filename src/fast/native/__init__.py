@@ -62,7 +62,10 @@ def build(name: str, libtorch: Optional[str] = None) -> None:
     if libtorch:
         env["TORCH"] = libtorch
     print(f"[native] building {name} library ({env.get('TORCH', 'torch of this Python')})")
-    subprocess.run(["bash", os.path.join(HERE, name, "build.sh")], env=env, check=True)
+    script = os.path.join(HERE, name, "build.sh")
+    if subprocess.run(["bash", script], env=env).returncode != 0:
+        raise SystemExit(f"[native] building the {name} library failed (message above); "
+                         f"fix it and rerun, or build it by hand: bash {os.path.relpath(script)}")
 
 
 def ensure(name: str, libtorch: Optional[str] = None, rebuild: bool = False) -> List[str]:

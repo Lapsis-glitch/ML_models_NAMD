@@ -52,6 +52,7 @@ def calls(monkeypatch):
     monkeypatch.setattr(native, "ensure_cuda_lib_path", lambda module: None)
     monkeypatch.setattr(build.subprocess, "run",
                         lambda cmd, **kw: rec["subprocess"].append(cmd))
+    monkeypatch.setattr(torch.cuda, "is_available", lambda: True)
     return rec
 
 
@@ -162,3 +163,27 @@ def test_fast_rejects_compiled_source(tmp_path, calls, scripted):
     with pytest.raises(SystemExit):
         build.main(["mace", scripted, "--fast", "--out", str(tmp_path / "m.pt")])
     assert calls["compile"] == []
+
+
+@pytest.mark.parametrize("model_type", ["mace", "sevennet", "torchani"])
+def test_fast_needs_gpu(tmp_path, calls, monkeypatch, model_type):
+    monkeypatch.setattr(torch.cuda, "is_available", lambda: False)
+    with pytest.raises(SystemExit):
+        build.main([model_type, "src", "--fast", "--out", str(tmp_path / "m.pt")])
+    assert calls["compile"] == [] and calls["ensure"] == []
+
+
+def test_schnet_fast_runs_without_gpu(tmp_path, calls, monkeypatch, scripted):
+    monkeypatch.setattr(torch.cuda, "is_available", lambda: False)
+    build.main(["schnet", scripted, "--r-max", "5.0", "--fast", "--out", str(tmp_path / "m.pt")])
+    assert "--fast" in calls["wrap"][0]
+
+
+@pytest.mark.parametrize("gpu,device", [(True, "cuda"), (False, "cpu")])
+def test_compile_device_default(tmp_path, calls, monkeypatch, gpu, device):
+    monkeypatch.setattr(torch.cuda, "is_available", lambda: gpu)
+    seen = {}
+    monkeypatch.setattr(build, "compile_inner",
+                        lambda a, inner: seen.setdefault("dev", a.compile_device) and ("", []))
+    build.main(["nequip", "pkg.nequip.zip", "--out", str(tmp_path / "m.pt")])
+    assert seen["dev"] == device
