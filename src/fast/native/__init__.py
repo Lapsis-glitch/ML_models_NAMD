@@ -30,18 +30,30 @@ def site_packages() -> str:
     return site.getsitepackages()[0]
 
 
+def nvrtc_library() -> str:
+    """NVRTC of the CUDA version torch was built with, from the nvidia pip
+    wheels ("" if they are not installed, e.g. with a system CUDA)."""
+    import glob
+    import torch
+    major = (torch.version.cuda or "").split(".")[0]
+    hits = sorted(glob.glob(os.path.join(site_packages(), "nvidia", "*", "lib",
+                                         f"libnvrtc.so.{major}*")))
+    return hits[0] if major and hits else ""
+
+
 def cuda_lib_dir() -> str:
-    """The nvidia cu13 wheel's lib dir (NVRTC lives there)."""
-    return os.path.join(site_packages(), "nvidia", "cu13", "lib")
+    """Directory of the pip-installed NVRTC ("" if none)."""
+    lib = nvrtc_library()
+    return os.path.dirname(lib) if lib else ""
 
 
 def lib_paths(name: str) -> List[str]:
     """Every library NAMD must load for ``name``, in load order."""
     if name == "cueq":
         sp = site_packages()
-        return [os.path.join(cuda_lib_dir(), "libnvrtc.so.13"),
-                os.path.join(sp, "cuequivariance_ops", "lib", "libcue_ops.so"),
-                _BUILT["cueq"]]
+        nvrtc = [nvrtc_library()] if nvrtc_library() else []
+        return nvrtc + [os.path.join(sp, "cuequivariance_ops", "lib", "libcue_ops.so"),
+                        _BUILT["cueq"]]
     return [_BUILT[name]]
 
 
@@ -70,7 +82,7 @@ def load(paths: List[str]) -> None:
 
 
 def ensure_cuda_lib_path(module: str) -> None:
-    """Re-exec this process with the nvidia cu13 lib dir on LD_LIBRARY_PATH.
+    """Re-exec this process with the pip-installed NVRTC on LD_LIBRARY_PATH.
 
     cuEquivariance and the TorchScript fuser dlopen NVRTC by name; without it
     on the library path cuEquivariance silently falls back to its slow
@@ -78,7 +90,7 @@ def ensure_cuda_lib_path(module: str) -> None:
     """
     d = cuda_lib_dir()
     cur = os.environ.get("LD_LIBRARY_PATH", "")
-    if not os.path.isdir(d) or d in cur.split(":"):
+    if not d or d in cur.split(":"):
         return
     env = dict(os.environ, LD_LIBRARY_PATH=f"{d}:{cur}" if cur else d)
     os.execve(sys.executable, [sys.executable, "-m", module] + sys.argv[1:], env)

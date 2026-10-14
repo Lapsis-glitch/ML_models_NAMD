@@ -48,7 +48,7 @@ def state_file(model: str, workdir: str, mace_python: str = None) -> str:
         raise RuntimeError(
             f"cannot read {model} in this environment ({type(exc).__name__}: {exc}). "
             "Models pickled by an older e3nn (MACE-OFF23) must be read by the env "
-            "that wrote them: pass --mace-python <MACE_312 python>.") from exc
+            "that wrote them: pass --mace-python <that env's python>.") from exc
     return out
 
 

@@ -2,13 +2,13 @@
 TorchScript-compile an **X-MACE** model (``AutoencoderExcitedMACE``) for
 :class:`src.wrappers.wrap_xmace.XMACE_TS_Wrapper`.
 
-Usage (``x_mace`` env, with the patched X-MACE source installed)::
+Usage (in an env with the patched X-MACE source installed, see the README)::
 
     python -m src.compile_xmace --weights fulvene.model \
         --out models/fulvene_compiled.pt
 
-Upstream X-MACE cannot be TorchScript-compiled as published; the ``x_mace``
-env carries the patched source (see the README).  Models saved with
+Upstream X-MACE cannot be TorchScript-compiled as published; it needs the
+patched source described in the README.  Models saved with
 ``nac_indices=None`` / ``soc_indices=None`` are fixed up here.
 """
 

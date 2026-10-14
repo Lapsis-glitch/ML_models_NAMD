@@ -314,7 +314,7 @@ python -m src.cli --model-type <name> --compiled inner.pt --out mlff_model.pt
 The parametrised tests then check shapes, dtypes, zero virials for a zero cell, `forward_batch`, `supports_batch` / `supports_pbc`, and that scripting works. The unit suite must stay weight-free, so don't use real models there.
 
 ```bash
-python -m pytest tests/test_interface_compliance.py -v      # allegro env
+python -m pytest tests/test_interface_compliance.py -v
 ```
 
 **Physics checks with the real model.** Write these as a separate test file, guarded with `pytest.skip` when the model file is missing so the unit suite stays weight-free. `tests/test_virial_nequip_ani.py` shows each check below.

@@ -7,13 +7,13 @@ Usage::
     python -m src.compile_mace --weights MACE-OFF23_medium.model \
         --out models/compiled_mace_off23_medium.pt
     python -m src.compile_mace --weights MACE-OFF23_medium.model --fast \
-        --mace-python ~/miniconda3/envs/MACE_312/bin/python \
+        --mace-python /path/to/old-e3nn-env/bin/python \
         --out models/mace_off23_medium_fast.pt
 
-The reference compile runs in the env that can unpickle the ``.model``
-(``MACE_312`` for MACE-OFF23).
+The reference compile runs in an env that can unpickle the ``.model``: one
+with the mace/e3nn versions that saved it (MACE-OFF23 needs ``e3nn 0.4.4``).
 
-``--fast`` (GPU, ``allegro`` env): rebuilds the model with cuEquivariance
+``--fast`` (GPU, env with a current mace and cuEquivariance): rebuilds the model with cuEquivariance
 kernels plus the exact FastMACE rewrites (``src/fast/mace``) and checks it
 against the stock model.  When this env cannot unpickle the ``.model`` (older
 e3nn), ``--mace-python`` names an interpreter that can, used only to dump the

@@ -86,7 +86,8 @@ def test_water_box():
 
 
 def test_native_lib_sets():
-    assert len(native.lib_paths("cueq")) == 3  # nvrtc, libcue_ops, uniform_1d op
+    cueq = native.lib_paths("cueq")  # [nvrtc,] libcue_ops, uniform_1d op
+    assert cueq[-2].endswith("libcue_ops.so") and cueq[-1].endswith("libcueq_uniform1d_native.so")
     assert native.lib_paths("oeq")[0].endswith("liboeq_native.so")
     assert native.lib_paths("cuaev")[0].endswith("libcuaev_native_precise.so")
 

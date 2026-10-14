@@ -2,7 +2,7 @@
 
 The optimised build rebuilds the model under the current mace/e3nn.  Models
 pickled by an older e3nn (e.g. MACE-OFF23, e3nn 0.4.4) cannot be unpickled
-there, so run this in the env that wrote them (``MACE_312``):
+there, so run this in an env with the mace/e3nn versions that wrote them:
 
     python -m src.fast.mace.extract_state MACE-OFF23_medium.model state.pt
 """

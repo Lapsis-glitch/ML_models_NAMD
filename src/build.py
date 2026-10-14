@@ -4,7 +4,7 @@ wrap.
 
     python -m src.build MODEL_TYPE SOURCE [--fast] [--out mlff_model.pt] [options]
 
-    python -m src.build mace     MACE-OFF23_medium.model --fast --mace-python <MACE_312 python>
+    python -m src.build mace     MACE-OFF23_medium.model --fast --mace-python <python that can read the .model>
     python -m src.build nequip   nequip.net:mir-group/NequIP-OAM-L:0.1 --r-max 6.0 --fast
     python -m src.build allegro  my_allegro.nequip.zip
     python -m src.build sevennet 7net-0 --fast --d3

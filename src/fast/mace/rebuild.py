@@ -1,5 +1,5 @@
-"""Rebuild MACE-OFF under the allegro env (mace 0.3.15, e3nn 0.6) from the
-version-neutral dump written by extract_state.py (run in MACE_312).
+"""Rebuild a MACE model under the current mace/e3nn from the version-neutral
+dump written by extract_state.py (run in the env that can read the .model).
 
 rebuild(state, dtype)            -> e3nn ScaleShiftMACE, same weights
 rebuild(state, dtype, cueq=True) -> same model built with cuEquivariance
