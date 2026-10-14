@@ -102,10 +102,60 @@ Other options: `--d3` adds D3(BJ) dispersion ([below](#d3-dispersion)); `--dtype
 ### What `--fast` needs
 
 - A CUDA GPU and the `allegro` env (the only one with a CUDA build of torch for sm_120 here).
-- **The libtorch NAMD uses.** MACE, NequIP, SevenNet and ANI optimised models call custom GPU ops. NAMD's shim registers them by loading small C++ libraries listed in `NAMD_MLFF_EXTRA_LIBS` (this needs NAMD patch `01`, [below](#running-in-namd)). `src.build` compiles those libraries the first time they are needed, against `--libtorch DIR` (or `$TORCH`). Point it at the libtorch your NAMD shim is built with; by default it uses the torch of the current Python, which works when the two are the same version. To rebuild a library, delete its `.so` under `src/fast/native/`.
-- ANI only: an `nvcc` for CUDA ≥ 12.8. Set `NVCC_HOME`, or the build installs the CUDA 13.0 compiler wheels into `src/fast/native/cuaev/toolchain` once.
+- **Native op libraries** for MACE, NequIP, SevenNet and ANI. `src.build` compiles them the first time they are needed; pass `--libtorch` (NAMD's libtorch). See [Native op libraries](#native-op-libraries) to build them by hand or when something goes wrong.
 
 If a model's architecture does not fit the rewrites (MACE, NequIP, SevenNet), the build says so and falls back to the faster kernels alone.
+
+### Native op libraries
+
+The optimised MACE, NequIP, SevenNet and ANI models call custom GPU ops. NAMD's shim runs no Python, so these ops are registered by small C++ libraries that the shim loads from `NAMD_MLFF_EXTRA_LIBS` (NAMD patch `01`). Each library is built once per machine.
+
+| Library | Used by | Built from | Output |
+|---|---|---|---|
+| `cueq` | MACE | `uniform1d_op.cpp` + `libcue_ops.so` from `cuequivariance-ops-torch-cu13` | `src/fast/native/cueq/libcueq_uniform1d_native.so` |
+| `oeq` | NequIP, SevenNet | the `openequivariance` package's C++ extension sources | `src/fast/native/oeq/liboeq_native.so` |
+| `cuaev` | ANI | the installed `torchani`'s `csrc/` (cuAEV) | `src/fast/native/cuaev/libcuaev_native_precise.so` |
+
+**Requirements** (in the `allegro` env):
+
+- `g++` with C++17, and `pip install -e ".[fast]"` (cuEquivariance, OpenEquivariance and the CUDA 13 runtime wheels they pull in).
+- **The libtorch your NAMD shim is built with.** The libraries link against it, and a library built against a different libtorch fails to load in NAMD. If it is the same torch version as the `allegro` env, the default (the torch of the active Python) works.
+- `cuaev` only: `nvcc` for CUDA ≥ 12.8 (needed for sm_120), and `torchani` installed with its `csrc/` directory (`ls $(python -c 'import torchani, os; print(os.path.dirname(torchani.__file__))')/csrc`).
+
+**Build** from the repository root:
+
+```bash
+export TORCH=/path/to/libtorch          # NAMD's libtorch; omit to use the torch of `python`
+bash src/fast/native/cueq/build.sh      # MACE
+bash src/fast/native/oeq/build.sh       # NequIP, SevenNet
+bash src/fast/native/cuaev/build.sh     # ANI
+```
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `TORCH` | the torch of `$PY` | libtorch to link against |
+| `PY` | `python` | Python of the build env (locates site-packages) |
+| `CUDA` | `<site-packages>/nvidia/cu13` | CUDA headers and runtime |
+| `NVCC_HOME` | `src/fast/native/cuaev/toolchain/nvidia/cu13` | `cuaev`: CUDA toolkit with `bin/nvcc`; if unset, the CUDA 13.0 compiler wheels are pip-installed there once (about 260 MB) |
+| `ARCH` | `120` | `cuaev`: GPU compute capability (`89` for Ada, `90` for Hopper, `120` for Blackwell) |
+| `VARIANT` | `precise` | `cuaev`: `upstream` uses torchani's `-use_fast_math` build instead |
+| `OUTLIB` | see table above | output path |
+
+`src.build` looks for the libraries at these paths and only builds the missing ones. To rebuild one (for example after changing libtorch), delete its `.so` and run its `build.sh` again.
+
+**Use** in NAMD, colon-separated, in this order:
+
+```bash
+SP=$(python -c 'import site; print(site.getsitepackages()[0])')
+# MACE
+export NAMD_MLFF_EXTRA_LIBS=$SP/nvidia/cu13/lib/libnvrtc.so.13:$SP/cuequivariance_ops/lib/libcue_ops.so:$PWD/src/fast/native/cueq/libcueq_uniform1d_native.so
+# NequIP, SevenNet
+export NAMD_MLFF_EXTRA_LIBS=$PWD/src/fast/native/oeq/liboeq_native.so
+# ANI
+export NAMD_MLFF_EXTRA_LIBS=$PWD/src/fast/native/cuaev/libcuaev_native_precise.so
+```
+
+`src.build` prints the right line for the model it built. To check a library loads without Python, run the shim's test program with `NAMD_MLFF_EXTRA_LIBS` exported: `source namd_benchmarks/env.sh; namd_benchmarks/lib/mlff_shim_test $NAMD_MLFF_LIB mlff_model.pt 0` (`Unknown builtin op` means a library is missing; an undefined-symbol error means it was built against a different libtorch).
 
 ### Step by step
 
