@@ -4,18 +4,19 @@ Runs in a fresh process that never imports cuequivariance_torch / cuequivariance
 (asserted), loading only libcue_ops.so + libcueq_uniform1d_native.so, like the NAMD shim.
 usage: python parity_native.py BASE.pt ART.pt [ART2.pt ...] [--n 30,300] [--walkers 1,4]
 """
-import argparse, os, sys
+import argparse, os, site, sys
 import torch
 HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.join(HERE, "..", ".."))  # scripts/opt for bench_common.water_system
-SP = "/home/rat/miniconda3/envs/allegro/lib/python3.12/site-packages"
+REPO = os.path.abspath(os.path.join(HERE, "..", "..", ".."))
+sys.path.insert(0, os.path.join(HERE, ".."))  # scripts/opt for bench_common.water_system
+SP = os.environ.get("SP") or site.getsitepackages()[0]
 ap = argparse.ArgumentParser()
 ap.add_argument("base"); ap.add_argument("arts", nargs="+")
 ap.add_argument("--n", default="30,300"); ap.add_argument("--walkers", default="1,4")
 ap.add_argument("--jitter", type=float, default=0.02)
 a = ap.parse_args()
 torch.ops.load_library(f"{SP}/cuequivariance_ops/lib/libcue_ops.so")
-torch.ops.load_library(os.path.join(HERE, "libcueq_uniform1d_native.so"))
+torch.ops.load_library(os.path.join(REPO, "src", "fast", "native", "cueq", "libcueq_uniform1d_native.so"))
 from bench_common import water_system
 dev = "cuda"
 base = torch.jit.load(a.base, map_location=dev)

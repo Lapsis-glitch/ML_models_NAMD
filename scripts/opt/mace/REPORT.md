@@ -17,7 +17,7 @@ The model is unchanged (same weights and architecture, fp64 as shipped). Every a
 The runtime env for the cuEq artifacts is the default shim plus three libraries:
 ```bash
 SP=/home/rat/miniconda3/envs/allegro/lib/python3.12/site-packages
-export NAMD_MLFF_EXTRA_LIBS=$SP/nvidia/cu13/lib/libnvrtc.so.13:$SP/cuequivariance_ops/lib/libcue_ops.so:/home/rat/PycharmProjects/ML_models_NAMD/scripts/opt/mace/cueq_native/libcueq_uniform1d_native.so
+export NAMD_MLFF_EXTRA_LIBS=$SP/nvidia/cu13/lib/libnvrtc.so.13:$SP/cuequivariance_ops/lib/libcue_ops.so:/home/rat/PycharmProjects/ML_models_NAMD/src/fast/native/cueq/libcueq_uniform1d_native.so
 ```
 - `libnvrtc.so.13` has to come first. `libcue_ops.so` needs that soname, and the libtorch zip only ships a hash-named nvrtc. LD_LIBRARY_PATH stays untouched.
 - `libcueq_uniform1d_native.so` is new (Route B). It links only libtorch + libcue_ops. It has no Python and no libtorch_python.
@@ -26,14 +26,14 @@ In a namd3 run (300 atoms, walk0, seeded Langevin, 300 steps) the recommended ar
 
 ## Route B: native `cuequivariance::uniform_1d` (done, and the only way cuEq is allowed in NAMD)
 
-Upstream, `cuequivariance::uniform_1d` is a Python `torch.library.custom_op`. Its compiled `_ext` .so registers nothing and needs libtorch_python, so a cuEq TorchScript artifact can't load in a pure-libtorch process. `scripts/opt/mace/cueq_native/uniform1d_op.cpp` ports that op to C++, line by line:
+Upstream, `cuequivariance::uniform_1d` is a Python `torch.library.custom_op`. Its compiled `_ext` .so registers nothing and needs libtorch_python, so a cuEq TorchScript artifact can't load in a pure-libtorch process. `src/fast/native/cueq/uniform1d_op.cpp` ports that op to C++, line by line:
 - The schema is copied verbatim from `torch.ops.cuequivariance.uniform_1d.default._schema` (cuequivariance-ops-torch 0.11.1).
-- **CUDA kernel.** This is the custom_op body: `_handle_batch_dim_auto`, allocation of the outputs (SHARED/INDEXED outputs zeroed), and the flat→nested argument mapping of the pybind layer. That mapping was recorded with the LD_PRELOAD spy (`spy.cpp` → `spy_mapping.log`): index buffers get `kBatched` and index_cfg −1, `batch_sizes=[batch_size]`, `buffer_bytes=nbytes`, `zero_out=false`, `ignore_first=true`. The work itself is one call to `kernelcatcher::equivariance::uniform_1d::run_uniform_1d_cuda` on the current torch stream.
+- **CUDA kernel.** This is the custom_op body: `_handle_batch_dim_auto`, allocation of the outputs (SHARED/INDEXED outputs zeroed), and the flat→nested argument mapping of the pybind layer. That mapping was recorded with the LD_PRELOAD spy (`scripts/opt/mace/cueq_spy.cpp` → `cueq_spy_mapping.log`): index buffers get `kBatched` and index_cfg −1, `batch_sizes=[batch_size]`, `buffer_bytes=nbytes`, `zero_out=false`, `ignore_first=true`. The work itself is one call to `kernelcatcher::equivariance::uniform_1d::run_uniform_1d_cuda` on the current torch stream.
 - **Autograd kernel.** A `torch::autograd::Function` port of `_do_bwd_jit`: the backward is the same op, renamed `*_bwd` with rewired operations, and it is dispatched through the op again, so double backward works too. `needs_input_grad(i)` indexes tensor inputs only; the backward returns 20 undefined grads for the non-tensor args plus one per tensor.
-- Build: `bash scripts/opt/mace/cueq_native/build.sh` (about 11 s, against `/home/rat/compile_NAMD_MACE/libtorch-2.11.0+cu130`).
+- Build: `bash src/fast/native/cueq/build.sh` (about 11 s, against `/home/rat/compile_NAMD_MACE/libtorch-2.11.0+cu130`).
 
 Acceptance:
-1. **Parity in a fresh process that never imports cuequivariance python** (asserted: `sys.modules` has no cuequivariance*). `cueq_native/parity_native.py` compared baseline, cueqf and fast_cueqf at N=30/300 × W=1/4: max dE 9.3e-10 kcal/mol, max dF 1.9e-13 kcal/mol/Å — ALL OK.
+1. **Parity in a fresh process that never imports cuequivariance python** (asserted: `sys.modules` has no cuequivariance*). `scripts/opt/mace/parity_native.py` compared baseline, cueqf and fast_cueqf at N=30/300 × W=1/4: max dE 9.3e-10 kcal/mol, max dF 1.9e-13 kcal/mol/Å — ALL OK.
 2. **`mlff_shim_test` on the default shim** with only the native EXTRA_LIBS: `mace_fast_cueqf.pt` and `mace_cueqf.pt` print ALL CHECKS PASSED. E = -47995.022275 kcal/mol, identical to the baseline; batch energies are identical too. RSS is 2.33 GB (fast_cueqf) / 2.18 GB (cueqf) vs 1.72 GB (baseline).
 3. **namd3 smoke** (`scripts/opt/mace/namd_smoke/run_smoke.sh`, private run dirs under `scripts/opt/mace/namd_smoke/runs/`; `namd_benchmarks/runs/` was not touched):
 
@@ -89,7 +89,7 @@ Median ms (peak alloc MiB). Parity is against the first model in each invocation
 | max dE (kcal/mol) | 5.5e-3 | 5.4e-2 | 5.5e-2 | 0.16 | 0.54 | 1.09 |
 | max dF (kcal/mol/Å) | 4.8e-4 | 1.2e-3 | 1.7e-3 | 2.4e-3 | 3.8e-3 | 5.7e-3 |
 
-The dE is essentially an offset from fp32 rounding of the per-species E0 table and of the per-atom energies. With fp32 summation it was 13 kcal/mol at 300 atoms; `fast_mace.py` now accumulates E0 and the interaction energy in fp64, which is a no-op for fp64 builds. Speed: 1.8x over fp64 fast at 300 atoms, 4x at 900, 5.5x at 3000 (the laptop RTX 5080 runs fp64 at about 1/64 of fp32).
+The dE is essentially an offset from fp32 rounding of the per-species E0 table and of the per-atom energies. With fp32 summation it was 13 kcal/mol at 300 atoms; `src/fast/mace/fast.py` now accumulates E0 and the interaction energy in fp64, which is a no-op for fp64 builds. Speed: 1.8x over fp64 fast at 300 atoms, 4x at 900, 5.5x at 3000 (the laptop RTX 5080 runs fp64 at about 1/64 of fp32).
 
 ## Where the time goes
 
@@ -119,7 +119,7 @@ The dE is essentially an offset from fp32 rounding of the per-species E0 table a
 | JIT knobs / TF32 | infra: no win / changes numerics |
 | wrapper flags | not needed; `src/wrappers/wrap_compiled_mace.py` unchanged by this agent |
 
-Two fixes carried over from earlier work: the U-basis rebase (`rebuild.rebase_U`; the naive cuEq conversion is off by 0.015 eV) and the TorchScript fixes in `cueq_fusion.py` (the scripted stock cuEq path is about 60 eV off). The fp32 rebuild now constructs and rebases in fp64, then casts. Constructing in fp32 had made the U-span check fail at 2.5e-8.
+Two fixes carried over from earlier work: the U-basis rebase (`src.fast.mace.rebuild.rebase_U`; the naive cuEq conversion is off by 0.015 eV) and the TorchScript fixes in `src/fast/mace/cueq.py` (the scripted stock cuEq path is about 60 eV off). The fp32 rebuild now constructs and rebases in fp64, then casts. Constructing in fp32 had made the U-span check fail at 2.5e-8.
 
 ## Tests
 `pytest tests/ -k "mace or MACE"`: 25 passed, 2 skipped. `tests/test_interface_compliance.py`: 21 passed.
@@ -132,8 +132,8 @@ bash scripts/opt/mace/run_grid.sh           # bench grid (N*W<=1200 includes e3n
 flock scripts/opt/.gpu_bench.lock bash scripts/opt/mace/namd_smoke/run_smoke.sh fast models/opt/mace_fast_cueqf.pt native 100 300
 ```
 Files:
-- `cueq_native/{uniform1d_op.cpp,build.sh,parity_native.py,spy.cpp,spy_mapping.log}`
-- `{rebuild,cueq_fusion,fast_mace,build_fast,compile_inner,wrap}.py`
+- `src/fast/native/cueq/{uniform1d_op.cpp,build.sh}`; `parity_native.py`, `cueq_spy.cpp`, `cueq_spy_mapping.log`
+- `src/fast/mace/{rebuild,cueq,fast,extract_state}.py`; build entry point `python -m src.fast.mace` (was `build_fast.py`), wrapping via `python -m src.cli --model-type mace` (was `wrap.py`)
 - `bench_capped.py`, `run_grid.sh`, `namd_smoke/run_smoke.sh`, `prof.py` (`--native`), `breakdown.py`
 - Results: `scripts/opt/results/mace_final_w{N}_W{W}.json`, `mace_final_w3000_W4_expseg.json`, `mace_f32parity_w*_W*.json`
 

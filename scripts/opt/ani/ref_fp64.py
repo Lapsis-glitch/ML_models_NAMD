@@ -3,7 +3,16 @@ Hartree -> kcal/mol with the repo constant. usage: python ref_fp64.py OUT.pt"""
 import os, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE); sys.path.insert(0, os.path.join(HERE, "..", "..", ".."))
-import ani_env; ani_env.setup(cuaev=False)
+# torchani without its (not shipped) csrc extensions: stub torchani.csrc with everything off (pyaev only).
+# Must run before `import torchani`.
+import types
+os.environ.setdefault("TORCHANI_NO_WARN_EXTENSIONS", "1")
+_stub = types.ModuleType("torchani.csrc")
+_stub.CUAEV_IS_INSTALLED = False
+_stub.MNP_IS_INSTALLED = False
+_stub.CLIST_IS_INSTALLED = False
+_stub.__all__ = ["CUAEV_IS_INSTALLED", "MNP_IS_INSTALLED", "CLIST_IS_INSTALLED"]
+sys.modules["torchani.csrc"] = _stub
 import torch, torchani
 from src.constants import HARTREE_TO_KCAL
 import geoms

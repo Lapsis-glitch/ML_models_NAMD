@@ -19,7 +19,7 @@ source $REPO/namd_benchmarks/env.sh >/dev/null
 case "$MODE" in
   pyinit) export LD_LIBRARY_PATH=$SP/nvidia/cu13/lib:$LD_LIBRARY_PATH
           export NAMD_MLFF_EXTRA_LIBS=/home/rat/miniconda3/envs/allegro/lib/libpython3.12.so.1.0:$REPO/scripts/opt/mace/cueq_pyinit/libmace_cueq_pyinit.so ;;
-  native) export NAMD_MLFF_EXTRA_LIBS=$SP/nvidia/cu13/lib/libnvrtc.so.13:$SP/cuequivariance_ops/lib/libcue_ops.so:$REPO/scripts/opt/mace/cueq_native/libcueq_uniform1d_native.so ;;
+  native) export NAMD_MLFF_EXTRA_LIBS=$SP/nvidia/cu13/lib/libnvrtc.so.13:$SP/cuequivariance_ops/lib/libcue_ops.so:$REPO/src/fast/native/cueq/libcueq_uniform1d_native.so ;;
 esac
 ATOMS=$((3*K)); SYS=$REPO/namd_benchmarks/systems/w${K}_${ATOMS}atoms
 coords=$SYS/water.pdb; [ -f $SYS/water_min.coor ] && coords=$SYS/water_min.coor

@@ -13,8 +13,10 @@ a = ap.parse_args()
 if a.cueq:
     import cuequivariance_torch  # noqa
 if a.native:
-    torch.ops.load_library("/home/rat/miniconda3/envs/allegro/lib/python3.12/site-packages/cuequivariance_ops/lib/libcue_ops.so")
-    torch.ops.load_library(os.path.join(HERE, "cueq_native", "libcueq_uniform1d_native.so"))
+    import site
+    _sp = os.environ.get("SP") or site.getsitepackages()[0]
+    torch.ops.load_library(os.path.join(_sp, "cuequivariance_ops", "lib", "libcue_ops.so"))
+    torch.ops.load_library(os.path.join(HERE, "..", "..", "..", "src", "fast", "native", "cueq", "libcueq_uniform1d_native.so"))
 from bench_common import water_system
 dev = torch.device("cuda")
 xyz, Z = water_system(a.n)

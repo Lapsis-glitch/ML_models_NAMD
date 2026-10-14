@@ -12,7 +12,7 @@
 #          scripts/opt/schnet/cudagraph/shim/libnamd_mlff.so   (BUILD_SHIM=1) shim + opt-in NAMD_MLFF_CUDA_GRAPH=1
 set -euo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
-PY=${PY:-/home/rat/miniconda3/envs/allegro/bin/python}
+PY=${PY:-python}   # allegro env python
 HERE=$REPO/scripts/opt/schnet
 INNER=$REPO/models/compiled_schnet_default.pt
 OUT=$REPO/models/opt
@@ -39,7 +39,7 @@ cp "$HERE/wrap_schnetpack.py.pre_schnet_nl.bak" "$TMP/src/wrappers/wrap_schnetpa
 
 # 4) optional: shim variant with the opt-in CUDA-graph path (does NOT touch the installed shim)
 if [ "${BUILD_SHIM:-0}" = 1 ]; then
-  S=${NAMD_SHIM_SRC:-/home/rat/compile_NAMD_MACE/namd_fennix/src/mlff_shim}
+  S=${NAMD_SHIM_SRC:-${NAMD_ROOT:-${COMPILE_ROOT:-$HOME/compile_NAMD_MACE}/namd_fennix}/src/mlff_shim}
   D=$HERE/cudagraph/shim
   cp "$S/mlff_shim.cpp" "$D/mlff_shim.cpp.orig"
   cp "$S/mlff_shim.h" "$S/mlff_shim_test.cpp" "$S/build_and_test.sh" "$D/"

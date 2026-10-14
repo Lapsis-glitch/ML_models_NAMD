@@ -10,7 +10,7 @@ PY=/home/rat/miniconda3/envs/allegro/bin/python
 export LD_LIBRARY_PATH=$SP/nvidia/cu13/lib:${LD_LIBRARY_PATH:-} TORCHANI_NO_WARN_EXTENSIONS=1
 export PYTORCH_CUDA_ALLOC_CONF=${PYTORCH_CUDA_ALLOC_CONF:-expandable_segments:True}
 A=scripts/opt/ani; M=models/opt; R=scripts/opt/results
-NAT="--extra-lib $A/cuaev_native/libcuaev_native_precise.so"
+NAT="--extra-lib src/fast/native/cuaev/libcuaev_native_precise.so"
 MODELS="--model base=$M/ani_baseline.pt --model fast=$M/ani_fast.pt --model fast_nocache=$M/ani_fast_nocache.pt"
 TAG=${TAG:-final}
 for N in ${SYSTEMS:-30 300 900 3000 6000}; do

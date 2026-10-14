@@ -195,14 +195,14 @@ SP=/home/rat/miniconda3/envs/allegro/lib/python3.12/site-packages; R=/home/rat/P
 # SchNet  (models/opt/schnet_fast.pt): nothing extra. Optional CUDA graphs = patched shim
 #          scripts/opt/schnet/cudagraph/shim/libnamd_mlff.so + NAMD_MLFF_CUDA_GRAPH=1 (not installed)
 # MACE    (models/opt/mace_fast_cueqf.pt):
-export NAMD_MLFF_EXTRA_LIBS=$SP/nvidia/cu13/lib/libnvrtc.so.13:$SP/cuequivariance_ops/lib/libcue_ops.so:$R/scripts/opt/mace/cueq_native/libcueq_uniform1d_native.so
+export NAMD_MLFF_EXTRA_LIBS=$SP/nvidia/cu13/lib/libnvrtc.so.13:$SP/cuequivariance_ops/lib/libcue_ops.so:$R/src/fast/native/cueq/libcueq_uniform1d_native.so
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True     # large systems (>=3000 x4)
 # NequIP  (models/opt/nequip_fast_oeq.pt):
-export NAMD_MLFF_EXTRA_LIBS=$R/scripts/opt/nequip/oeq_native/liboeq_native.so
+export NAMD_MLFF_EXTRA_LIBS=$R/src/fast/native/oeq/liboeq_native.so
 # SevenNet (models/opt/sevennet_fast.pt / sevennet_fast_d3.pt): the same library as NequIP
-export NAMD_MLFF_EXTRA_LIBS=$R/scripts/opt/nequip/oeq_native/liboeq_native.so
+export NAMD_MLFF_EXTRA_LIBS=$R/src/fast/native/oeq/liboeq_native.so
 # ANI-2x  (models/opt/ani_fast.pt):
-export NAMD_MLFF_EXTRA_LIBS=$R/scripts/opt/ani/cuaev_native/libcuaev_native_precise.so
+export NAMD_MLFF_EXTRA_LIBS=$R/src/fast/native/cuaev/libcuaev_native_precise.so
 # FeNNiX  (unchanged namd_benchmarks/models/fennix/w<K>/manifest.json, or models/opt/fennix_fp32/w<K>):
 #   patched namd3 copy ~/compile_NAMD_MACE/namd_fennix_fxopt/Linux-x86_64-g++/namd3,
 #   LD_LIBRARY_PATH="$FENNIX_CUDA_LIBS:$LD_LIBRARY_PATH", optional NAMD_QM_FAST_INDEX=1, config "QMNoPntChrg on"

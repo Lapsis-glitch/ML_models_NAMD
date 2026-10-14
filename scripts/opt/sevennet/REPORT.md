@@ -20,7 +20,7 @@ Every recommended artifact loads in NAMD's **default shim** (`namd_benchmarks/li
 |---|---|---|---|---|---|
 | `sevennet_baseline.pt` | current wrapper + SevenNet's stock serial deployment `models/compiled_sevennet_0.pt` (BASELINE) | 27.7 ms | 46.1 | 511 | 40.5 ms/step |
 | `sevennet_oeq.pt` | SevenNet's own OpenEquivariance deployment (`deploy(use_oeq=True)`), same weights | 14.3 (1.9x) | 14.4 (3.2x) | 45.2 (11.3x) | 16.2 |
-| **`sevennet_fast.pt`** | **OEQ + FastSevenNet exact rewrites (`--fast`, `src/sevennet_fast.py`) — RECOMMENDED** | **4.9 (5.7x)** | **6.0 (7.7x)** | **41.3 (12.4x)** | **8.6 (4.7x)** |
+| **`sevennet_fast.pt`** | **OEQ + FastSevenNet exact rewrites (`--fast`, `src/fast/sevennet.py`) — RECOMMENDED** | **4.9 (5.7x)** | **6.0 (7.7x)** | **41.3 (12.4x)** | **8.6 (4.7x)** |
 | `sevennet_baseline_d3.pt` | baseline + D3(BJ, PBE) (`--d3`) | 30.9 | 47.6 | 525 | 46.2 |
 | **`sevennet_fast_d3.pt`** | **FastSevenNet + D3** | **6.8** | **8.0** | **56.7** | **9.5 (4.9x)** |
 
@@ -28,7 +28,7 @@ The table gives median ms per call (bench_common, W = 1) and the namd3 wall time
 
 The OEQ and fast artifacts need the default shim plus the **same** library as the NequIP artifacts:
 ```bash
-export NAMD_MLFF_EXTRA_LIBS=/home/rat/PycharmProjects/ML_models_NAMD/scripts/opt/nequip/oeq_native/liboeq_native.so
+export NAMD_MLFF_EXTRA_LIBS=/home/rat/PycharmProjects/ML_models_NAMD/src/fast/native/oeq/liboeq_native.so
 ```
 - Without it the shim refuses the model with an unknown-op error, `libtorch_tp_jit::jit_conv_forward`.
 - SevenNet's OEQ deployment calls OEQ's `TensorProductConv` op, exactly as NequIP does.
@@ -42,7 +42,7 @@ SevenNet 0.13 supports OEQ natively: `sevenn/nn/oeq_helper.py` swaps each `Irrep
 - **Wrap:** `python -m src.cli --model-type sevennet --compiled <inner> --out ...`. `src.cli` sees the deployment's `oeq` key and loads the native library itself, or you can pass `--extra-libs` explicitly.
 - **Scope:** the kernels-only route works for every SevenNet checkpoint, multi-fidelity ones included (`--modal`).
 
-## 2. FastSevenNet (`src.compile_sevennet --fast`, `src/sevennet_fast.py`)
+## 2. FastSevenNet (`src.compile_sevennet --fast`, `src/fast/sevennet.py`)
 
 With OEQ the model is **host-bound** below ~1000 atoms. At 30 atoms an OEQ call takes 13.6 ms wall but only 2.6 ms of GPU time, spread over ~930 kernel launches.
 
@@ -189,7 +189,7 @@ bash scripts/opt/sevennet/run_grid.sh   # bench grid (~4.5 min)
 flock scripts/opt/.gpu_bench.lock bash scripts/opt/sevennet/namd_smoke/run_smoke.sh fast models/opt/sevennet_fast.pt native 100 300
 ```
 Files:
-- the rewrites: `src/sevennet_fast.py`; the entry point: `src/compile_sevennet.py --fast`
+- the rewrites: `src/fast/sevennet.py`; the entry point: `src/compile_sevennet.py --fast`
 - here: `build.sh`, `parity.py`, `prof.py`, `run_grid.sh`, `namd_smoke/run_smoke.sh`
 - results in `scripts/opt/results/sevennet_final_w*_W*.json`, `sevennet_l3i5_w*_W1.json` and `sevennet_mf0_w*_W1.json`
 

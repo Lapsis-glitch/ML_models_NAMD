@@ -1,9 +1,10 @@
 """Per-submodule GPU time breakdown of MACE-OFF (eager, synced hooks; fwd only
 per module, backward as one block).  usage: breakdown.py N {e3nn|cueqf} [dtype]"""
 import sys, os, time, collections
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))); sys.path.insert(0, "scripts/opt"); sys.path.insert(0, ".")
+HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, os.path.join(HERE, "..")); sys.path.insert(0, os.path.join(HERE, "..", "..", ".."))  # scripts/opt, repo root
 import torch
-from rebuild import rebuild
+from src.fast.mace.rebuild import rebuild
 from bench_common import water_system
 from src.edges import build_edges
 n = int(sys.argv[1]); kind = sys.argv[2]; dt = getattr(torch, sys.argv[3] if len(sys.argv) > 3 else "float64")

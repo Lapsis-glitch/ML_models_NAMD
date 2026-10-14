@@ -9,7 +9,7 @@ PY=${PY:-/home/rat/miniconda3/envs/allegro/bin/python}
 SP=${SP:-$("$PY" -c 'import site; print(site.getsitepackages()[0])')}
 export LD_LIBRARY_PATH=$SP/nvidia/cu13/lib:${LD_LIBRARY_PATH:-}
 export PYTORCH_CUDA_ALLOC_CONF=${PYTORCH_CUDA_ALLOC_CONF:-expandable_segments:True}
-NAT="--extra-lib scripts/opt/nequip/oeq_native/liboeq_native.so"
+NAT="--extra-lib src/fast/native/oeq/liboeq_native.so"
 M=models/opt
 # e3nn baseline: ~4 GiB per 1000 atoms -> only where N*W <= 3000 (speedup/parity columns then refer
 # to the first model present)

@@ -8,7 +8,7 @@ SP=/home/rat/miniconda3/envs/allegro/lib/python3.12/site-packages
 PY=/home/rat/miniconda3/envs/allegro/bin/python
 export LD_LIBRARY_PATH=$SP/nvidia/cu13/lib:${LD_LIBRARY_PATH:-}
 export PYTORCH_CUDA_ALLOC_CONF=${PYTORCH_CUDA_ALLOC_CONF:-expandable_segments:True}
-NAT="--extra-lib scripts/opt/nequip/oeq_native/liboeq_native.so"
+NAT="--extra-lib src/fast/native/oeq/liboeq_native.so"
 M=models/opt
 E3NN="--model base=$M/nequip_baseline.pt --model recomp=$M/nequip_recompiled_cuda.pt"
 OEQ="--model oeq=$M/nequip_oeq.pt --model fast_oeq=$M/nequip_fast_oeq.pt"

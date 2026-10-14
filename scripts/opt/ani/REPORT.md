@@ -13,9 +13,9 @@ The model is unchanged: ANI-2x, all 8 ensemble members, same weights (checked te
 | `ani_baseline_lean.pt` | reference: stock inner + wrapper `lean=True` only | none |
 
 ```bash
-export NAMD_MLFF_EXTRA_LIBS=/home/rat/PycharmProjects/ML_models_NAMD/scripts/opt/ani/cuaev_native/libcuaev_native_precise.so
+export NAMD_MLFF_EXTRA_LIBS=/home/rat/PycharmProjects/ML_models_NAMD/src/fast/native/cuaev/libcuaev_native_precise.so
 ```
-That is the only extra. The library needs only the libtorch zip, plus the zip's cudart through a symlink in `cuaev_native/lib/`. It needs neither libtorch_python nor libpython.
+That is the only extra. The library needs only the libtorch zip, plus the zip's cudart through a symlink in `src/fast/native/cuaev/lib/`. It needs neither libtorch_python nor libpython.
 
 namd3 runs (walk0, seeded, private run dirs):
 
@@ -30,14 +30,14 @@ QMENERGY of fast vs base shows a constant offset: ~0.6 kcal/mol at 300 atoms, 2.
 
 ## What was done (all exact rewrites; fp32 network math unchanged)
 
-1. **Native cuAEV** (`cuaev_native/`).
+1. **Native cuAEV** (`src/fast/native/cuaev/`).
    - torchani 2.7.9 ships the cuAEV CUDA sources (`torchani/csrc/aev.cu`, `cuaev.cpp`) but no binary. They already register `TORCH_LIBRARY(cuaev)` with a C++ Autograd kernel.
    - The only source change is `<torch/extension.h>` → `<torch/torch.h>`, which drops pybind11/Python. The library is built against the libtorch zip with nvcc 13.0 for sm_120.
-   - The system nvcc is 12.0/12.6, which has no sm_120. nvcc 13.0.88 plus cccl/crt/nvvm were pip-installed with `--target scripts/opt/ani/toolchain --no-deps` (264 MB; allegro untouched).
+   - The system nvcc is 12.0/12.6, which has no sm_120. nvcc 13.0.88 plus cccl/crt/nvvm were pip-installed with `--target src/fast/native/cuaev/toolchain --no-deps` (264 MB; allegro untouched).
    - Variant `precise` (default) uses plain `expf`/`cosf` and no `-use_fast_math`. `VARIANT=upstream` (torchani's CMake flags: `-use_fast_math` + `__expf` intrinsics) also builds but is not used: no measurable end-to-end gain, and AEV is only ~20% of GPU time.
    - The single-molecule path that does all pairs inside the kernel (`torch.ops.cuaev.run`) replaces torchani's PyTorch all-pairs neighbour list, radial/angular terms and index_add (~150 ops). cuAEV vs pyAEV: max|dAEV| 1.3e-6, max|d grad| 1e-5 (fp32 noise).
    - Walkers (B > 1) of ≤ 1024 atoms go through cuAEV's batch mode in one call, 1.6–2.6x faster than one call per walker at W=4. Larger walkers get one call each: the batch kernel uses one thread block per molecule and holds it in shared memory (≤ ~2400 atoms).
-2. **Fused ensemble** (`fast_ani.py: ElementNet`).
+2. **Fused ensemble** (`src/fast/ani/fast.py: ElementNet`).
    - Per element, layer 1 of all 8 members is ONE GEMM ([8·h1, 1008] @ [1008, n]); layers 2–4 are batched GEMMs over members.
    - Everything is kept transposed (features × atoms), so there are no layout copies.
    - Atoms are grouped by element with one bincount + stable argsort. The stock model does 8 members × 7 elements × (eq + nonzero with a host **sync** + index_select + MLP + index_add).
@@ -168,8 +168,8 @@ bash scripts/opt/ani/run_grid.sh   # bench grid + proteins + periodic (~10 min)
 flock scripts/opt/.gpu_bench.lock bash scripts/opt/ani/namd_smoke/run_smoke.sh fast models/opt/ani_fast.pt native 100 300
 ```
 Files:
-- Native lib: `cuaev_native/{build.sh,src/,lib/,libcuaev_native_precise.so}`
-- Model and build: `fast_ani.py`, `build_fast.py`, `ani_env.py` (build-time only: loads the native lib and tells torchani cuAEV is installed), `wrap.py`
+- Native lib: `src/fast/native/cuaev/{build.sh,src/,lib/,libcuaev_native_precise.so}`
+- Model and build: `src/fast/ani/fast.py`, `python -m src.fast.ani` (was `build_fast.py`), `src.fast.ani.setup_cuaev` (was `ani_env.py`; build-time only: loads the native lib and tells torchani cuAEV is installed), `python -m src.cli --model-type torchani` (was `wrap.py`)
 - Parity: `geoms.py`, `ref_fp64.py`, `parity_native.py`
 - Benchmarks and profiling: `bench_pbc.py`, `run_grid.sh`, `prof.py`, `namd_smoke/run_smoke.sh`, `geoms_prot/`
 - Logs: `parity.txt`, `shim_test.txt`, `grid_log.txt`
@@ -182,4 +182,4 @@ Files:
 2. To sweep with the fast artifact, repoint `namd_benchmarks/models/ani2x.pt` (your symlink, not changed) at `models/opt/ani_fast.pt` and export the `NAMD_MLFF_EXTRA_LIBS` line above.
 3. `ani_fast` aborts (device assert) if the atom types change at a fixed atom count within one process. NAMD never does that; use `ani_fast_nocache` if something else might.
 4. The stock periodic path is unusable beyond ~1000 atoms (O(27 N²) memory). If you run periodic ANI, use the fast artifact.
-5. The cuAEV lib's RPATH points to `/home/rat/compile_NAMD_MACE/libtorch-2.11.0+cu130`. Rebuild it (`cuaev_native/build.sh`) if the zip moves.
+5. The cuAEV lib's RPATH points to `/home/rat/compile_NAMD_MACE/libtorch-2.11.0+cu130`. Rebuild it (`src/fast/native/cuaev/build.sh`) if the zip moves.

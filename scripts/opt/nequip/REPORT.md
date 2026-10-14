@@ -14,10 +14,10 @@ The model is unchanged: NequIP-OAM-L 0.1 (`mir-group/NequIP-OAM-L:0.1`, package 
 
 The runtime env for the OEQ artifacts is the default shim plus one library:
 ```bash
-export NAMD_MLFF_EXTRA_LIBS=/home/rat/PycharmProjects/ML_models_NAMD/scripts/opt/nequip/oeq_native/liboeq_native.so
+export NAMD_MLFF_EXTRA_LIBS=/home/rat/PycharmProjects/ML_models_NAMD/src/fast/native/oeq/liboeq_native.so
 ```
 - Nothing else is needed.
-- The library's RUNPATH points cudart and nvrtc at `oeq_native/lib/lib{cudart,nvrtc}.so.13`. Those are symlinks to the libtorch zip's hashed copies, so the process loads the same files libtorch already uses. cublas and the driver also come from the zip / WSL.
+- The library's RUNPATH points cudart and nvrtc at `src/fast/native/oeq/lib/lib{cudart,nvrtc}.so.13`. Those are symlinks to the libtorch zip's hashed copies, so the process loads the same files libtorch already uses. cublas and the driver also come from the zip / WSL.
 
 In a namd3 run (300 atoms, walk0, seeded, 300 steps), steps 100–300 take:
 
@@ -33,8 +33,8 @@ OAM-L was trained with `enable_OpenEquivariance` (its package config says so). N
 
 - **Install:** OEQ 0.7.0 was pip-installed into allegro. The dry run showed only openequivariance + pybind11 would change; torch, e3nn and numpy are unchanged.
 - **Why a new library was needed:** OEQ registers the op schemas and CUDA kernels in C++ (`extension/torch_core.hpp`, `TORCH_LIBRARY(libtorch_tp_jit)`), but the autograd formulas are Python-only (`TensorProductConv.register_autograd`). Neither shipped .so fits NAMD: the JIT build embeds pybind11 and links libpython, and the precompiled one targets CUDA 12.
-- **What was built:** `scripts/opt/nequip/oeq_native/oeq_native.cpp` compiles the upstream `torch_core.hpp` unchanged against the libtorch zip and drops pybind11. It adds `TORCH_LIBRARY_IMPL(libtorch_tp_jit, Autograd)` kernels that mirror the Python ones: `jit_conv_forward` → `jit_conv_backward` → `jit_conv_double_backward`, and the same for `jit_tp_*`. The backward re-dispatches through the op, so double backward works; the Python triple backward is left out.
-- **Build:** `oeq_native/build.sh`, about 20 s.
+- **What was built:** `src/fast/native/oeq/oeq_native.cpp` compiles the upstream `torch_core.hpp` unchanged against the libtorch zip and drops pybind11. It adds `TORCH_LIBRARY_IMPL(libtorch_tp_jit, Autograd)` kernels that mirror the Python ones: `jit_conv_forward` → `jit_conv_backward` → `jit_conv_double_backward`, and the same for `jit_tp_*`. The backward re-dispatches through the op, so double backward works; the Python triple backward is left out.
+- **Build:** `src/fast/native/oeq/build.sh`, about 20 s.
 
 Acceptance:
 1. **Parity in a fresh process that never imports openequivariance** (`parity_native.py` and `parity_fast.py` assert this on `sys.modules`). All cells OK; see the parity section.
@@ -52,7 +52,7 @@ Acceptance:
 
 No crashes. Steps 0/1/2/10/50 agree to ≤1.5e-3 kcal/mol.
 
-## FastNequIP: exact rewrites (`fast_nequip.py`, `build_fast.py`)
+## FastNequIP: exact rewrites (`src/fast/nequip/fast.py`, `python -m src.fast.nequip`)
 
 The rewrites are graph surgery on the eager model after `enable_OpenEquivariance` and before scripting. The weights are unchanged. The packaged model runs nequip 0.14 code, so the surgery handles that version's `scatter_norm_factor` and the ZBL `edge_cutoff` key.
 
@@ -156,8 +156,8 @@ bash scripts/opt/nequip/run_grid.sh   # bench grid (~8 min)
 flock scripts/opt/.gpu_bench.lock bash scripts/opt/nequip/namd_smoke/run_smoke.sh fast_oeq models/opt/nequip_fast_oeq.pt native 100 300
 ```
 Files:
-- `oeq_native/{oeq_native.cpp,build.sh,lib/}`
-- `compile_ts.py`, `fast_nequip.py`, `build_fast.py`, `wrap.py`
+- `src/fast/native/oeq/{oeq_native.cpp,build.sh,lib/}`
+- `python -m src.compile_nequip` (was `compile_ts.py`), `src/fast/nequip/fast.py` (was `fast_nequip.py`), `python -m src.fast.nequip` (was `build_fast.py`), `python -m src.cli --model-type nequip` (was `wrap.py`)
 - `parity_native.py`, `parity_fast.py`, `parity_tf32.py`
 - `bench_nq.py` (bench_common + VRAM cap), `run_grid.sh`, `namd_smoke/run_smoke.sh`
 - `prof.py`, `breakdown.py`, `opcount.py`
@@ -167,4 +167,4 @@ Files:
 1. To sweep NequIP with OEQ in NAMD, repoint `namd_benchmarks/models/nequip_oam.pt` (user-owned symlink, not changed here) at `models/opt/nequip_fast_oeq.pt` and export the `NAMD_MLFF_EXTRA_LIBS` line above.
 2. Below about 1000 atoms the model is host-bound. CUDA graphs (the SchNet graph shim, not installed) or AOTInductor (needs a change to the shim's model loader) are the remaining levers.
 3. `liboeq_native.so` needs the allegro OEQ and nvidia/cu13 headers only at build time; at run time it needs only the libtorch zip. Rebuild it if the zip moves.
-4. Do not load `liboeq_native.so` into a Python process that also imports openequivariance (duplicate `TORCH_LIBRARY(libtorch_tp_jit)`); `wrap.py` refuses that combination.
+4. Do not load `liboeq_native.so` into a Python process that also imports openequivariance (duplicate `TORCH_LIBRARY(libtorch_tp_jit)`); the old `wrap.py` refused that combination, `src.cli` does not check it.
