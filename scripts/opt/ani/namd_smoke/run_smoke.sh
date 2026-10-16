@@ -2,7 +2,7 @@
 # Single-cell namd3 smoke test of an ANI artifact, run in its OWN dir (does not touch namd_benchmarks/runs/).
 # usage: run_smoke.sh LABEL MODEL.pt {zip|native} [WATER=100] [STEPS=300]
 #   zip    -> default C++ libtorch shim (libnamd_mlff.so), no extra libs (stock TorchANI artifacts)
-#   native -> default zip shim + NAMD_MLFF_EXTRA_LIBS=scripts/opt/ani/cuaev_native/libcuaev_native_precise.so (cuAEV ops)
+#   native -> default zip shim + NAMD_MLFF_EXTRA_LIBS=src/fast/native/cuaev/libcuaev_native_precise.so (cuAEV ops)
 set -uo pipefail
 LABEL=$1; MODEL=$(readlink -f "$2"); MODE=$3; K=${4:-100}; STEPS=${5:-300}
 REPO=/home/rat/PycharmProjects/ML_models_NAMD
@@ -15,7 +15,7 @@ case "$MODE" in
 esac
 source $REPO/namd_benchmarks/env.sh >/dev/null
 case "$MODE" in
-  native) export NAMD_MLFF_EXTRA_LIBS=${CUAEV_LIB:-$REPO/scripts/opt/ani/cuaev_native/libcuaev_native_precise.so} ;;
+  native) export NAMD_MLFF_EXTRA_LIBS=${CUAEV_LIB:-$REPO/src/fast/native/cuaev/libcuaev_native_precise.so} ;;
 esac
 ATOMS=$((3*K)); SYS=$REPO/namd_benchmarks/systems/w${K}_${ATOMS}atoms
 coords=$SYS/water.pdb; [ -f $SYS/water_min.coor ] && coords=$SYS/water_min.coor

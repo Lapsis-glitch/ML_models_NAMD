@@ -24,7 +24,7 @@ ap.add_argument("--rows", type=int, default=25)
 ap.add_argument("--calls", type=int, default=5)
 a = ap.parse_args()
 
-torch.ops.load_library(str(bc.REPO / "scripts/opt/nequip/oeq_native/liboeq_native.so"))
+torch.ops.load_library(str(bc.REPO / "src/fast/native/oeq/liboeq_native.so"))
 dev = torch.device("cuda:0")
 bc.JITTER = 0.02
 r = bc.Runner("x", a.artifact, dev)

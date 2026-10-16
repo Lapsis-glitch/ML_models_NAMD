@@ -9,9 +9,9 @@ SP=/home/rat/miniconda3/envs/allegro/lib/python3.12/site-packages
 export LD_LIBRARY_PATH=$SP/nvidia/cu13/lib:${LD_LIBRARY_PATH:-} TORCHANI_NO_WARN_EXTENSIONS=1
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 LIBS=(--extra-lib $SP/nvidia/cu13/lib/libnvrtc.so.13 --extra-lib $SP/cuequivariance_ops/lib/libcue_ops.so
-      --extra-lib scripts/opt/mace/cueq_native/libcueq_uniform1d_native.so
-      --extra-lib scripts/opt/nequip/oeq_native/liboeq_native.so
-      --extra-lib scripts/opt/ani/cuaev_native/libcuaev_native_precise.so)
+      --extra-lib src/fast/native/cueq/libcueq_uniform1d_native.so
+      --extra-lib src/fast/native/oeq/liboeq_native.so
+      --extra-lib src/fast/native/cuaev/libcuaev_native_precise.so)
 M=models/opt
 cells=("$@"); [ ${#cells[@]} -eq 0 ] && cells=(30 1 300 1 900 1 3000 1 6000 1 30 4 300 4 900 4 3000 4 6000 4)
 for ((i=0; i<${#cells[@]}; i+=2)); do

@@ -4,7 +4,7 @@ import os, sys
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 import torch
 import bench_common as bc
-torch.ops.load_library(str(bc.REPO / "scripts/opt/nequip/oeq_native/liboeq_native.so"))
+torch.ops.load_library(str(bc.REPO / "src/fast/native/oeq/liboeq_native.so"))
 torch.cuda.set_per_process_memory_fraction(15 * 2**30 / torch.cuda.get_device_properties(0).total_memory, 0)
 bc.JITTER = 0.02
 dev = torch.device("cuda:0")

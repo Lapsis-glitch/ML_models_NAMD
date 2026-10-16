@@ -32,16 +32,17 @@ build time):
 ``--oeq``   SevenNet's own OpenEquivariance deployment (``use_oeq``): fused
             tensor-product convolution kernels.
 ``--fast``  ``--oeq`` plus the exact FastSevenNet rewrites of
-            ``src/sevennet_fast.py`` (fewer, larger ops; the model is
+            ``src/fast/sevennet.py`` (fewer, larger ops; the model is
             host-bound without them).  If a rewrite doesn't fit the model's
             structure, it falls back to ``--oeq`` and says so.
 
-Both need the native op library ``scripts/opt/nequip/oeq_native/liboeq_native.so``
+Both need the native op library ``src/fast/native/oeq/liboeq_native.so``
 at run time: in NAMD via ``NAMD_MLFF_EXTRA_LIBS``; ``src.cli`` loads it by
-itself when it wraps such a deployment.  See scripts/opt/sevennet/REPORT.md.
+itself when it wraps such a deployment.
 """
 
 import argparse
+import importlib.util
 from pathlib import Path
 
 
@@ -61,10 +62,13 @@ def compile_sevennet(checkpoint: str, out_path: str, modal: str = None,
             "Checkpoint type map is not in index order; the deployed "
             "chemical_symbols_to_index would be wrong.")
 
+    if (oeq or fast) and importlib.util.find_spec("openequivariance") is None:
+        raise RuntimeError("--oeq / --fast need the openequivariance package "
+                           "(pip install openequivariance)")
     Path(out_path).parent.mkdir(parents=True, exist_ok=True)
     kind = "fast" if fast else ("oeq" if oeq else "stock")
     if fast:
-        from .sevennet_fast import RewriteNotApplicable, rewriting_deploy
+        from .fast.sevennet import RewriteNotApplicable, rewriting_deploy
         try:
             with rewriting_deploy():
                 deploy(checkpoint, out_path, modal=modal, use_oeq=True)
@@ -84,7 +88,7 @@ def compile_sevennet(checkpoint: str, out_path: str, modal: str = None,
           f"{f' (modal {modal})' if modal else ''}{how}  ->  {out_path}")
     print(f"  elements: {len(type_map)}   cutoff: {r_max} Å   dtype: {dtype}")
     if kind != "stock":
-        print("  needs scripts/opt/nequip/oeq_native/liboeq_native.so at run time "
+        print("  needs src/fast/native/oeq/liboeq_native.so at run time "
               "(NAMD_MLFF_EXTRA_LIBS)")
     return kind
 
@@ -103,6 +107,9 @@ def main(argv=None):
                      help="--oeq plus the exact FastSevenNet rewrites (GPU; recommended)")
     parser.add_argument("--out", required=True, help="Output TorchScript file")
     args = parser.parse_args(argv)
+    if args.fast or args.oeq:
+        from .fast.native import ensure_cuda_lib_path
+        ensure_cuda_lib_path("src.compile_sevennet")
     compile_sevennet(args.checkpoint, args.out, modal=args.modal,
                      oeq=args.oeq, fast=args.fast)
 

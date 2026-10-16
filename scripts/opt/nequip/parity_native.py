@@ -6,7 +6,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 import torch
 import bench_common as bc
 REPO = bc.REPO
-torch.ops.load_library(str(REPO / "scripts/opt/nequip/oeq_native/liboeq_native.so"))
+torch.ops.load_library(str(REPO / "src/fast/native/oeq/liboeq_native.so"))
 dev = torch.device("cuda:0")
 arts = {k: REPO / "models/opt" / f"nequip_{k}.pt" for k in ("baseline", "recompiled_cuda", "oeq")}
 runners = {k: bc.Runner(k, p, dev) for k, p in arts.items()}

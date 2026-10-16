@@ -1,180 +1,243 @@
 # ML_models_NAMD
 
-Run machine-learning interatomic potentials (MLIPs) inside [NAMD](https://www.ks.uiuc.edu/Research/namd/).
+Run machine-learning interatomic potentials inside [NAMD](https://www.ks.uiuc.edu/Research/namd/).
 
-Each supported model is wrapped behind one fixed TorchScript interface, so NAMD's C++ MLFF backend can load any of them as a single `.pt` file without running Python. FeNNiX is the exception: it is exported to StableHLO and runs through NAMD's PJRT backend instead (see [FeNNiX](#fennix-stablehlo--pjrt)).
+Every model is wrapped behind one TorchScript interface, so NAMD loads it as a single `.pt` file through its C++ `mlff` backend, with no Python at run time. FeNNiX is the exception: it is exported to StableHLO and runs through NAMD's PJRT backend ([FeNNiX](#fennix)).
 
-| Model | Wrapper | Native units | NAMD backend |
-|---|---|---|---|
-| [MACE](https://github.com/ACEsuit/mace) (incl. MACE-OFF) | `MACE_TS_Wrapper` | eV | `QMSoftware mlff` |
-| [NequIP](https://github.com/mir-group/nequip) (incl. NequIP-OAM) | `NequIP_Allegro_Wrapper` | eV | `QMSoftware mlff` |
-| [Allegro](https://github.com/mir-group/allegro) | `NequIP_Allegro_Wrapper` | eV | `QMSoftware mlff` |
-| [SchNetPack](https://github.com/atomistic-machine-learning/schnetpack) ≥ 2.0 | `SchNetPack_Wrapper` | eV | `QMSoftware mlff` |
-| [TorchANI](https://github.com/aiqm/torchani) (ANI-1x/1ccx/2x) | `TorchANI_Wrapper` | Hartree | `QMSoftware mlff` |
-| [X-MACE](https://github.com/rhyan10/X-MACE) (excited states) | `XMACE_TS_Wrapper` | eV | `QMSoftware mlff` |
-| [SevenNet](https://github.com/MDIL-SNU/SevenNet) (7net-0, 7net-l3i5, 7net-omat, multi-fidelity) | `SevenNet_Wrapper` | eV | `QMSoftware mlff` |
-| [FeNNiX / FeNNol](https://github.com/thomasple/FeNNol) | StableHLO export | eV | `QMSoftware fennol` |
+| Model | `--fast` build | Speed-up on RTX 5080 (30 / 300 / 3000 atoms) |
+|---|---|---|
+| [MACE](https://github.com/ACEsuit/mace) (MACE-OFF, any `*.model`) | cuEquivariance + FastMACE rewrites | 3.6× / 14× / reference runs out of GPU memory |
+| [NequIP](https://github.com/mir-group/nequip) (NequIP-OAM, any package) | OpenEquivariance + FastNequIP rewrites | 2.3× / 6.3× / reference runs out of GPU memory |
+| [SevenNet](https://github.com/MDIL-SNU/SevenNet) (7net-0, -l3i5, -omat, multi-fidelity) | OpenEquivariance + FastSevenNet rewrites | 5.7× / 7.7× / 12× |
+| [TorchANI](https://github.com/aiqm/torchani) (ANI-1x, ANI-1ccx, ANI-2x) | cuAEV + fused ensemble | 8.0× / 8.7× / 5.0× |
+| [SchNetPack](https://github.com/atomistic-machine-learning/schnetpack) ≥ 2.0 | fast energy route, cell-list neighbour list (also on CPU) | 1.2× / 1.2× / 1.3× |
+| [Allegro](https://github.com/mir-group/allegro) | none | |
+| [X-MACE](https://github.com/rhyan10/X-MACE) (excited states) | none | |
+| [FeNNiX](https://github.com/thomasple/FeNNol) | NAMD-side patches | |
+
+The optimised models use the same weights and compute the same function as the stock models. `src.build` compares each optimised model with the stock model before saving it. Benchmarks and parity tables: [`scripts/opt/COMPARISON.md`](scripts/opt/COMPARISON.md).
 
 ---
 
 ## Contents
 
-1. [Environments](#environments)
-2. [Guide: compile a model for NAMD](#guide-compile-a-model-for-namd)
-3. [FeNNiX (StableHLO / PJRT)](#fennix-stablehlo--pjrt)
-4. [Guide: optimised builds](#guide-optimised-builds)
-5. [The wrapper interface](#the-wrapper-interface)
-6. [Testing](#testing)
-7. [Adding a new model](#adding-a-new-model)
-8. [Repository layout](#repository-layout)
+1. [Quick start](#quick-start)
+2. [Environments](#environments)
+3. [Building a model](#building-a-model)
+4. [Running in NAMD](#running-in-namd)
+5. [Checking a model](#checking-a-model)
+6. [FeNNiX](#fennix)
+7. [D3 dispersion](#d3-dispersion)
+8. [The wrapper interface](#the-wrapper-interface)
+9. [Testing](#testing)
+10. [Repository layout](#repository-layout)
+
+---
+
+## Quick start
+
+```bash
+pip install -e ".[sevennet,fast]"
+python -m src.build sevennet 7net-0 --fast --out models/sevennet_fast.pt
+```
+
+This command compiles the model, builds the custom-op library it needs and wraps the model. Its last lines show what to export before running NAMD:
+
+```
+NAMD model: /path/to/models/sevennet_fast.pt
+Before running NAMD:
+  export NAMD_MLFF_EXTRA_LIBS=/path/to/src/fast/native/oeq/liboeq_native.so
+```
+
+One line per model:
+
+```bash
+python -m src.build mace     MACE-OFF23_medium.model --fast --mace-python <python that can read the .model>
+python -m src.build nequip   nequip.net:mir-group/NequIP-OAM-L:0.1 --r-max 6.0 --fast
+python -m src.build sevennet 7net-0 --fast
+python -m src.build torchani ani2x --fast
+python -m src.build schnet   schnet_scripted.pt --r-max 5.0 --fast
+python -m src.build allegro  results/allegro/allegro_packaged.nequip.zip --r-max 5.0
+python -m src.build xmace    fulvene.model --state 0
+```
+
+Where to get each `SOURCE`:
+
+| Model | Source |
+|---|---|
+| MACE-OFF23 | `wget https://raw.githubusercontent.com/ACEsuit/mace-off/main/mace_off23/MACE-OFF23_medium.model` (also `_small`, `_large`; see [ACEsuit/mace-off](https://github.com/ACEsuit/mace-off)) |
+| NequIP-OAM-L | downloaded from nequip.net on first use of the `nequip.net:` id |
+| SevenNet | `7net-0`, `7net-l3i5` and `7net-mf-0` ship with the `sevenn` package; for other names, `sevenn` downloads the checkpoint on first use |
+| ANI | downloaded by torchani from GitHub on first use of `ani1x` / `ani1ccx` / `ani2x` |
+| Allegro, other NequIP models | a model you train ([Training your own model](#training-your-own-model)), or a published package from [nequip.net](https://www.nequip.net) |
+| SchNetPack | a model you train ([Training your own model](#training-your-own-model)) |
+| X-MACE | your own `.model`; `models/fulvene.model` is an example |
+| FeNNiX | `models/fennix-bio1S.fnx` |
+
+Without network access to these hosts, the first download fails with a proxy or connection error. The `models/` directory contains compiled models you can pass as `SOURCE` instead, which also skips the compile step: `compiled_mace_off23_medium.pt`, `compiled_nequip_oam_l.nequip.pth`, `compiled_ani2x.pt`, `fulvene_compiled.pt` (X-MACE), and `compiled_schnet_default.pt` (SchNet with random weights, for timing only).
+
+Leave out `--fast` to build the **reference** model, which uses the framework's own kernels and runs anywhere, CPU included. Use it to check an optimised build ([Checking a model](#checking-a-model)).
 
 ---
 
 ## Environments
 
-The frameworks cannot share one Python environment (`mace-torch 0.3.x` pins `e3nn 0.4.4`, NequIP ≥ 0.6 needs `e3nn ≥ 0.6`, X-MACE pins `e3nn 0.5.1`, FeNNol needs JAX). We use one conda env per family:
+The frameworks' dependencies conflict, so you cannot install all of them in one Python environment. Use one environment per group:
 
-| Env | Used for | Key pins |
+| Environment | Used for | Why it is separate |
 |---|---|---|
-| `MACE_312` | reading MACE `*.model` files (compile, or extract weights for the optimised build) | `mace-torch 0.3.x`, `e3nn 0.4.4` |
-| `allegro` | NequIP/Allegro, TorchANI, SchNetPack, SevenNet (`sevenn 0.13`), wrapping, tests, the only env with a working CUDA torch on sm_120 | `torch 2.11+cu130`, `nequip 0.17`, `e3nn ≥ 0.6` |
-| `x_mace` | X-MACE (editable install of a patched `rhyan10/X-MACE`) | `torch 2.2`, `e3nn 0.5.1`, `numpy < 2` |
-| `fennix` | FeNNiX StableHLO export | JAX + FeNNol |
+| main | NequIP, Allegro, SevenNet, TorchANI, SchNetPack, MACE models saved with a current e3nn, every `--fast` build, the tests | needs a CUDA build of torch for your GPU and `e3nn ≥ 0.6` (required by NequIP) |
+| old MACE | reading MACE `*.model` files saved with an older e3nn: MACE-OFF23 was saved with `e3nn 0.4.4`, which cannot be installed next to NequIP | needs the mace-torch and e3nn versions that saved the file |
+| X-MACE | X-MACE (patched source, see [X-MACE](#x-mace)) | X-MACE requires older torch and e3nn versions |
+| JAX | FeNNiX export | JAX + FeNNol |
 
-Install the repo into each env with the matching extra:
+Create each environment with your usual tool (venv or conda), then install from the repository root:
 
 ```bash
-pip install -e ".[mace]"        # or [nequip], [allegro], [schnet], [torchani], [sevennet], [test], [all]
+# main: first install torch built for your GPU's CUDA version (pytorch.org), then
+pip install -e ".[nequip,allegro,sevennet,torchani,schnet,test]"
+pip install -e ".[fast]"                      # --fast builds; building openequivariance downloads libtorch from download.pytorch.org
+pip install cuequivariance-ops-torch-cu12     # MACE --fast; use -cu13 if torch is a CUDA 13 build
+pip install mace-torch && pip install "e3nn>=0.6"   # MACE --fast; ignore pip's warning that mace-torch wants e3nn 0.4.4
+python -c "import torch; print(torch.__version__, torch.cuda.is_available())"   # torch must still be your CUDA build
+
+# old MACE: only to read MACE files saved with e3nn 0.4.4 (MACE-OFF23)
+pip install -e ".[mace]"
+
+# JAX: FeNNiX export (for a GPU, install JAX with CUDA support as the JAX docs describe)
+pip install fennol jax
 ```
 
-Wrapping (`python -m src.cli`) only needs torch plus the file you are wrapping, and we run it from `allegro`. The exception is X-MACE, which is wrapped in `x_mace`.
+Installing an extra can replace the installed torch with another version, so check torch after each `pip install`. The `[mace]` extra installs `e3nn 0.4.4`, and NequIP and SevenNet do not work with that version: keep the extra out of the main environment. For X-MACE, see [X-MACE](#x-mace).
 
 ---
 
-## Guide: compile a model for NAMD
-
-Every TorchScript model goes through the same four steps:
-
-```
-weights ──(1) compile──▶ inner TorchScript ──(2) wrap──▶ mlff_model.pt ──(3) check──▶ (4) NAMD
-          model-specific   compiled_*.pt       src.cli    NAMD-ready        Python      QMSoftware mlff
-```
-
-1. **Compile.** Turn the framework's checkpoint into a TorchScript file. This step is different for every framework.
-2. **Wrap.** `python -m src.cli` puts that file behind the fixed interface, converts units to kcal/mol, and saves `mlff_model.pt`.
-3. **Check.** Load the result in plain PyTorch and evaluate one molecule.
-4. **Run.** Point NAMD at the file.
-
-This produces the **reference** model: the framework's own kernels behind the wrapper. It runs anywhere, CPU included. For production speed on a GPU, build the optimised variant as well ([Guide: optimised builds](#guide-optimised-builds)), then check it against this reference.
-
-The examples below use published pretrained models. A model you trained yourself goes the same way: start from its compiled or deployed file.
-
-### Step 1 — Compile
-
-| Model | Env | Command | Output |
-|---|---|---|---|
-| MACE-OFF23 | `MACE_312` | `python -m src.compile_mace_off --weights MACE-OFF23_medium.model --out models/compiled_mace_off23_medium.pt` | fp64 TorchScript |
-| NequIP-OAM-L | `allegro` | `python scripts/opt/nequip/compile_ts.py nequip.net:mir-group/NequIP-OAM-L:0.1 models/compiled_nequip_oam_l.nequip.pth --device cuda` | TorchScript `.nequip.pth` |
-| ANI-2x / ANI-1x / ANI-1ccx | `allegro` | `python -m src.compile_torchani --variant ani2x --out models/compiled_ani2x.pt` | TorchScript + element order |
-| X-MACE | `x_mace` | see [X-MACE](#x-mace) below | TorchScript |
-| SevenNet | `allegro` | `python -m src.compile_sevennet --checkpoint 7net-0 --out models/compiled_sevennet_0.pt` (add `--fast` for the [optimised build](#sevennet)) | fp32 TorchScript + metadata |
-| SchNetPack | `allegro` | no pretrained model; train one, or use `python -m src.compile_schnetpack --out … --r-max 5.0` for **random weights (timing only)** | TorchScript |
-
-Notes:
-
-- **MACE-OFF.** Get the `.model` file from the [MACE-OFF release](https://github.com/ACEsuit/mace-off) (mace-torch caches it in `~/.cache/mace/`). `--dtype float32` makes an fp32 variant, which is faster but has different numerics.
-- **NequIP / Allegro.** `nequip-compile --mode torchscript` refuses to run on torch ≥ 2.10. `scripts/opt/nequip/compile_ts.py` does the same thing without that check, and accepts either a `nequip.net:` model id or a local `*.nequip.zip` package. Set `--device` to where NAMD will run the model. On older torch you can use `nequip-compile --mode torchscript --target pair_nequip <package> <out>` directly. OAM-L doesn't store its cutoff as an attribute, so pass `--r-max 6.0` when wrapping.
-- **SevenNet.** `src.compile_sevennet` runs SevenNet's own LAMMPS serial deployment (`sevenn get_model`), so a `deployed_serial.pt` you already have can be wrapped directly. `--checkpoint` takes a pretrained name (`7net-0`, `7net-l3i5`, `7net-omat`, `7net-mf-ompa`, …) or your own `checkpoint_best.pth`. Multi-fidelity checkpoints need `--modal` (e.g. `mpa`). SevenNet's D3 dispersion is a separate CUDA kernel, not part of the deployed model; add it when wrapping with `--d3` (see [D3 dispersion](#d3-dispersion)).
-- **TorchANI.** The compile script prints the element order. Pass it unchanged to `--elements` when wrapping. The ANI-2x order is `1,6,7,8,16,9,17` (H C N O S F Cl), which is also the CLI default.
-
-#### X-MACE
-
-The upstream X-MACE code (`rhyan10/X-MACE`, branch `X-MACE_socs`) can't be TorchScript-compiled as published. We keep a patched copy installed editable in the `x_mace` env. **Don't `pip install mace-torch` over it**, because that replaces the patches. The patches fix:
-
-- a `zip()` over five `ModuleList`s in `AutoencoderExcitedMACE.forward` that TorchScript drops without an error (the loop never runs);
-- `None` entries in `socs_readouts`, untyped accumulators and bare `torch.tensor([])` placeholders;
-- a `retain == False` typo and missing `Optional[Tensor]` handling in `compute_forces`.
-
-Models saved with `nac_indices=None` / `soc_indices=None` also need a fix at load time:
-
-```python
-import torch
-from copy import deepcopy
-from e3nn.util import jit
-
-m = torch.load("fulvene.model", map_location="cpu", weights_only=False).eval()
-if m.nac_indices is None: m.nac_indices = 0
-if m.soc_indices is None: m.soc_indices = 0
-torch.jit.save(jit.compile(deepcopy(m)), "models/fulvene_compiled.pt")
-```
-
-### Step 2 — Wrap
+## Building a model
 
 ```bash
-python -m src.cli --model-type mace     --compiled models/compiled_mace_off23_medium.pt       --out mlff_model.pt
-python -m src.cli --model-type nequip   --compiled models/compiled_nequip_oam_l.nequip.pth    --r-max 6.0 --out mlff_model.pt
-python -m src.cli --model-type allegro  --compiled results/allegro/allegro_deployed.pth       --out mlff_model.pt
-python -m src.cli --model-type schnet   --compiled results/schnetpack/schnet_scripted.pt      --r-max 5.0 --out mlff_model.pt
-python -m src.cli --model-type torchani --compiled models/compiled_ani2x.pt --elements 1,6,7,8,16,9,17 --out mlff_model.pt
-python -m src.cli --model-type xmace    --compiled models/fulvene_compiled.pt --state 0       --out mlff_model.pt
-python -m src.cli --model-type sevennet --compiled models/compiled_sevennet_0.pt              --out mlff_model.pt
-python -m src.cli --model-type sevennet --compiled models/compiled_sevennet_0.pt --d3         --out mlff_model.pt   # + D3(BJ)
+python -m src.build MODEL_TYPE SOURCE [--fast] [--out mlff_model.pt] [options]
 ```
 
-| Flag | Applies to | Meaning |
+| `MODEL_TYPE` | `SOURCE` | Required options |
 |---|---|---|
-| `--model-type` | all | `mace`, `nequip`, `allegro`, `schnet`, `torchani`, `xmace`, `sevennet` |
-| `--compiled` | all | the file from step 1 |
-| `--out` | all | output file (default `mlff_model.pt`) |
-| `--device` | all | device to load onto while wrapping (default `cpu`) |
-| `--r-max` | schnet (required), nequip (fallback) | cutoff in Å; **must equal the training cutoff** |
-| `--energy-key`, `--forces-key` | schnet | output dict keys if your model uses non-default names |
-| `--elements` | torchani | atomic numbers in the model's species order (default ANI-2x) |
-| `--state` | xmace | electronic state to expose (0 = ground) |
-| `--d3` | all | add D3(BJ) dispersion ([below](#d3-dispersion)); `--d3-functional` (default `pbe`), `--d3-cutoff` / `--d3-cn-cutoff` (bohr², default 9000 / 1600) |
-| `--extra-libs` | all | colon-separated native op libraries to load first (same value as `NAMD_MLFF_EXTRA_LIBS`); needed to wrap an optimised inner model |
-| `--fast` | schnet | optimised energy route ([optimised builds](#guide-optimised-builds)); tuning: `--graph-max-atoms`, `--half-min-atoms`, `--nl-cell-min-pairs`, `--no-half-filter` |
-| `--lean` | torchani | low-overhead path with bit-identical outputs (optimised builds) |
+| `mace` | `*.model` file | none; see the note below for MACE-OFF23 |
+| `nequip`, `allegro` | `*.nequip.zip` package or `nequip.net:` id | `--r-max` with any package that stores no cutoff, including your own trained ones (use the training cutoff) and NequIP-OAM-L (`6.0`); `--compile-device` sets where the model will run (default: `cuda` if a GPU is visible, else `cpu`) |
+| `sevennet` | pretrained name or `checkpoint.pth` | `--modal` for multi-fidelity checkpoints |
+| `torchani` | `ani1x`, `ani1ccx` or `ani2x`, or a model you trained | for a trained model, `--elements` as the trainer prints it (without it, `src.build` assumes the ANI-2x order) |
+| `schnet` | scripted SchNetPack model (from training) | `--r-max` = the training cutoff |
+| `xmace` | `*.model` file | `--state` (default `0`, the ground state) |
 
-The CLI scripts the wrapper with `torch.jit.script`, saves it, and prints the cutoff, batching support and internal dtype.
+`src.build` writes the compiled model next to the output as `<out>_inner.pt` (`_inner.nequip.pth` for NequIP and Allegro); you can delete it or pass it as `SOURCE` to rewrap.
 
-SchNetPack models trained in units other than eV need the `energy_units_to_kcal` argument of `SchNetPack_Wrapper`. The CLI doesn't expose it, so build the wrapper in Python and call `src.export.export_wrapped` yourself.
+**MACE-OFF23** was saved with `e3nn 0.4.4`, so only the old-MACE environment can read the `.model` file. Build the reference model there: `python -m src.build mace MACE-OFF23_medium.model`. For `--fast`, run `src.build` in the main environment and add `--mace-python <old-MACE environment's python>`; `src.build` uses that Python only to read the weights. In the main environment, reading the file without `--mace-python` fails with `ValueError: too many values to unpack` from e3nn's `__setstate__`.
 
-### Step 3 — Check the result
+`SOURCE` can also be an already compiled TorchScript file, in which case `src.build` skips the compile step. This does not work with `--fast`, because the optimised build needs the weights to rebuild the model. SchNet is the exception: its `--fast` is a wrapper option, works from the scripted model and also runs on CPU.
 
-Load the wrapped file with nothing but torch and evaluate one water molecule, first without a box and then in one:
+Other options: `--d3` adds D3(BJ) dispersion ([below](#d3-dispersion)); `--dtype float32` makes an fp32 MACE (faster for large systems, different numerics); `--libtorch` is described next. `python -m src.build --help` lists everything.
 
-```python
-import torch
+### What `--fast` needs
 
-m = torch.jit.load("mlff_model.pt", map_location="cpu")
+- A CUDA GPU, and the main environment with a CUDA build of torch (not needed for SchNet). `src.build` stops at once if torch reports no GPU.
+- **Native op libraries** for MACE, NequIP, SevenNet and ANI. `src.build` compiles them the first time they are needed; pass `--libtorch` (NAMD's libtorch). See [Native op libraries](#native-op-libraries) to build them by hand or when something goes wrong.
 
-coords = torch.tensor([[0.000,  0.000,  0.117],
-                       [0.000,  0.757, -0.469],
-                       [0.000, -0.757, -0.469]], dtype=torch.float64)   # Å
-Z = torch.tensor([8, 1, 1], dtype=torch.long)
-no_pc = torch.zeros(0, 3, dtype=torch.float64), torch.zeros(0, dtype=torch.float64)
+If the rewrites do not apply to a model's architecture (MACE, NequIP, SevenNet), `src.build` prints a message and builds the model with the faster kernels only.
 
-# all-zero cell = not periodic -> virial is zero
-e, f, q, w = m(coords, Z, *no_pc, torch.zeros(1, 3, 3, dtype=torch.float64))
-print("E [kcal/mol]:", e.item(), "forces", tuple(f.shape), f.dtype)
+### Native op libraries
 
-# 20 Å cubic box -> same energy for an isolated molecule, virial filled in
-e_pbc, _, _, w_pbc = m(coords, Z, *no_pc, 20.0 * torch.eye(3, dtype=torch.float64).unsqueeze(0))
-print("E_pbc - E:", (e_pbc - e).item(), "virial diag:", w_pbc.diagonal().tolist())
+The optimised MACE, NequIP, SevenNet and ANI models call custom GPU ops. NAMD's shim runs no Python, so small C++ libraries register these ops; the shim loads them from the paths in `NAMD_MLFF_EXTRA_LIBS` (NAMD patch `01`). You build each library once per machine.
+
+| Library | Used by | Built from | Output |
+|---|---|---|---|
+| `cueq` | MACE | `uniform1d_op.cpp` + `libcue_ops.so` from `cuequivariance-ops-torch-cu12` / `-cu13` | `src/fast/native/cueq/libcueq_uniform1d_native.so` |
+| `oeq` | NequIP, SevenNet | the `openequivariance` package's C++ extension sources | `src/fast/native/oeq/liboeq_native.so` |
+| `cuaev` | ANI | the installed `torchani`'s `csrc/` (cuAEV) | `src/fast/native/cuaev/libcuaev_native_precise.so` |
+
+**Requirements** (in the main environment):
+
+- `g++` with C++17, `pip install -e ".[fast]"` (cuEquivariance, OpenEquivariance) and, for MACE, `pip install cuequivariance-ops-torch-cu12` or `-cu13` to match the CUDA version of your torch.
+- **The libtorch your NAMD shim is built with.** The libraries link against it, and NAMD cannot load a library built against a different libtorch. If the shim uses the same torch version as your Python environment, the default (the torch of the active Python) works.
+- `cuaev` only: an `nvcc` that supports your GPU (Blackwell cards need CUDA ≥ 12.8), and `torchani` installed with its `csrc/` directory (`ls $(python -c 'import torchani, os; print(os.path.dirname(torchani.__file__))')/csrc`).
+
+**Build** from the repository root:
+
+```bash
+export TORCH=/path/to/libtorch          # NAMD's libtorch; omit to use the torch of `python`
+bash src/fast/native/cueq/build.sh      # MACE
+bash src/fast/native/oeq/build.sh       # NequIP, SevenNet
+bash src/fast/native/cuaev/build.sh     # ANI
 ```
 
-For ANI-2x this prints `E ≈ -47934 kcal/mol` (−76.38 Ha), float64 forces of shape `(3, 3)`, and `E_pbc - E = 0`. A wrong `--elements` order or `--r-max` shows up here as a bad energy, which is much easier to spot than inside NAMD. Set `TORCHANI_NO_WARN_EXTENSIONS=1` to silence TorchANI's extension warnings.
+| Variable | Default | Meaning |
+|---|---|---|
+| `TORCH` | the torch of `$PY` | libtorch to link against |
+| `PY` | `python` | Python of the build environment, used to find its site-packages |
+| `CUDA` | the nvidia CUDA wheel in site-packages, else `$CUDA_HOME`, else `/usr/local/cuda` | CUDA root with `include/` and `lib/` |
+| `NVCC_HOME` | the first of `$CUDA`, the `nvcc` on `PATH`, `src/fast/native/cuaev/toolchain` whose `nvcc` supports `ARCH` | `cuaev`: CUDA toolkit with `bin/nvcc`. With CUDA 13 and no suitable `nvcc`, the script pip-installs the compiler wheels into `toolchain/` once (about 260 MB) |
+| `ARCH` | the GPU of the build machine | `cuaev`: compute capability to build for (`89` Ada, `90` Hopper, `120` Blackwell) |
+| `VARIANT` | `precise` | `cuaev`: `upstream` builds with torchani's `-use_fast_math` flags instead |
+| `OUTLIB` | see table above | output path |
 
-### Step 4 — Run in NAMD
+`src.build` checks these paths and builds only the libraries that are missing. If a build fails, the script prints what is missing (for example `openequivariance is not installed` or `no nvcc supporting sm_120 found`) and `src.build` stops. To rebuild one (for example after changing libtorch), delete its `.so` and run its `build.sh` again.
 
-The wrapped model is loaded by NAMD's QM interface through the `mlff` backend (a libtorch shim, `libnamd_mlff.so`, which namd3 `dlopen`s). The atoms that the model should handle are flagged in a PDB column, the same way as for any other QM engine:
+**Use** in NAMD: export the library paths, colon-separated. These commands print the value for each model (the paths where the libraries are, or will be, built; check that the files exist):
+
+```bash
+python -c "from src.fast.native import lib_paths; print(':'.join(lib_paths('cueq')))"   # MACE
+python -c "from src.fast.native import lib_paths; print(':'.join(lib_paths('oeq')))"    # NequIP, SevenNet
+python -c "from src.fast.native import lib_paths; print(':'.join(lib_paths('cuaev')))"  # ANI
+```
+
+`src.build` prints the right line for the model it built. To check that NAMD can load a library without Python, run the shim's test program with `NAMD_MLFF_EXTRA_LIBS` exported: `source namd_benchmarks/env.sh; namd_benchmarks/lib/mlff_shim_test $NAMD_MLFF_LIB mlff_model.pt 0` (`Unknown builtin op` means a library is missing; an undefined-symbol error means it was built against a different libtorch).
+
+### Step by step
+
+`src.build` chains two scripts you can also run yourself:
+
+1. **Compile** the checkpoint to TorchScript: `python -m src.compile_<model>` with `mace`, `nequip` (also Allegro), `sevennet`, `torchani` or `xmace`. Each takes `--fast` for the optimised inner model. The SchNetPack trainer already saves a scripted model ([Training your own model](#training-your-own-model)); `src.compile_schnetpack` only makes random-weight models for timing.
+2. **Wrap** it for NAMD:
+
+   ```bash
+   python -m src.cli --model-type mace --compiled inner.pt --out mlff_model.pt \
+       [--extra-libs "$NAMD_MLFF_EXTRA_LIBS"]
+   ```
+
+   `--extra-libs` is required to wrap an optimised inner model. The ablation switches of the optimised builds are in `python -m src.fast.{mace,nequip,ani}`.
+
+### Training your own model
+
+Prepare the data once, then train with the script for your framework. The input is an extended XYZ file with the energy in eV in `atoms.info["energy"]` and the forces in eV/Å in `atoms.arrays["forces"]` (what ASE writes for a structure with a calculator attached):
+
+```bash
+python -m src.training.prepare_data --xyz data.xyz --output-dir prepared
+python -m src.training.train_schnetpack --data-dir prepared --output-dir results/schnetpack --r-max 5.0
+python -m src.training.train_allegro    --data-dir prepared --output-dir results/allegro    --r-max 5.0
+python -m src.training.train_nequip     --data-dir prepared --output-dir results/nequip     --r-max 5.0
+```
+
+| Trainer | File to pass to `src.build` |
+|---|---|
+| `train_schnetpack` | `results/schnetpack/schnet_scripted.pt`, with the same `--r-max` as in training |
+| `train_allegro` | `results/allegro/allegro_packaged.nequip.zip`, with `--r-max` as in training (or `allegro_deployed.pth`, if training wrote it, without `--r-max`) |
+| `train_nequip` | `results/nequip/nequip_packaged.nequip.zip`, with `--r-max` as in training |
+| `train_mace` | `results/mace/mace_compiled.pt` |
+| `train_torchani` | `results/torchani/torchani_scripted.pt`, with `--elements` as printed at the end of training |
+
+Each trainer's `--help` lists its model and training options (for example `--max-epochs` and `--batch-size`). `src.build` also accepts a model trained for only a few epochs, but its energies mean nothing; train until the validation error that the trainer prints stops falling. At the end of NequIP and Allegro training, the trainers try to export a TorchScript `.pth` as well and may print `nequip-compile --mode torchscript failed (expected on PyTorch >= 2.10)` or `Manual TorchScript also failed`. You can ignore both: `src.build` compiles the `.nequip.zip` package itself.
+
+### X-MACE
+
+Upstream X-MACE ([rhyan10/X-MACE](https://github.com/rhyan10/X-MACE), branch `X-MACE_socs`) cannot be TorchScript-compiled as published, and this repository does not include the patched copy. Clone that branch, apply the fixes below and install it editable (`pip install -e .`) in its own environment. pip installs X-MACE under the package name `mace-torch`, so it replaces any other mace-torch in that environment, and a later `pip install mace-torch` would overwrite the patched copy. Without the patched copy, loading a `.model` fails with `Can't get attribute 'AutoencoderExcitedMACE'`. `models/fulvene.model` was also saved from a GPU, so loading it needs one; on a CPU-only machine, use `models/fulvene_compiled.pt` as `SOURCE`. The patches fix a `zip()` over five `ModuleList`s that TorchScript silently skips, `None` entries in `socs_readouts`, untyped accumulators and `torch.tensor([])` placeholders, and `Optional[Tensor]` handling in `compute_forces`. Run `src.build xmace` in that environment.
+
+---
+
+## Running in NAMD
+
+NAMD loads the model through its QM interface with the `mlff` backend (a libtorch shim, `libnamd_mlff.so`). The atoms with `beta = 1` in `qm.pdb` are the ML region:
 
 ```tcl
 QMForces                on
 QMSoftware              mlff
 QMExecPath              /path/to/mlff_model.pt
-# atoms with beta = 1 in qm.pdb are the ML region
 QMColumn                beta
 qmParamPDB              qm.pdb
 qmBondColumn            occ
@@ -186,324 +249,140 @@ QMSwitching             off
 QMVdWParams             off
 QMMult                  1 1
 QMCharge                1 0
-# on = the model supplies all forces (full-ML runs)
+# on = the model supplies all forces (whole-system ML)
 qmReplaceAll            off
-# only for whole-box ML with no MM point charges (skips per-step point-charge selection);
-# leave it off for QM/MM embedding
+# whole-system ML with no MM point charges only: NAMD then skips the per-step point-charge selection
 # QMNoPntChrg           on
 ```
 
-A complete working config is in `namd_benchmarks/templates/bench.conf.tmpl`, and `namd_benchmarks/env.sh` sets up the runtime environment. That includes `NAMD_MLFF_LIB` (the shim to load) and the library paths. The shim must be built against the **same libtorch** as NAMD itself. The NAMD source changes it relies on are in `scripts/opt/namd_patches/`, and their README explains each patch.
+For an optimised model, export the `NAMD_MLFF_EXTRA_LIBS` line `src.build` printed before starting NAMD. Without it the model fails to load with `Unknown builtin op`.
+
+- The shim must be built against the same libtorch as NAMD, and the native op libraries against that libtorch too.
+- The changes to the NAMD source are stored as patches in [`scripts/opt/namd_patches/`](scripts/opt/namd_patches/README.md): `01` (`NAMD_MLFF_EXTRA_LIBS`, JIT options), `02` (FeNNiX PJRT fast path), `03` (faster QM atom indexing for large QM regions, `NAMD_QM_FAST_INDEX=1`).
+- `namd_benchmarks/templates/bench.conf.tmpl` is a complete config, and `namd_benchmarks/env.sh` sets up the runtime environment.
 
 ---
 
-## FeNNiX (StableHLO / PJRT)
+## Checking a model
 
-FeNNiX-BIO1 is a JAX model, so it doesn't go through TorchScript. `scripts/export_fennix_bio1_stablehlo.py` (run in the `fennix` env) lowers a **fixed-shape** energy + forces function to StableHLO. NAMD's C++ PJRT backend then compiles and runs it.
+Load the wrapped model with nothing but torch and the native libraries, as NAMD does, and evaluate one water molecule. Run it for the reference and the optimised model and compare. The water test only works for a model with parameters for H and O; for another model, replace `coords` and `Z` with a molecule made of elements it knows (a model asked about unknown elements still returns a number, but a meaningless one).
 
-Each export is tied to one atom count and one composition. Export once per system. The `--pdb` you pass must contain **exactly the ML-region atoms, in NAMD's order**. For whole-box ML, that is simply the system PDB:
+```python
+import os, torch
+for so in filter(None, os.environ.get("NAMD_MLFF_EXTRA_LIBS", "").split(":")):
+    torch.ops.load_library(so)
 
-```bash
-XLA_PYTHON_CLIENT_PREALLOCATE=false conda run -n fennix python scripts/export_fennix_bio1_stablehlo.py \
-    --model models/fennix-bio1S.fnx \
-    --pdb   system/qm.pdb \
-    --out-dir models/fennix/my_system
+MODEL = "mlff_model.pt"                                                     # the --out of src.build
+dev = "cuda" if torch.cuda.is_available() else "cpu"
+coords = torch.tensor([[0.0, 0.0, 0.117], [0.0, 0.757, -0.469], [0.0, -0.757, -0.469]],
+                      dtype=torch.float64, device=dev)                       # Å
+Z = torch.tensor([8, 1, 1], device=dev)
+pc = torch.zeros(0, 3, dtype=torch.float64, device=dev), torch.zeros(0, dtype=torch.float64, device=dev)
+no_box = torch.zeros(1, 3, 3, dtype=torch.float64, device=dev)            # all-zero cell = not periodic
+
+m = torch.jit.load(MODEL, map_location=dev)
+for _ in range(3):                    # TorchScript optimises the graph by the 3rd call
+    e, f, q, virial = m(coords, Z, *pc, no_box)
+print(f"E = {e.item():.6f} kcal/mol, forces {tuple(f.shape)} {f.dtype}")
 ```
 
-| Flag | Meaning |
-|---|---|
-| `--pdb` / `--z-list` | atom list (and reference coordinates) that fix the shape; use one or the other |
-| `--total-charge` | fixed total charge (default: sum of PDB formal charges, else 0) |
-| `--pbc` | periodic export: takes the live cell as a second input and returns the virial |
-| `--cell` | reference cell for `--pbc`: 3 numbers (orthorhombic) or 9 (rows a, b, c); defaults to the PDB `CRYST1` |
-| `--nblist-margin` | headroom on the fixed neighbour-list capacity (default 1.25); if MD outgrows it, the artifact sets an overflow flag and NAMD stops |
-| `--matmul-precision` | `default` is TF32 on NVIDIA GPUs; `--pbc` and `--pc-capacity` default to `highest` |
-| `--pc-capacity P` | point-charge embedding (NAMD `QMElecEmbed`): adds padded, masked point-charge inputs and a `pc_forces` output (NAMD's `forward_pc_forces` contract); NAMD stops if a QM group sends more than P point charges. Not with `--pbc`. No FeNNol model uses external point charges, so it needs `--test-model` |
-| `--test-model` | export a synthetic closed-form model (`pc-stub`, `pc-stub-cr`, `pc-stub-tip3p`, in `scripts/fennix_pc_test_models.py`) instead of a `.fnx`, to test the NAMD side |
+With the reference models, the snippet prints:
 
-The output directory holds `manifest.json`, the `.stablehlo.mlir`, and reference outputs. In NAMD:
+| Model | E (kcal/mol) |
+|---|---|
+| ANI-2x | -47934.33 |
+| MACE-OFF23 medium | -47995.02 |
+| NequIP-OAM-L | -290.90 |
+| SevenNet 7net-0 | -324.82 |
+| X-MACE fulvene (H, C only), state 0, on `scripts/opt/infra/fulvene1.xyz` (see below) | -143996.57 |
+
+To use a geometry file instead of water, replace `coords` and `Z` in the snippet:
+
+```python
+import ase.io
+a = ase.io.read("scripts/opt/infra/fulvene1.xyz")
+coords = torch.tensor(a.positions, dtype=torch.float64, device=dev)
+Z = torch.tensor(a.numbers, device=dev)
+```
+
+With a wrong `--r-max` or element order, the energy here is visibly wrong. Your own trained models have no reference value; compare their energy with the training data instead, after converting eV to kcal/mol (× 23.0605).
+
+Two messages during wrapping are expected: TorchANI prints `cutoff (r_max): 0.0 Å`, because its cutoff is stored in the AEV computer, and SchNet `--fast` prints a `UserWarning` about converting a tensor with `requires_grad=True` to a scalar. Expected optimised − reference differences: fp64 MACE ΔE = 0, ΔF ≈ 1e-13; SevenNet and NequIP (fp32) ΔF of 1e-4 to 3e-4 kcal/mol/Å; ANI 1e-3 to 1e-2 kcal/mol (the optimised model sums the energy in fp64, stock torchani in fp32).
+
+---
+
+## FeNNiX
+
+FeNNiX-BIO1 is a JAX model. `scripts/export_fennix_bio1_stablehlo.py` (JAX environment, `pip install fennol jax`) exports a **fixed-shape** energy + forces function to StableHLO, which NAMD's C++ PJRT backend compiles and runs. Export once per system. The `--pdb` file (any PDB with element columns) must contain exactly the ML-region atoms, in NAMD's order:
+
+```bash
+# first test: one water molecule (the default when neither --pdb nor --z-list is given)
+python scripts/export_fennix_bio1_stablehlo.py --model models/fennix-bio1S.fnx --out-dir models/fennix/water
+# your system
+XLA_PYTHON_CLIENT_PREALLOCATE=false python scripts/export_fennix_bio1_stablehlo.py \
+    --model models/fennix-bio1S.fnx --pdb my_system/qm.pdb --out-dir models/fennix/my_system
+```
 
 ```tcl
 QMSoftware              fennol
 QMExecPath              /path/to/models/fennix/my_system/manifest.json
 ```
 
-Under `--pbc` the model uses the minimum-image convention, so every perpendicular box width must be at least 2 × cutoff. `namd_benchmarks/export_fennix.sh` shows how to export for a series of system sizes.
+To check an export without NAMD, read the lines `energy abs diff eV:` and `force max abs diff eV/A:` that the export script prints after evaluating the exported function against the Python reference (below 1e-6 for the water test). The export script also writes `reference.npz` and `reference_runtime.txt`, with the reference energies and forces, to the output directory.
 
-With `--pc-capacity` the energy excludes the QM–point-charge Coulomb sum, which NAMD adds from the returned charges, and the forces include the charge response. Padded slots are made inert before the model sees them. The export fails if padding or the capacity changes the result, or if the artifact differs from a float64 reference.
+| Flag | Meaning |
+|---|---|
+| `--pbc` | periodic export (cell input, virial output); minimum image, so every box width must be ≥ 2 × cutoff. `--cell` gives the reference cell (default: PDB `CRYST1`) |
+| `--matmul-precision` | `default` is TF32 on NVIDIA GPUs (fast; energy error up to ~10 kcal/mol at 6000 atoms); `highest` is true fp32, 1.4–2× slower. `--pbc` defaults to `highest` |
+| `--nblist-margin` | headroom on the fixed neighbour-list capacity (default 1.25); NAMD stops if the system needs more neighbours than that during MD |
+| `--total-charge` | fixed total charge (default: sum of PDB formal charges) |
+| `--pc-capacity P` | point-charge embedding inputs (`QMElecEmbed`), for testing the NAMD side with `--test-model` |
+
+The FeNNiX speed-up comes from the NAMD side: patch `02`, `QMNoPntChrg on` for whole-system ML, and `NAMD_QM_FAST_INDEX=1` with patch `03` for large QM regions.
 
 ---
 
-## Guide: optimised builds
+## D3 dispersion
 
-#### D3 dispersion
+`--d3` adds Grimme D3 with Becke–Johnson damping to any model, as `SevenNetD3Calculator` adds it to SevenNet. SevenNet's own D3 is a CUDA library NAMD cannot load, so `src/d3.py` reimplements it in TorchScript, inside the model file. When wrapping, `src.cli` reads the parameters from the installed `sevenn` package; NAMD does not need `sevenn`.
 
-`--d3` adds Grimme D3 with Becke–Johnson damping to any model, the way `SevenNetD3Calculator` adds it to SevenNet. SevenNet's own D3 is a CUDA library loaded through ctypes, which NAMD can't use, so `src/d3.py` does the same maths in TorchScript and it is exported inside the model file. The parameters (C6 reference table, functional parameters, SevenNet's unit constants) are read from the installed `sevenn` package when you wrap, so wrapping with `--d3` needs `sevenn`; the NAMD run doesn't.
-
-- It matches SevenNet's CUDA D3 in energy, forces and stress (`tests/test_d3.py`), and SevenNet + `--d3` matches `SevenNetD3Calculator`.
-- Two-body only and BJ damping only, as in SevenNet. `--d3-functional` takes any name in SevenNet's BJ table (`pbe`, `pbe0`, `b3-lyp`, `r2scan`, …). SevenNet's table has one quirk, kept for parity: `b2-plyp` runs with s6 = 1, because the line setting s6 = 0.64 comes after its `break`.
-- Cutoffs are hard and given as r² in bohr², like SevenNet's `vdw_cutoff` / `cn_cutoff`: 9000 (50.2 Å) and 1600 (21.2 Å). The virial is the analytic one, which, like SevenNet's stress, leaves out the tiny energy steps from pairs crossing the cutoffs.
-- Cost: every pair within 50 Å, summed over periodic images, in float64. For a periodic box of side L that is about N²·(100/L)³ pair-images, so lower `--d3-cutoff` for large boxes.
-- D3 is only applied among the atoms the model sees (the QM region in QM/MM).
-
-`python -m src.cli` on its own always produces the **reference** model. The optimised models are built with the tools in `scripts/opt/<model>/`. They keep the same weights and the same maths, but swap in faster GPU kernels and remove overhead. The recipes below use **the same settings as the benchmark artifacts in `models/opt/`**. Rebuilding MACE-OFF23, NequIP-OAM-L, ANI-2x and SchNet this way reproduces those artifacts exactly (ΔE = ΔF = 0). The MACE and NequIP builds assert parity with the stock model before saving, and the SevenNet build checks each rewrite against the module it replaces. Their checks cycle through every element the model knows, so they test your model's actual species rather than only H and O. ANI is checked with the comparison step at the end of this guide.
-
-| Model | What the optimised build changes | Works for | Extra requirement in NAMD |
-|---|---|---|---|
-| MACE | cuEquivariance kernels + FastMACE exact rewrites | any MACE `*.model` | 3 native libs via `NAMD_MLFF_EXTRA_LIBS` |
-| NequIP | OpenEquivariance kernels + FastNequIP exact rewrites | NequIP packages (a kernels-only fallback is available if the rewrites don't fit your model) | `liboeq_native.so` via `NAMD_MLFF_EXTRA_LIBS` |
-| SevenNet | OpenEquivariance kernels (SevenNet's own `use_oeq` deployment) + FastSevenNet exact rewrites | any SevenNet checkpoint, multi-fidelity included (`src.compile_sevennet --fast`) | `liboeq_native.so` via `NAMD_MLFF_EXTRA_LIBS` (the NequIP library) |
-| ANI | cuAEV + fused per-element ensemble networks | torchani's pretrained ANI-1x, ANI-1ccx, ANI-2x (not custom-trained ANI) | `libcuaev_native_precise.so` via `NAMD_MLFF_EXTRA_LIBS` |
-| SchNet | fast energy route, cell-list neighbour list, half-list filter | any SchNetPack model with an `Atomwise` energy head | none |
-| FeNNiX | nothing on the model side; NAMD-side patches + config | any export | NAMD patch `02` (+ `03`), `QMNoPntChrg on` |
-| Allegro, X-MACE | no optimised route; use the reference model | | |
-
-Speed-ups on an RTX 5080 range from 1.1× (SchNet) to about 15× (MACE). They are in `scripts/opt/COMPARISON.md`, and each model's `scripts/opt/<model>/REPORT.md` has the details and parity numbers.
-
-### At a glance
-
-Every optimised build is the same four steps. Only the tools in each step change per model:
-
-```
-1. native op library  (once per machine, against NAMD's libtorch)   ->  *_native.so
-2. fast inner model   (same weights, parity-checked)                ->  models/opt/<name>_inner_fast.pt
-3. wrap               python -m src.cli ... --extra-libs "$NAMD_MLFF_EXTRA_LIBS"
-4. run                NAMD with the same NAMD_MLFF_EXTRA_LIBS exported
-```
-
-| Model | 1. native library | 2. fast inner | 3. extra `src.cli` flags |
-|---|---|---|---|
-| MACE | `mace/cueq_native/build.sh` | `mace/build_fast.py cueqf OUT --no-plain-linear --state STATE` (after `extract_state.py` in `MACE_312`) | `--extra-libs` |
-| NequIP | `nequip/oeq_native/build.sh` | `nequip/build_fast.py PKG OUT` | `--extra-libs` (`--r-max` if needed) |
-| SevenNet | `nequip/oeq_native/build.sh` (the same library) | `python -m src.compile_sevennet --checkpoint CKPT --fast --out OUT` | none: `src.cli` loads the library itself (`--d3` as usual) |
-| ANI | `ani/cuaev_native/build.sh` | `ani/build_fast.py --model ani2x --cache-species --group-max-atoms 1024 OUT` | `--extra-libs --lean --elements …` |
-| SchNet | — | — (wrap the normal inner) | `--fast` |
-
-(Paths are under `scripts/opt/`.) To rebuild the benchmark models themselves, including the NAMD loadability test, run `bash scripts/opt/<model>/build.sh`. The sections below give the exact commands for your own model.
-
-### Before you start
-
-- Everything runs in the **`allegro` env on a GPU**. The cuEquivariance, OpenEquivariance and cuAEV kernels are CUDA-only.
-- Put CUDA 13 NVRTC on the library path, **including at build time**. Without it cuEquivariance silently falls back to its slow path:
-  ```bash
-  SP=$(python -c 'import site; print(site.getsitepackages()[0])')   # allegro env
-  export LD_LIBRARY_PATH=$SP/nvidia/cu13/lib:$LD_LIBRARY_PATH
-  ```
-- The native op libraries (`*_native.so`) register the custom ops in C++, so NAMD never runs Python. They must be built against the **same libtorch as NAMD's shim**: pass `TORCH=<libtorch dir>` (and `CUDA=<cuda root>` if needed) to their `build.sh`. Build each library once per machine.
-- In NAMD, `NAMD_MLFF_EXTRA_LIBS=/a.so:/b.so` makes the shim load those libraries before the model. This needs NAMD patch `01` from `scripts/opt/namd_patches/`. Without the libraries the model fails to load with `Unknown builtin op`. Wrap with the same list: `python -m src.cli … --extra-libs "$NAMD_MLFF_EXTRA_LIBS"`.
-- The `scripts/opt/<model>/build.sh` scripts rebuild the benchmark models end to end, including the NAMD loadability test. They read `PY`, `SP`, `TORCH` (and `MACE_PY`, `PKG`) from the environment and fall back to the original machine's paths.
-
-### MACE
-
-```bash
-# 1. dump config + weights to a version-neutral file
-#    (MACE_312 env: e3nn 0.4.4 pickles can't be read under e3nn 0.6)
-TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD=1 python scripts/opt/mace/extract_state.py my_mace.model models/opt/my_mace_state.pt
-
-# --- the rest runs in the allegro env ---
-# 2. native cuEq op library (once)
-TORCH=/path/to/libtorch bash scripts/opt/mace/cueq_native/build.sh
-export NAMD_MLFF_EXTRA_LIBS=$SP/nvidia/cu13/lib/libnvrtc.so.13:$SP/cuequivariance_ops/lib/libcue_ops.so:$PWD/scripts/opt/mace/cueq_native/libcueq_uniform1d_native.so
-
-# 3. fast inner model: cuEq + fused conv + FastMACE, fp64 (asserts parity with the stock model)
-python scripts/opt/mace/build_fast.py cueqf models/opt/my_mace_inner_fast.pt --no-plain-linear \
-    --state models/opt/my_mace_state.pt
-
-# 4. wrap
-python -m src.cli --model-type mace --compiled models/opt/my_mace_inner_fast.pt \
-    --extra-libs "$NAMD_MLFF_EXTRA_LIBS" --out models/opt/my_mace_fast.pt
-```
-
-- `--dtype float32` in step 3 gives an fp32 variant. It is faster for large systems, but the numerics change.
-- For no custom ops at all, use `build_fast.py e3nn …` and wrap without `--extra-libs`. That gives FastMACE on plain e3nn: slower than cuEq, but it loads with no extra libraries.
-- If `build_fast.py` stops with an assertion on an unusual MACE architecture, fall back to the kernels only: `python scripts/opt/mace/compile_inner.py cueqf inner.pt --state …`.
-
-### NequIP
-
-```bash
-# 1. native OpenEquivariance op library (once)
-TORCH=/path/to/libtorch bash scripts/opt/nequip/oeq_native/build.sh
-export NAMD_MLFF_EXTRA_LIBS=$PWD/scripts/opt/nequip/oeq_native/liboeq_native.so
-
-# 2. fast inner from a NequIP package (*.nequip.zip from `nequip-package build`;
-#    nequip.net models are cached in ~/.nequip/model_cache/); asserts parity at 30 and 300 atoms
-python scripts/opt/nequip/build_fast.py my_model.nequip.zip models/opt/my_nequip_inner_fast.nequip.pth
-
-# 3. wrap (--r-max only if the model doesn't store its cutoff, e.g. OAM-L: 6.0)
-python -m src.cli --model-type nequip --compiled models/opt/my_nequip_inner_fast.nequip.pth \
-    --extra-libs "$NAMD_MLFF_EXTRA_LIBS" --out models/opt/my_nequip_fast.pt
-```
-
-The FastNequIP rewrites were written for NequIP-OAM-L, and `build_fast.py` stops with an assertion if a block doesn't have the structure it expects. The fallback gives you the OpenEquivariance kernels without the rewrites:
-
-```bash
-python scripts/opt/nequip/compile_ts.py my_model.nequip.zip inner.nequip.pth --device cuda --modifiers enable_OpenEquivariance
-```
-
-Then wrap it the same way.
-
-### SevenNet
-
-The usual compile-then-wrap, with `--fast` on the compile step. It works for any SevenNet checkpoint: pretrained names, your own `.pth`, and multi-fidelity ones with `--modal`.
-
-```bash
-# 1. native OpenEquivariance op library (once per machine; the same library NequIP uses)
-TORCH=/path/to/libtorch bash scripts/opt/nequip/oeq_native/build.sh
-
-# 2. compile: SevenNet's own OEQ deployment plus exact rewrites of its linears, gates and
-#    radial MLPs (each rewrite is checked in fp64 against what it replaces)
-python -m src.compile_sevennet --checkpoint 7net-0 --fast --out models/opt/my_sevennet_inner_fast.pt
-
-# 3. wrap (add --d3 for D3 dispersion, as with the reference model); src.cli loads the
-#    OEQ library by itself and prints the NAMD_MLFF_EXTRA_LIBS line to use in NAMD
-python -m src.cli --model-type sevennet --compiled models/opt/my_sevennet_inner_fast.pt --out models/opt/my_sevennet_fast.pt
-
-# 4. NAMD
-export NAMD_MLFF_EXTRA_LIBS=$PWD/scripts/opt/nequip/oeq_native/liboeq_native.so
-```
-
-- If a rewrite doesn't fit a model's structure, `--fast` falls back to the OpenEquivariance kernels alone and says so. `--oeq` asks for the kernels alone directly.
-- On 7net-0 the fast build is 5.7× the reference at 30 atoms, 7.7× at 300 and 12× at 3000, with forces within 2–3× fp32 noise. Details are in `scripts/opt/sevennet/REPORT.md`.
-- Don't load `liboeq_native.so` into a Python process that also imports `openequivariance`, e.g. one that builds SevenNet models. The ops would be registered twice.
-
-### ANI
-
-```bash
-# 1. native cuAEV library (once). Needs an nvcc for CUDA >= 12.8 (sm_120): set NVCC_HOME, or install the
-#    pip wheels into scripts/opt/ani/toolchain the way scripts/opt/ani/build.sh does
-TORCH=/path/to/libtorch VARIANT=precise bash scripts/opt/ani/cuaev_native/build.sh
-export NAMD_MLFF_EXTRA_LIBS=$PWD/scripts/opt/ani/cuaev_native/libcuaev_native_precise.so
-
-# 2. fast inner (prints the element list to wrap with)
-python scripts/opt/ani/build_fast.py --model ani2x --cache-species --group-max-atoms 1024 models/opt/ani_inner_fast.pt
-
-# 3. wrap
-python -m src.cli --model-type torchani --compiled models/opt/ani_inner_fast.pt --lean \
-    --elements 1,6,7,8,16,9,17 --extra-libs "$NAMD_MLFF_EXTRA_LIBS" --out models/opt/ani_fast.pt
-```
-
-- For ANI-1x or ANI-1ccx, use `--model ani1x` / `--model ani1ccx` and `--elements 1,6,7,8`.
-- `build_fast.py` has no parity check of its own, so compare the result with the reference using the check below. Expect ΔE of 1e-3 to 1e-2 kcal/mol: the fast path sums the energy in fp64, while stock torchani sums in fp32.
-
-### SchNet
-
-No extra build is needed. Wrap with `--fast`:
-
-```bash
-python -m src.cli --model-type schnet --compiled schnet_scripted.pt --r-max 5.0 --fast --out models/opt/schnet_fast.pt
-```
-
-The fast route is used for non-periodic inputs; periodic calls go through the reference path. The defaults of the tuning flags are the benchmark values. No extra libraries are needed in NAMD.
-
-### FeNNiX
-
-The exported artifact is already the optimised one; the speed-up is on the NAMD side:
-
-- NAMD patch `02_fennix_backend` (faster PJRT execute path, about 3× at 300 atoms);
-- `QMNoPntChrg on` for whole-box ML (config only);
-- `NAMD_QM_FAST_INDEX=1` with patch `03` for large QM regions.
-
-Non-periodic exports run their matmuls in **TF32** by default. That is fast, but the energy error reaches about 10 kcal/mol at 6000 atoms, and it changes from one compile to the next. Export with `--matmul-precision highest` for true fp32, which is 1.4–2× slower.
-
-### Checking an optimised build
-
-Compare the optimised model with the reference in a fresh Python process that loads **only the native libraries**. This is how NAMD will load it, so it also catches a missing library:
-
-```python
-import os, torch
-for so in filter(None, os.environ.get("NAMD_MLFF_EXTRA_LIBS", "").split(":")):
-    torch.ops.load_library(so)                      # what the NAMD shim does
-
-dev = "cuda"
-coords = torch.tensor([[0.0, 0.0, 0.117], [0.0, 0.757, -0.469], [0.0, -0.757, -0.469]],
-                      dtype=torch.float64, device=dev)
-Z = torch.tensor([8, 1, 1], device=dev)
-pc = torch.zeros(0, 3, dtype=torch.float64, device=dev), torch.zeros(0, dtype=torch.float64, device=dev)
-cell = torch.zeros(1, 3, 3, dtype=torch.float64, device=dev)
-
-res = {}
-for name in ("mlff_model.pt", "models/opt/my_mace_fast.pt"):   # reference, optimised
-    m = torch.jit.load(name, map_location=dev)
-    for _ in range(3):                                          # 3rd call runs the optimised graph
-        e, f, _, _ = m(coords, Z, *pc, cell)
-    res[name] = (e.item(), f)
-(e0, f0), (e1, f1) = res.values()
-print("dE =", abs(e1 - e0), "kcal/mol   max dF =", (f1 - f0).abs().max().item(), "kcal/mol/Å")
-```
-
-Expected differences from the reference:
-- fp64 MACE: exact (ΔE = 0, ΔF ≈ 1e-13);
-- SevenNet (fp32): ΔF ≈ 1e-4 kcal/mol/Å, ΔE up to ~4e-8 of the total energy;
-- ANI: 1e-3 to 1e-2 kcal/mol, from the fp64 summation;
-- fp32 and TF32 variants: 1e-4 to 1e-2.
-
-The per-model `REPORT.md` files have the full parity tables.
+- The results match SevenNet's CUDA D3 in energy, forces and stress (`tests/test_d3.py`).
+- It is two-body only, with BJ damping. `--d3-functional` takes any name in SevenNet's BJ table (`pbe` default, `pbe0`, `b3-lyp`, `r2scan`, …).
+- The cutoffs are given as r² in bohr² (`src.cli --d3-cutoff 9000 --d3-cn-cutoff 1600`, i.e. 50.2 Å and 21.2 Å). The cost grows with the number of pairs within 50 Å over periodic images, so lower `--d3-cutoff` for large boxes.
+- D3 is computed only between the atoms the model sees (the QM region in QM/MM).
 
 ---
 
 ## The wrapper interface
 
-Every TorchScript wrapper in `src/wrappers/` is an `nn.Module` with:
+Every wrapper in `src/wrappers/` is an `nn.Module` with:
 
 ```
-forward(coords, Z, pc_coords, pc_charges, cell)
-    -> (energy, forces, charges, virial)
-forward_batch(coords, Z, batch, ptr, pc_coords, pc_charges, cells)      # @torch.jit.export
-    -> (energies, forces, charges, virials)
-supports_batch: bool = True
-supports_pbc:   bool = True
+forward(coords, Z, pc_coords, pc_charges, cell)               -> (energy, forces, charges, virial)
+forward_batch(coords, Z, batch, ptr, pc_coords, pc_charges, cells)  -> (energies, forces, charges, virials)
 ```
 
 | Output | Shape (single / batch) | Units |
 |---|---|---|
 | energy | scalar / `[B]` | kcal/mol |
 | forces | `[N, 3]` / `[N_total, 3]` | kcal/mol/Å |
-| charges | `[N]` / `[N_total]` | e (zeros if the model has no charges) |
-| virial | `[3, 3]` / `[B, 3, 3]` | kcal/mol, symmetric, `−dE/dε = Σ rᵢ ⊗ fᵢ` |
+| charges | `[N]` / `[N_total]` | e (zeros if the model has none) |
+| virial | `[3, 3]` / `[B, 3, 3]` | kcal/mol, `Σ rᵢ ⊗ fᵢ` |
 
-- All outputs are **float64**. The conversion from each model's native units uses the factors in `src/constants.py` and runs on the device.
-- `cell` is `[1, 3, 3]` (`cells` is `[B, 3, 3]`) with the lattice vectors as rows, in Å. **An all-zero cell means not periodic**, and then the virial is zero.
-- `pc_coords` / `pc_charges` are accepted for compatibility and currently ignored.
-- Neighbour lists come from `src/edges.py`, in FP32, with periodic images when there is a cell. TorchANI is the exception: its AEV code builds its own.
-
-### Per-model notes
-
-- **MACE.** The wrapper builds the one-hot `node_attrs` and caches the constant tensors (batch, ptr, node_attrs) after the first call. Edges are built in FP32 and MACE-OFF runs in FP64.
-- **NequIP / Allegro.** Both share one wrapper. `atom_types` are 0-based type indices, not Z; the Z → type table comes from the compiled model's metadata.
-- **SchNetPack.** The cutoff isn't stored in the model, so `--r-max` must match training. The float32 → float64 cast happens in the wrapper, because `CastTo64` isn't scriptable.
-- **TorchANI.** The model returns energies only; forces come from `torch.autograd.grad`. Batches of different-sized molecules are padded with species `-1`.
-- **X-MACE.** The inner model computes every state (`energy [B, n_states]`, `forces [N, n_states, 3]`) and the wrapper returns the one chosen with `--state`. Its weights are float32 (MACE-OFF's are float64).
-- **SevenNet.** The inner model is SevenNet's LAMMPS deployment: energy only, from an edge list we build, so forces and virial come from autograd. It is frozen, so the type map, cutoff and dtype are read from the deployment's `_extra_files`, not from attributes. Edge vectors are built in float64 and cast to the model's float32 at the call. Batched energies are `atomic_energy` summed per molecule, because the deployment sums every atom into one total.
+All outputs are float64. `cell` holds the lattice vectors as rows in Å; an all-zero cell means not periodic (virial zero). The wrappers accept `pc_coords` / `pc_charges` and ignore them. To add a model, see [`src/wrappers/README.md`](src/wrappers/README.md).
 
 ---
 
 ## Testing
 
 ```bash
-python -m pytest tests/ -v                      # in the allegro env
+python -m pytest tests/ -v                       # main environment; mock models, no weights needed
+bash tests/run_nequip_tests.sh                   # NequIP/Allegro
+bash tests/run_e2e_water_dimer.sh [--skip-orca]  # ORCA -> train every model -> wrap
+JAX_PLATFORMS=cpu python -m pytest tests/test_fennix_export.py tests/test_fennix_pbc.py tests/test_fennix_pc.py -v   # JAX environment
 ```
 
-Known failures, all left over from before the PBC interface:
-- `TestE2E_SchNetPack::test_train_and_wrap` and `TestE2E_TorchANI::test_train_and_wrap` call `forward()` without the `cell` argument.
-- The four `*_non_periodic_path_unchanged_vs_head` tests (`test_pbc_virial.py`, `test_virial_nequip_ani.py`, `test_virial_xmace_schnet.py`) compare against `git show HEAD:…` on the assumption that HEAD predates PBC. That stopped being true once the PBC wrappers were committed.
-
-The unit tests use **mock inner models**, so they check the interface without any trained weights. They cover shapes, dtypes, batching, PBC and the virial, and that each wrapper survives `torch.jit.script`. The integration tests do a real train → wrap and are what catches version-pin conflicts. They skip NequIP/Allegro when `e3nn < 0.6`, which is intentional.
-
-```bash
-bash tests/run_nequip_tests.sh                  # NequIP/Allegro in their own env
-bash tests/run_e2e_water_dimer.sh [--skip-orca] # ORCA -> train every model -> wrap
-JAX_PLATFORMS=cpu conda run -n fennix python -m pytest tests/test_fennix_export.py tests/test_fennix_pbc.py tests/test_fennix_pc.py -v
-```
-
----
-
-## Adding a new model
-
-See **[`src/wrappers/README.md`](src/wrappers/README.md)**. It covers:
-- what NAMD's C++ side calls and expects;
-- a complete, tested template wrapper (forces and virial by autograd, batching, PBC);
-- the TorchScript rules that break wrappers;
-- registration, tests, loading the model through NAMD's shim, and how to make it fast.
+Known failures, all older than the periodic interface: `TestE2E_SchNetPack::test_train_and_wrap` and `TestE2E_TorchANI::test_train_and_wrap` call `forward()` without `cell`; the four `*_non_periodic_path_unchanged_vs_head` tests compare against a `HEAD` that predates PBC.
 
 ---
 
@@ -511,22 +390,17 @@ See **[`src/wrappers/README.md`](src/wrappers/README.md)**. It covers:
 
 ```
 src/
-  cli.py                 wrap a compiled model for NAMD (step 2)
-  compile_mace_off.py    pretrained MACE-OFF   -> TorchScript (step 1)
-  compile_torchani.py    pretrained ANI-*      -> TorchScript (step 1)
-  compile_schnetpack.py  random-weight SchNet  -> TorchScript (timing only)
-  wrappers/              one wrapper per framework; README.md = how to write a new one
-  edges.py, nl_vesin.py  neighbour lists (FP32, PBC-aware)
-  virial.py              shared virial normalisation
-  constants.py           unit conversion factors
-  export.py              torch.jit.script + save + diagnostics
-  training/              prepare_data + train_<model> + default configs
-  datagen/               ORCA data generation (pure QM, and QM/MM in qmmm/)
+  build.py               one call: compile + native libraries + wrap
+  compile_<model>.py     checkpoint -> TorchScript (mace, nequip, sevennet, torchani, xmace, schnetpack)
+  cli.py                 wrap a compiled model for NAMD
+  fast/                  optimised builds: <model>/ rewrites + builders, native/ C++ op libraries
+  wrappers/              one wrapper per framework; README.md = how to add one
+  edges.py, virial.py, constants.py, d3.py, export.py
+  training/, datagen/    training scripts and ORCA data generation
 scripts/
-  export_fennix_bio1_stablehlo.py   FeNNiX -> StableHLO
-  opt/                              optimised builds, benchmarks, NAMD patches
-namd_benchmarks/         NAMD benchmark suite (water boxes, enzyme), env.sh, config template
-cpp/pjrt_shim/           C++ PJRT runtime used for FeNNiX
-models/                  compiled and wrapped model artifacts
+  export_fennix_bio1_stablehlo.py
+  opt/                   benchmarks, per-model reports, reproduction scripts, NAMD patches
+namd_benchmarks/         NAMD benchmark systems, env.sh, config template
+models/                  compiled and wrapped models
 tests/
 ```

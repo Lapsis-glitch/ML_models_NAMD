@@ -7,7 +7,7 @@ REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"; cd "$REPO"
 SP=/home/rat/miniconda3/envs/allegro/lib/python3.12/site-packages
 PY=/home/rat/miniconda3/envs/allegro/bin/python
 export LD_LIBRARY_PATH=$SP/nvidia/cu13/lib:${LD_LIBRARY_PATH:-}
-NAT="--extra-lib $SP/cuequivariance_ops/lib/libcue_ops.so --extra-lib scripts/opt/mace/cueq_native/libcueq_uniform1d_native.so"
+NAT="--extra-lib $SP/cuequivariance_ops/lib/libcue_ops.so --extra-lib src/fast/native/cueq/libcueq_uniform1d_native.so"
 M=models/opt
 E3NN="--model base=$M/mace_baseline.pt --model fast_e3nn=$M/mace_fast_e3nn.pt"
 CUEQ="--model cueqf=$M/mace_cueqf.pt --model fast_cueqf=$M/mace_fast_cueqf.pt --model fast_cueqf_f32_EXTRA=$M/mace_fast_cueqf_f32.pt"

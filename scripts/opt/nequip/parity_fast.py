@@ -5,7 +5,7 @@ import os, sys
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 import torch
 import bench_common as bc
-torch.ops.load_library(str(bc.REPO / "scripts/opt/nequip/oeq_native/liboeq_native.so"))
+torch.ops.load_library(str(bc.REPO / "src/fast/native/oeq/liboeq_native.so"))
 dev = torch.device("cuda:0")
 L = {k: torch.jit.load(str(bc.REPO / f"models/opt/nequip_{k}.pt"), map_location=dev) for k in ("baseline", "oeq", "fast_oeq")}
 assert not any(m.startswith("openequivariance") for m in sys.modules)

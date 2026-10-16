@@ -8,12 +8,15 @@ Usage::
     python -m src.compile_torchani --variant ani2x \
         --out models/compiled_ani2x.pt
 
-After this, wrap for NAMD with::
+    python -m src.compile_torchani --variant ani2x --fast \
+        --out models/ani2x_fast.pt
 
-    python -m src.cli --model-type torchani \
-        --compiled models/compiled_ani2x.pt \
-        --elements 1,6,7,8,16,9,17 \
-        --out models/trpcage_ani2x_qmmm.pt
+After this, wrap for NAMD with ``python -m src.cli --model-type torchani``,
+passing the printed element order to ``--elements``.
+
+``--fast`` (GPU): cuAEV kernels plus a fused per-element ensemble
+(``src/fast/ani``), checked against the stock model in float64.  Builds and
+needs the native ``cuaev`` library (``src.build`` handles it).
 """
 
 import argparse
@@ -61,14 +64,23 @@ def compile_torchani(variant: str, out_path: str, device: str = "cpu") -> list:
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[1])
     parser.add_argument("--variant", required=True, choices=list(_VARIANTS),
                         help="Pretrained TorchANI variant")
     parser.add_argument("--out", required=True,
                         help="Output compiled TorchScript .pt file")
     parser.add_argument("--device", default="cpu")
+    parser.add_argument("--fast", action="store_true",
+                        help="cuAEV kernels + fused ensemble (GPU)")
     args = parser.parse_args(argv)
-    compile_torchani(args.variant, args.out, args.device)
+    if args.fast:
+        from .fast.native import ensure, ensure_cuda_lib_path
+        ensure_cuda_lib_path("src.compile_torchani")
+        from .fast.ani import build_fast_ani
+        Path(args.out).parent.mkdir(parents=True, exist_ok=True)
+        build_fast_ani(args.variant, args.out, ensure("cuaev")[0])
+    else:
+        compile_torchani(args.variant, args.out, args.device)
 
 
 if __name__ == "__main__":

@@ -18,7 +18,7 @@ import torch
 
 import bench_common as bc
 
-torch.ops.load_library(str(bc.REPO / "scripts/opt/nequip/oeq_native/liboeq_native.so"))
+torch.ops.load_library(str(bc.REPO / "src/fast/native/oeq/liboeq_native.so"))
 dev = torch.device("cuda:0")
 M = bc.REPO / "models/opt"
 labels = sys.argv[1:] or sorted(

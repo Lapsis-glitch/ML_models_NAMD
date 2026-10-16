@@ -1,24 +1,21 @@
 """
-Unified CLI for exporting wrapped MLIP models for NAMD.
+Wrap a compiled MLIP for NAMD (step 2 of ``src.build``).
 
 Usage examples::
 
-    python -m src.cli --model-type mace    --compiled model.pt --out mlff.pt
-    python -m src.cli --model-type nequip  --compiled model.pth --out mlff.pt
-    python -m src.cli --model-type allegro --compiled model.pth --out mlff.pt
-    python -m src.cli --model-type schnet  --compiled model.pt --r-max 5.0 --out mlff.pt
-    python -m src.cli --model-type torchani --compiled model.pt --out mlff.pt --elements 1,6,7,8
-    python -m src.cli --model-type sevennet --compiled deployed_serial.pt --out mlff.pt
+    python -m src.cli --model-type mace     --compiled model.pt  --out mlff.pt
+    python -m src.cli --model-type nequip   --compiled model.pth --out mlff.pt
+    python -m src.cli --model-type schnet   --compiled model.pt  --r-max 5.0 --out mlff.pt
+    python -m src.cli --model-type torchani --compiled model.pt  --elements 1,6,7,8 --out mlff.pt
     python -m src.cli --model-type sevennet --compiled deployed_serial.pt --d3 --out mlff.pt
-    # optimised SevenNet (python -m src.compile_sevennet --fast); the OEQ op
-    # library is loaded automatically
-    python -m src.cli --model-type sevennet --compiled deployed_fast.pt --out mlff.pt
 
-Optimised inner models (scripts/opt/) use custom ops; pass the same native
-libraries NAMD will load via NAMD_MLFF_EXTRA_LIBS::
+Optimised inner models (``src.compile_<model> --fast``) use custom ops; pass
+the native libraries NAMD will load via ``NAMD_MLFF_EXTRA_LIBS``::
 
     python -m src.cli --model-type mace --compiled mace_inner_fast.pt \
         --extra-libs "$NAMD_MLFF_EXTRA_LIBS" --out mlff.pt
+
+``python -m src.build`` does compile + wrap (+ native libraries) in one call.
 """
 
 import argparse
@@ -66,8 +63,8 @@ def main(argv=None):
     parser.add_argument("--forces-key", default="forces",
                         help="[schnet] Output dict key for forces")
     parser.add_argument("--fast", action="store_true",
-                        help="[schnet] Opt-in fast energy route for "
-                             "non-periodic inputs (optimised build)")
+                        help="[schnet, torchani] Optimised wrapper path "
+                             "(schnet: fast energy route; torchani: lean path)")
     parser.add_argument("--graph-max-atoms", type=int, default=2048,
                         help="[schnet --fast] Largest system a graph-capable "
                              "shim should capture")
@@ -85,9 +82,7 @@ def main(argv=None):
     parser.add_argument("--elements", default="1,6,7,8,16,9,17",
                         help="[torchani] Comma-separated atomic numbers "
                              "in species order (default: ANI-2x)")
-    parser.add_argument("--lean", action="store_true",
-                        help="[torchani] Opt-in low-overhead path, "
-                             "bit-identical outputs (optimised build)")
+    parser.add_argument("--lean", action="store_true", help=argparse.SUPPRESS)
 
     # X-MACE-specific
     parser.add_argument("--state", type=int, default=0,
@@ -150,7 +145,7 @@ def main(argv=None):
             model_path=args.compiled,
             device=args.device,
             element_list=elem_list,
-            lean=args.lean,
+            lean=args.lean or args.fast,
         ).eval()
 
     elif model_type == "xmace":

@@ -1,9 +1,10 @@
 """Eager (unscripted) parity: e3nn MACE-OFF vs cuEq-converted, raw MACE input dict.
 usage: python debug_cueq_parity.py [reduced_cg 0|1]"""
 import sys, os
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))); sys.path.insert(0, "scripts/opt"); sys.path.insert(0, ".")
+HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, os.path.join(HERE, "..")); sys.path.insert(0, os.path.join(HERE, "..", "..", ".."))  # scripts/opt, repo root
 import torch
-from rebuild import rebuild
+from src.fast.mace.rebuild import rebuild
 from bench_common import water_system
 from src.edges import build_edges
 dev = "cuda"

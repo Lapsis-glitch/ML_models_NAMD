@@ -296,7 +296,7 @@ If your model **computes forces and virial itself**, drop the autograd parts. Ca
    - add a branch that builds your wrapper (`.eval()`), with any model-specific flags prefixed `[<name>]` in their help text;
    - add a label for `export_wrapped`.
 3. **`pyproject.toml`:** add an optional-dependency group with the packages needed to *compile* the inner model. Wrapping itself only needs torch.
-4. If the inner model needs its own compile step, add a `src/compile_<name>.py` alongside `compile_mace_off.py` / `compile_torchani.py`.
+4. If the inner model needs its own compile step, add a `src/compile_<name>.py` alongside `compile_mace.py` / `compile_torchani.py`, and register it in `src/build.py`.
 
 Then:
 
@@ -314,7 +314,7 @@ python -m src.cli --model-type <name> --compiled inner.pt --out mlff_model.pt
 The parametrised tests then check shapes, dtypes, zero virials for a zero cell, `forward_batch`, `supports_batch` / `supports_pbc`, and that scripting works. The unit suite must stay weight-free, so don't use real models there.
 
 ```bash
-python -m pytest tests/test_interface_compliance.py -v      # allegro env
+python -m pytest tests/test_interface_compliance.py -v
 ```
 
 **Physics checks with the real model.** Write these as a separate test file, guarded with `pytest.skip` when the model file is missing so the unit suite stays weight-free. `tests/test_virial_nequip_ani.py` shows each check below.
@@ -360,10 +360,10 @@ Start from a correct, tested wrapper, then optimise against it. What paid off fo
   - Use `torch._assert_async` for sanity checks.
 - **Keep constants on the device.** Move conversion factors and lookup tables once, not on every call.
 - **Build edges in FP32**, and use `build_edges_cell*` (the cell list) for thousands of atoms.
-- **Put faster kernels behind an opt-in flag** (`fast=True`, `lean=True`) and keep the stock path as the reference. The optimised build must match the reference to rounding, and the per-model `build_fast.py` scripts assert exactly that.
+- **Put faster kernels behind an opt-in flag** (`fast=True`, `lean=True`) and keep the stock path as the reference. The optimised build must match the reference to rounding, and the builders in `src/fast/` assert exactly that.
 - **Custom CUDA kernels must be native.** Register the op in C++ with `TORCH_LIBRARY` and build it against the **same libtorch as NAMD's shim**. Load it with `NAMD_MLFF_EXTRA_LIBS` in NAMD, and with `src.cli --extra-libs` when wrapping.
   - An op registered from Python (a `torch.library` decorator, or `import some_package`) can't be used, because NAMD never runs Python.
-  - Working examples: `scripts/opt/mace/cueq_native/`, `scripts/opt/nequip/oeq_native/` and `scripts/opt/ani/cuaev_native/`.
+  - Working examples: `src/fast/native/cueq/`, `src/fast/native/oeq/` and `src/fast/native/cuaev/`.
 - **Measure with `scripts/opt/bench_common.py`.** It feeds artifacts exactly what the shim feeds them and times them interleaved in one process, so ratios are fair. Pass the reference first; parity is reported against it.
   ```bash
   python scripts/opt/bench_common.py --model ref=mlff_model.pt --model fast=mlff_fast.pt \
